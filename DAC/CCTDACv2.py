@@ -25,7 +25,7 @@ from scipy.interpolate import UnivariateSpline as UniSpline
 from time import *
 from numpy import *
 from resonator.scripts.PulseSequences.advanceDACs import ADV_DAC
-
+from resonator.labrad_config import generalsettings
 
 
 SERVERNAME = 'CCTDAC Pulser v2'
@@ -135,10 +135,7 @@ class CCTDACServer( LabradServer ):
     Used for controlling DC trap electrodes
     """
     name = SERVERNAME
-    USERS = ('cct', 'resonator')
-    for user in USERS:
-        if user in os.listdir('/home'):
-            serNode = user+'main'
+    serNode = generalsettings.serNode
     onNewUpdate = Signal(SIGNALID, 'signal: ports updated', 's')
     multipoles = ['Ex1', 'Ey1', 'Ez1', 'U1', 'U2', 'U3', 'U4', 'U5']
     maxDACIndex = 126    
