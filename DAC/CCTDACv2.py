@@ -24,18 +24,9 @@ from scipy import interpolate
 from scipy.interpolate import UnivariateSpline as UniSpline
 from time import *
 from numpy import *
-import sys
+from resonator.scripts.PulseSequences.advanceDACs import ADV_DAC
 
-### work-around so resonator can load CCTDACv2 until permanent registry fix is implemented
-import os
-USERS = ('cct', 'resonator')
-for user in USERS:
-    if user in os.listdir('/home'):
-        sys.path.append('/home/' + user + '/LabRAD/cct/PulseSequences')
-        break
-### end of work-around
-# sys.path.append('/home/cct/LabRAD/cct/PulseSequences')
-from advanceDACs import ADV_DAC
+
 
 SERVERNAME = 'CCTDAC Pulser v2'
 PREC_BITS = 16.
@@ -138,11 +129,13 @@ class Port():
         return chr(num)                                    
         
 class CCTDACServer( LabradServer ):
+    import os
     """
     CCTDAC Server
     Used for controlling DC trap electrodes
     """
     name = SERVERNAME
+    USERS = ('cct', 'resonator')
     for user in USERS:
         if user in os.listdir('/home'):
             serNode = user+'main'
