@@ -1,5 +1,3 @@
-import sys;
-sys.path.append('/home/cct/LabRAD/cct/scripts/simpleMeasurements/FFT')
 import os
 from PyQt4 import QtGui
 from PyQt4 import QtCore,uic
@@ -77,6 +75,7 @@ class SCAN(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
+        from Devices_config import Device_config
         from labrad.wrappers import connectAsync
         from labrad.types import Error
         from labrad import types as T
@@ -88,7 +87,8 @@ class SCAN(QtGui.QWidget):
         self.ds = yield self.cxn.cctdac_pulser_v2
         self.pmt = self.cxn.normalpmtflow
         self.rs = self.cxncam.rohdeschwarz_server
-        self.rs.select_device('GPIB Bus - USB0::0x0AAD::0x0054::104543')
+        self.SMAGPIB = Device_config.SC_SMA
+        self.rs.select_device(self.SMAGPIB)
         self.control['numStepsAmp'].valueChanged.connect(self.numAStepsChanged)
         self.control['sizeStepsAmp'].valueChanged.connect(self.sizeAStepsChanged)
         self.control['numStepsTfrq'].valueChanged.connect(self.numTStepsChanged)

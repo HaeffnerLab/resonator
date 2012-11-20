@@ -24,8 +24,8 @@ from scipy import interpolate
 from scipy.interpolate import UnivariateSpline as UniSpline
 from time import *
 from numpy import *
-from resonator.scripts.PulseSequences.advanceDACs import ADV_DAC
-from resonator.labrad_config import generalsettings
+from scripts.PulseSequences.advanceDACs import ADV_DAC
+from labrad_config import generalsettings
 
 
 SERVERNAME = 'CCTDAC Pulser v2'
@@ -37,7 +37,7 @@ NOMINAL_VMAX = 40.
 
 class Voltage(object):
     def __init__(self, n, i, v):        
-        self.portNum = n
+        self.portNum = nSetControllerWait
         self.setNum = i
         self.voltage = v
         
