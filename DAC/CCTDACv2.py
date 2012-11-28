@@ -37,7 +37,7 @@ NOMINAL_VMAX = 40.
 
 class Voltage(object):
     def __init__(self, n, i, v):        
-        self.portNum = nSetControllerWait
+        self.portNum = n
         self.setNum = i
         self.voltage = v
         
