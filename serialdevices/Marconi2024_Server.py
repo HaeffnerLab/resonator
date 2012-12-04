@@ -16,12 +16,12 @@
 #### END NODE INFO
 #"""
 
-from serialdeviceserver_v1_2 import SerialDeviceServer, setting, inlineCallbacks,\
+from serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks,\
                                     SerialDeviceError, SerialConnectionError
 from twisted.internet import reactor
 from twisted.internet.defer import returnValue
 from labrad.server import Signal
-# from labrad.types import Error
+#from labrad.types import Error
 
 SIGNALID = 209057 # what for?
 SIGNALID1 = 209058
@@ -30,10 +30,11 @@ class MarconiServer(SerialDeviceServer):
     """Server for basic CW control of Marconi RF Generator"""
     
     name = 'Marconi Server'
-    regKey = 'MarconiKey' # set MarconiKey in registry to /dev/ttyUSB# where # is the uSB port you are connected at
-                          # actually this does not seem to work
+    regKey = 'MarconiKey' 
+    # set MarconiKey in registry to /dev/ttyUSB# where # is USB port connection
+    # actually this does not seem to work
     port = None
-    serNode = 'cctmain' # name of the serial server
+    serNode = 'cctmain' # name of the serial server ???
     timeout = 1.0
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)') # what for?
     onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')
@@ -42,7 +43,7 @@ class MarconiServer(SerialDeviceServer):
     def initServer(self):
         self.createDict()
         if not self.regKey or not self.serNode: 
-            raise SerialDeviceError('Must define regKey and serNode attributes' )
+            raise SerialDeviceError('Must define regKey and serNode attributes')
         port = yield self.getPortFromReg(self.regKey)
         self.port = port
         try:
@@ -58,9 +59,10 @@ class MarconiServer(SerialDeviceServer):
                 print 'Check set up and restart serial server'
             else: raise
             
-#         self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
-#         self.SetControllerWait(0) # turns off automatic listen after talk, necessary 
-                                    # to stop line unterminated errors
+        #self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
+        #self.SetControllerWait(0) 
+        # ^ turns off automatic listen after talk, necessary 
+        # to stop line unterminated errors
         self.SetPowerUnits(units='DBM')
         yield self.populateDict()
         self.listeners = set()
@@ -70,6 +72,7 @@ class MarconiServer(SerialDeviceServer):
         d['state'] = None # state is boolean
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
+        d['power_units'] = None # power (will be) in dBm
         self.marDict = d
     
     @inlineCallbacks
@@ -80,6 +83,7 @@ class MarconiServer(SerialDeviceServer):
         self.marDict['state'] = bool(state) 
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
+        self.marDict['power_units'] = 'DBM' # because we set it, but not ideal
         
     
     def initContext(self, c):
@@ -101,12 +105,12 @@ class MarconiServer(SerialDeviceServer):
         '''Ask instrument to identify itself'''
         command = self.IdenStr()
         self.ser.write(command)
-#         self.ForceRead() # expect a reply from instrument
+        #self.ForceRead() # expect a reply from instrument
         answer = yield self.ser.readline()
         returnValue(answer[:-1])
     
     @setting(2, "GetFreq", returns='v')
-    def GetFreq(self,c):
+    def GetFreq(self, c):
         '''Returns current frequency (in MHz)'''
         return self.marDict['freq']
 
@@ -117,7 +121,7 @@ class MarconiServer(SerialDeviceServer):
         self.ser.write(command)
         self.marDict['freq'] = freq
         notified = self.getOtherListeners(c)
-        self.onNewUpdate(('freq',freq),notified )
+        self.onNewUpdate(('freq',freq),notified)
       
     @setting(4, "GetState", returns='b')
     def GetState(self,c):
@@ -141,7 +145,7 @@ class MarconiServer(SerialDeviceServer):
     @setting(7, "SetPower", level = 'v',returns = "")
     def SetPower(self,c, level):
         '''Sets power level, enter power in dBm'''
-        self.checkPower(level)
+        self.checkPower(level) # what does this do?
         command = self.PowerSetStr(level)
         self.ser.write(command)
         self.marDict['power'] = level
@@ -154,8 +158,8 @@ class MarconiServer(SerialDeviceServer):
         command = self.SetPowerUnitsStr(units)
         self.ser.write(command)
         self.marDict['PwrUnits'] = units
-        #notified = self.getOtherListereners(c)
-        #self.onNewUpdate(('power units',units),notified)
+        notified = self.getOtherListereners(c)
+        self.onNewUpdate(('power_units',units),notified)
 
     # HIDDEN METHODS
     @inlineCallbacks
@@ -167,7 +171,7 @@ class MarconiServer(SerialDeviceServer):
     def _GetState(self):
         command = self.StateReqStr()
         yield self.ser.write(command)
-#         yield self.ForceRead() # expect a reply from instrument
+        #yield self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         state_str = msg.split(':')[2]
         if output_str == 'ENABLED':
@@ -180,7 +184,7 @@ class MarconiServer(SerialDeviceServer):
     def _GetFreq(self):
         command = self.FreqReqStr()
         yield self.ser.write(command)
-#         yield self.ForceRead() # expect a reply from instrument
+        #yield self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
         returnValue(freq)
@@ -189,7 +193,7 @@ class MarconiServer(SerialDeviceServer):
     def _GetPower(self):
         command = self.PowerReqStr()
         yield  self.ser.write(command)
-#         yield self.ForceRead() # expect a reply from instrument
+        #yield self.ForceRead() # expect a reply from instrument
         amp = float(msg.split(';')[2].split()[1])
         answer = yield self.ser.readline()
         returnValue(answer)
@@ -230,16 +234,16 @@ class MarconiServer(SerialDeviceServer):
         '''String to set power units (defaults to dBM)'''
         return 'RFLV:UNITS ' + units
     
-    # string to force read
     def ForceReadStr(self):
+        '''String to force device to read message'''
         return '++read eoi' + '\n'
     
-    # string to set the addressing of the prologix
     def SetAddrStr(self, addr):
+        '''String to set addressing of prologix'''
         return '++addr ' + str(addr) + '\n'
 
-__server__ = MarconiServer()
 
 if __name__ == "__main__":
+    server = MarconiServer()
     from labrad import util
-    util.runServer(__server__)
+    util.runServer(server)
