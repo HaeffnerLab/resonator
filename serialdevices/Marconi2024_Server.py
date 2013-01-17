@@ -1,4 +1,7 @@
 # Serial version
+# Requires serial_server_v1_2.py to be running in labrad
+# Simply inherits from serialdeviceserver
+
 #"""
 #### BEGIN NODE INFO
 #[info]
@@ -23,6 +26,16 @@ from twisted.internet.defer import returnValue
 from labrad.server import Signal
 #from labrad.types import Error
 
+
+# DEBUGGING TOOL
+def ann(method):
+    def wrapped(*args):
+        print "Starting", method
+        return method(*args)
+        print "Ending", method
+    return wrapped
+
+
 SIGNALID = 209057 # what for?
 SIGNALID1 = 209058
 
@@ -34,13 +47,14 @@ class MarconiServer(SerialDeviceServer):
     # set MarconiKey in registry to /dev/ttyUSB# where # is USB port connection
     # actually this does not seem to work
     port = None
-    serNode = 'cctmain' # name of the serial server ???
+    serNode = 'resonatormain' # name of the serial server ???
     timeout = 1.0
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)') # what for?
-    onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')
+    onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
     
     @inlineCallbacks
     def initServer(self):
+        print 'Initializing server'
         self.createDict()
         if not self.regKey or not self.serNode: 
             raise SerialDeviceError('Must define regKey and serNode attributes')
@@ -63,9 +77,13 @@ class MarconiServer(SerialDeviceServer):
         #self.SetControllerWait(0) 
         # ^ turns off automatic listen after talk, necessary 
         # to stop line unterminated errors
-        self.SetPowerUnits(units='DBM')
-        yield self.populateDict()
+        
+        self.createDict()
+        yield self.populateDict() # the problem is here!
+        
         self.listeners = set()
+        #self.SetPowerUnits(units='DBM')
+        print 'Finished initializing server'
     
     def createDict(self):
         d = {}
@@ -75,16 +93,16 @@ class MarconiServer(SerialDeviceServer):
         d['power_units'] = None # power (will be) in dBm
         self.marDict = d
     
+    @ann
     @inlineCallbacks
     def populateDict(self):
-        state = yield self._GetState() 
+        #state = yield self._GetState() 
         freq = yield self._GetFreq()
         power = yield self._GetPower()
         self.marDict['state'] = bool(state) 
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
         self.marDict['power_units'] = 'DBM' # because we set it, but not ideal
-        
     
     def initContext(self, c):
         """Initialize a new context object."""
@@ -105,7 +123,7 @@ class MarconiServer(SerialDeviceServer):
         '''Ask instrument to identify itself'''
         command = self.IdenStr()
         self.ser.write(command)
-        #self.ForceRead() # expect a reply from instrument
+        self.ForceRead() # expect a reply from instrument
         answer = yield self.ser.readline()
         returnValue(answer[:-1])
     
@@ -153,12 +171,12 @@ class MarconiServer(SerialDeviceServer):
         self.onNewUpdate(('power',level),notified)
     
     @setting(8, "PowerUnits", units = 's', returns = '')
-    def SetPowerUnits(self, c=None, units='dBm'):
+    def SetPowUnits(self, c=None, units='dBm'):
         '''Sets power units'''
         command = self.SetPowerUnitsStr(units)
         self.ser.write(command)
         self.marDict['PwrUnits'] = units
-        notified = self.getOtherListereners(c)
+        notified = self.getOtherListeners(c)
         self.onNewUpdate(('power_units',units),notified)
 
     # HIDDEN METHODS
@@ -167,33 +185,39 @@ class MarconiServer(SerialDeviceServer):
         command = self.ForceReadStr()
         yield self.ser.write(command)
     
+    @ann
     @inlineCallbacks
     def _GetState(self):
         command = self.StateReqStr()
         yield self.ser.write(command)
-        #yield self.ForceRead() # expect a reply from instrument
+        yield self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
+        print 'before'
+        print "message is:", msg
         state_str = msg.split(':')[2]
+        print 'after'
         if output_str == 'ENABLED':
             state = True
         else:
             state = False
         returnValue(state)
     
+    @ann
     @inlineCallbacks
     def _GetFreq(self):
         command = self.FreqReqStr()
         yield self.ser.write(command)
-        #yield self.ForceRead() # expect a reply from instrument
+        yield self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
         returnValue(freq)
-        
+    
+    @ann    
     @inlineCallbacks
     def _GetPower(self):
         command = self.PowerReqStr()
         yield  self.ser.write(command)
-        #yield self.ForceRead() # expect a reply from instrument
+        yield self.ForceRead() # expect a reply from instrument
         amp = float(msg.split(';')[2].split()[1])
         answer = yield self.ser.readline()
         returnValue(answer)

@@ -86,12 +86,9 @@ class SerialDeviceServer( LabradServer ):
     """
     name = NAME
     port = None
-    baudrate = None
     regKey = None
     serNode = None
     timeout = None
-    stopbits = None
-    bytesize = None
     ser = None
     
     class SerialConnection():
@@ -103,18 +100,13 @@ class SerialDeviceServer( LabradServer ):
         def __init__( self, ser, port, **kwargs ):
             timeout = kwargs.get('timeout')
             baudrate = kwargs.get('baudrate')
-            stopbits = kwargs.get('stopbits')
-            bytesize = kwargs.get('bytesize')
             ser.open( port )
             if timeout is not None: ser.timeout( timeout )
             if baudrate is not None: ser.baudrate( baudrate )
-            if stopbits is not None: ser.stopbits( stopbits )
-            if bytesize is not None: ser.bytesize( bytesize )            
             self.write = lambda s: ser.write( s )
-            self.write_line = lambda s: ser.write_line(s)
+            self.writeline = lambda s: ser.write_line(s)
             self.read = lambda x = 0: ser.read( x )
             self.readline = lambda: ser.read_line()
-            self.readlines = lambda: ser.read_lines()  #sdfa
             self.close = lambda: ser.close()
             self.flushinput = lambda: ser.flushinput()
             self.flushoutput = lambda: ser.flushoutput()
@@ -134,18 +126,10 @@ class SerialDeviceServer( LabradServer ):
         @raise SerialConnectionError: Error code 1.  Raised if we could not create serial connection.
         """
         if kwargs.get('timeout') is None and self.timeout: kwargs['timeout'] = self.timeout
-        if kwargs.get('baudrate') is None and self.baudrate: kwargs['baudrate'] = self.baudrate
-        if kwargs.get('stopbits') is None and self.stopbits: kwargs['stopbits'] = self.stopbits
-        if kwargs.get('bytesize') is None and self.bytesize: kwargs['bytesize'] = self.bytesize
-
         print '\nAttempting to connect at:'
         print '\n\tserver:\t%s' % serStr
         print '\n\tport:\t%s' % port
-        print '\n\tbaudrate:\t%s' % (str( self.baudrate) if kwargs.get('baudrate') is not None else 'Default')
-        print '\n\tstopbits:\t%s' % (str( self.stopbits) if kwargs.get('stopbits') is not None else 'Default')
-        print '\n\tbytesize:\t%s' % (str( self.bytesize) if kwargs.get('bytesize') is not None else 'Default')        
-        print '\n\ttimeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' )
-        
+        print '\n\timeout:\t%s\n\n' % ( str( self.timeout ) if kwargs.get('timeout') is not None else 'No timeout' )
         cli = self.client
         try:
             # get server wrapper for serial server
@@ -202,7 +186,6 @@ class SerialDeviceServer( LabradServer ):
         """
         reg = self.client.registry
         try:
-            #change this back to 'Ports'
             yield reg.cd( ['', 'Ports'] )
             portDir = yield reg.dir()
             portKeys = portDir[1]

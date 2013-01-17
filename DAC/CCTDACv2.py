@@ -24,9 +24,8 @@ from scipy import interpolate
 from scipy.interpolate import UnivariateSpline as UniSpline
 from time import *
 from numpy import *
-from scripts.PulseSequences.advanceDACs import ADV_DAC
-from labrad_config import generalsettings
-
+import sys
+from resonator.scripts.PulseSequences.advanceDACs import ADV_DAC
 
 SERVERNAME = 'CCTDAC Pulser v2'
 PREC_BITS = 16.
@@ -129,13 +128,12 @@ class Port():
         return chr(num)                                    
         
 class CCTDACServer( LabradServer ):
-    import os
     """
     CCTDAC Server
     Used for controlling DC trap electrodes
     """
     name = SERVERNAME
-    serNode = generalsettings.serNode
+    serNode = 'cctmain'
     onNewUpdate = Signal(SIGNALID, 'signal: ports updated', 's')
     multipoles = ['Ex1', 'Ey1', 'Ez1', 'U1', 'U2', 'U3', 'U4', 'U5']
     maxDACIndex = 126    
@@ -287,7 +285,8 @@ class CCTDACServer( LabradServer ):
                 spline[i][j] = sp[i][j](p)                                
                 n += 23                           
         self.spline = spline
-        yield self.advDACs(1)
+        #yield self.advDACs(1)
+        self.DACIndex = 1
         
         # get ion position info
         y = data[23 * 8]        
@@ -375,6 +374,7 @@ class CCTDACServer( LabradServer ):
     @inlineCallbacks
     def advDACs(self, reset = 0):        
         """Pulse Sequence"""
+        import labrad.types as T
         pulser = yield self.pulser
         seq = ADV_DAC(pulser)        
         pulser.new_sequence()

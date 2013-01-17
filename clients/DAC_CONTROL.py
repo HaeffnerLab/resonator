@@ -10,6 +10,7 @@ UpdateTime = 100 # ms
 SIGNALID = 270836
 SIGNALID2 = 270835
 Nelectrodes = 28
+Centernumber = 24
 
 class MULTIPOLE_CONTROL(QtGui.QWidget):
     def __init__(self, reactor, parent=None):
@@ -168,48 +169,41 @@ class CHANNEL_CONTROL (QtGui.QWidget):
     def makeGUI(self):
         layout = QtGui.QGridLayout()                                                                            
         self.controlLabels = []
-        for i in range(1, Nelectrodes):
+        for i in range(1, Nelectrodes+1):
 	    self.controlLabels.append(str(i))
 	    
         self.controls = {}
         for label in self.controlLabels:
-	    if int(label) < 6: 
-		self.controls[label] = QCustomSpinBox(label, (-30, 30))
-	    elif int(label) < 15: 
-		self.controls[label] = QCustomSpinBox(str(int(label) - 5) + '   ' , (-30, 30))
+	    if int(label) < 15: 
+		self.controls[label] = QCustomSpinBox(str(int(label)) + '   ' , (-30, 30))
 	    else:
-		self.controls[label] = QCustomSpinBox(str(int(label) - 5) , (-30, 30))
-        self.controlLabels.append('CNT')
-        self.controls['CNT'] = QCustomSpinBox('CNT', (-30, 30))
+		self.controls[label] = QCustomSpinBox(str(int(label)) , (-30, 30))
+ #       self.controlLabels.append('CNT')
+  #      self.controls['CNT'] = QCustomSpinBox('CNT', (-30, 30))
         
         self.labelToNumber = {}
         for l in self.controlLabels:
-            if l == 'CNT':
-                self.labelToNumber[l] = Nelectrodes
-            else:
-                self.labelToNumber[l] = int(l)
+      #      if l == 'CNT':
+        #        self.labelToNumber[l] = Centernumber
+       #     else:
+            self.labelToNumber[l] = int(l)
 
         self.channelValues = {}
         for k in self.controlLabels:
             self.channelValues[k]=0.0
-            
-	smaBox = QtGui.QGroupBox('SMA Out')
-	smaLayout = QtGui.QGridLayout()
-	smaBox.setLayout(smaLayout)
 	
 	elecBox = QtGui.QGroupBox('Electrodes')
 	elecLayout = QtGui.QGridLayout()
 	elecBox.setLayout(elecLayout)
-	layout.addWidget(smaBox, 0, 0)
-	layout.addWidget(elecBox, 0, 1)
+	layout.addWidget(elecBox, 0, 0)
 	
-        for j in range(5):
-            smaLayout.addWidget(self.controls[str(j+1)],j,1)
-        for j in range(5, 16):
-	    elecLayout.addWidget(self.controls[str(j+1)],16 - j,1)
-	for j in range(16, 27):
-	    elecLayout.addWidget(self.controls[str(j+1)],27 - j,5)
-        elecLayout.addWidget(self.controls['CNT'], 12, 3)        
+        for j in range(1, 12):
+	    elecLayout.addWidget(self.controls[str(j)],12 - j,1)
+	for j in range(12, 23):
+	    elecLayout.addWidget(self.controls[str(j)],23 - j,5)
+    #    elecLayout.addWidget(self.controls['CNT'], 12, 3)
+        for j in range(23,29):
+            elecLayout.addWidget(self.controls[str(j)],29 - j,9)    
         
         layout.setColumnStretch(1, 1)
        
@@ -288,26 +282,19 @@ class CHANNEL_MONITOR(QtGui.QWidget):
        
         self.posDisplay = QCustomSpinBoxION((-2000, 2000))
         
-        smaBox = QtGui.QGroupBox('SMA Out')
-        smaLayout = QtGui.QGridLayout()
-        smaBox.setLayout(smaLayout)
 	
         elecBox = QtGui.QGroupBox('Electrode Voltages')
         elecLayout = QtGui.QGridLayout()
         elecBox.setLayout(elecLayout)
-        layout.addWidget(smaBox, 0, 0)
-        layout.addWidget(elecBox, 0, 1)
+        layout.addWidget(elecBox, 0, 0)
 	
-        for j in range(5):
-            smaLayout.addWidget(QtGui.QLabel(str(j+1)),j,0)
-            smaLayout.addWidget(self.electrodes[j],j,1)
-        for j in range(5, 16):
-            elecLayout.addWidget(QtGui.QLabel(str(j-4)),16 - j,0)
-            elecLayout.addWidget(self.electrodes[j],16 - j,1)
+        for j in range(1, 12):
+            elecLayout.addWidget(QtGui.QLabel(str(j)),12 - j,0)
+            elecLayout.addWidget(self.electrodes[j-1],12 - j,1)
             elecLayout.setColumnStretch(1, 1)
-        for j in range(16, 27):
-            elecLayout.addWidget(QtGui.QLabel(str(j-4)),27 - j,4)
-            elecLayout.addWidget(self.electrodes[j],27 - j,5)
+        for j in range(12, 23):
+            elecLayout.addWidget(QtGui.QLabel(str(j)),23 - j,4)
+            elecLayout.addWidget(self.electrodes[j-1],23 - j,5)
             elecLayout.setColumnStretch(5, 1)
 	
         elecLayout.addWidget(QtGui.QLabel('CNT'), 12, 2)

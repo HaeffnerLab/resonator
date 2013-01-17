@@ -12,9 +12,9 @@ class ResonatorGUI(QtGui.QMainWindow):
         self.tabWidget.addTab(lightControlTab,'&Laser Room')
         self.createGrapherTab()
         
-        scriptControl = self.makeScriptControl(reactor)
+#        scriptControl = self.makeScriptControl(reactor)
         gridLayout = QtGui.QGridLayout()
-        gridLayout.addWidget(scriptControl, 0, 0, 1, 1)
+#        gridLayout.addWidget(scriptControl, 0, 0, 1, 1)
         gridLayout.addWidget(self.tabWidget, 0, 1, 1, 3)
         centralWidget = QtGui.QWidget()
         centralWidget.setLayout(gridLayout)
