@@ -44,13 +44,13 @@ class MarconiServer(SerialDeviceServer):
     
     name = 'Marconi Server'
     regKey = 'MarconiKey' 
-    # set MarconiKey in registry to /dev/ttyUSB# where # is USB port connection
-    # actually this does not seem to work
+    # set MarconiKey in registry to ttyUSB# where # is USB port connection
     port = None
-    serNode = 'resonatormain' # name of the serial server ???
+    serNode = 'resonatormain' # labradnode
     timeout = 1.0
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)') # what for?
     onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
+    gpibaddr = 2
     
     @inlineCallbacks
     def initServer(self):
@@ -72,14 +72,13 @@ class MarconiServer(SerialDeviceServer):
                 print 'Error opening serial connection'
                 print 'Check set up and restart serial server'
             else: raise
-            
-        #self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
-        #self.SetControllerWait(0) 
+
+        self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
+        self.SetControllerWait(0) 
         # ^ turns off automatic listen after talk, necessary 
         # to stop line unterminated errors
-        
-        self.createDict()
-        yield self.populateDict() # the problem is here!
+        #self.createDict()
+        #yield self.populateDict() # the problem is here!
         
         self.listeners = set()
         #self.SetPowerUnits(units='DBM')
@@ -93,10 +92,10 @@ class MarconiServer(SerialDeviceServer):
         d['power_units'] = None # power (will be) in dBm
         self.marDict = d
     
-    @ann
     @inlineCallbacks
+    @ann
     def populateDict(self):
-        #state = yield self._GetState() 
+        state = yield self._GetState() 
         freq = yield self._GetFreq()
         power = yield self._GetPower()
         self.marDict['state'] = bool(state) 
@@ -116,7 +115,6 @@ class MarconiServer(SerialDeviceServer):
         notified.remove(c.ID)
         return notified
     
-    
     # SETTINGS (available to user)
     @setting(1, "Identify", returns='s')
     def Identify(self, c):
@@ -125,7 +123,7 @@ class MarconiServer(SerialDeviceServer):
         self.ser.write(command)
         self.ForceRead() # expect a reply from instrument
         answer = yield self.ser.readline()
-        returnValue(answer[:-1])
+        returnValue(answer)
     
     @setting(2, "GetFreq", returns='v')
     def GetFreq(self, c):
@@ -170,7 +168,7 @@ class MarconiServer(SerialDeviceServer):
         notified = self.getOtherListeners(c)
         self.onNewUpdate(('power',level),notified)
     
-    @setting(8, "PowerUnits", units = 's', returns = '')
+    @setting(8, "SetPowerUnits", units = 's', returns = '')
     def SetPowUnits(self, c=None, units='dBm'):
         '''Sets power units'''
         command = self.SetPowerUnitsStr(units)
@@ -181,11 +179,15 @@ class MarconiServer(SerialDeviceServer):
 
     # HIDDEN METHODS
     @inlineCallbacks
+    def SetControllerWait(self, status):
+        command = self.WaitRespStr(status)
+        yield self.ser.write(command)
+
+    @inlineCallbacks
     def ForceRead(self):
         command = self.ForceReadStr()
         yield self.ser.write(command)
     
-    @ann
     @inlineCallbacks
     def _GetState(self):
         command = self.StateReqStr()
@@ -202,7 +204,6 @@ class MarconiServer(SerialDeviceServer):
             state = False
         returnValue(state)
     
-    @ann
     @inlineCallbacks
     def _GetFreq(self):
         command = self.FreqReqStr()
@@ -212,7 +213,6 @@ class MarconiServer(SerialDeviceServer):
         freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
         returnValue(freq)
     
-    @ann    
     @inlineCallbacks
     def _GetPower(self):
         command = self.PowerReqStr()
@@ -261,6 +261,9 @@ class MarconiServer(SerialDeviceServer):
     def ForceReadStr(self):
         '''String to force device to read message'''
         return '++read eoi' + '\n'
+
+    def WaitRespStr(self, wait):
+        return '++auto ' + str(wait) + '\n'
     
     def SetAddrStr(self, addr):
         '''String to set addressing of prologix'''
