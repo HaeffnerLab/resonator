@@ -50,7 +50,7 @@ class MarconiServer(SerialDeviceServer):
     timeout = 1.0
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
     onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
-    gpibaddr = 2
+    gpibaddr = 11
     
     @inlineCallbacks
     def initServer(self):
@@ -75,7 +75,7 @@ class MarconiServer(SerialDeviceServer):
         self.SetControllerMode(1) # prologix set to controller mode
         self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
         self.SetControllerWait(0) # turn off auto listen after talk, to stop line unterminated errors
-        yield self.populateDict()
+        #yield self.populateDict()
         self.listeners = set()
         print 'Finished initializing server'
     
@@ -173,6 +173,12 @@ class MarconiServer(SerialDeviceServer):
         notified = self.getOtherListeners(c)
         self.onNewUpdate(('power_units',units),notified)
 
+    @setting(9, "ClearStatus", returns = '')
+    def ClearStatus(self, c=None):
+        '''Clear the event register and error queue'''
+        command = self.CLSStr()
+        self.ser.write(command)
+
 
     # ===== HIDDEN METHODS =====
 
@@ -195,7 +201,7 @@ class MarconiServer(SerialDeviceServer):
     def _GetState(self):
         command = self.StateReqStr()
         yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
+        self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         state_str = msg.split(':')[2]
         if state_str == 'ENABLED':
@@ -208,7 +214,7 @@ class MarconiServer(SerialDeviceServer):
     def _GetFreq(self):
         command = self.FreqReqStr()
         yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
+        self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
         returnValue(freq)
@@ -217,7 +223,7 @@ class MarconiServer(SerialDeviceServer):
     def _GetPower(self):
         command = self.PowerReqStr()
         yield  self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
+        self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         amp = float(msg.split(';')[2].split()[1])
         returnValue(amp)
@@ -229,6 +235,10 @@ class MarconiServer(SerialDeviceServer):
         '''String to request machine to identify itself'''
         return '*IDN?' + '\n'
  
+    def CLSStr(self):
+        '''String to clear the envent register and error queue'''
+        return '*CLS' + '\n'
+
     def FreqReqStr(self):
         '''String to request current frequency'''
         return 'CFRQ?' + '\n'
