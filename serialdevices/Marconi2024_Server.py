@@ -74,7 +74,8 @@ class MarconiServer(SerialDeviceServer):
             else: raise
         #self.SetControllerMode(1) # prologix set to controller mode
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
-        self.SetControllerWait(0) # turn off auto listen after talk, to stop line unterminated errors
+        self.SetControllerWait(0)   # turn off auto listen after talk, 
+                                    # to stop line unterminated errors
         yield self.populateDict()
         self.listeners = set()
         print 'Finished initializing server'
@@ -124,62 +125,53 @@ class MarconiServer(SerialDeviceServer):
         self.ForceRead() # expect a reply from instrument
         answer = yield self.ser.readline()
         returnValue(answer[:-1])
-    
-    @setting(2, "GetFreq", returns='v')
-    def GetFreq(self, c):
-        '''Returns current frequency (in MHz)'''
-        return self.marDict['freq']
 
-    @setting(3, "SetFreq", freq = 'v', returns = "")
-    def SetFreq(self, c, freq):
-        '''Sets frequency, enter value in MHZ'''
-        self.checkFreq(freq)
-        command = self.FreqSetStr(freq)
-        yield self.ser.write(command)
-        self.marDict['freq'] = freq
-        #notified = self.getOtherListeners(c)
-        #self.onNewUpdate(('freq',freq),notified)
-      
-    @setting(4, "GetState", returns='b')
-    def GetState(self, c):
-        '''Request current on/off state of instrument'''
-        return self.marDict['state']
-    
-    @setting(5, "SetState", state= 'b', returns = "")
-    def SetState(self, c, state):
-        '''Sets on/off '''
-        command = self.StateSetStr(state)
-        yield self.ser.write(command)
-        self.marDict['state'] = state
-        #notified = self.getOtherListeners(c)
-        #self.onStateUpdate(state,notified)
-    
-    @setting(6, "GetPower", returns = 'v')
-    def GetPower(self, c):
-        ''' Returns current power level in dBm'''
+    @setting(2, "Amplitude", level = 'v',returns = "v")
+    def Amplitude(self, c, level=None):
+        '''Sets power level, enter power in dBm'''
+        if level is not None:
+            self.checkPower(level)
+            command = self.PowerSetStr(level)
+            yield self.ser.write(command)
+            self.marDict['power'] = level
+            #notified = self.getOtherListeners(c)
+            #self.onNewUpdate(('power',level),notified)
         return self.marDict['power']
     
-    @setting(7, "SetPower", level = 'v',returns = "")
-    def SetPower(self, c, level):
-        '''Sets power level, enter power in dBm'''
-        self.checkPower(level)
-        command = self.PowerSetStr(level)
-        yield self.ser.write(command)
-        self.marDict['power'] = level
-        #notified = self.getOtherListeners(c)
-        #self.onNewUpdate(('power',level),notified)
-    
-    @setting(8, "SetPowerUnits", units = 's', returns = '')
-    def SetPowerUnits(self, c=None, units='DBM'):
-        '''Sets power units, default is dBm'''
-        command = self.PowerUnitsSetStr(units)
-        yield self.ser.write(command)
-        self.marDict['power_units'] = units
-        #notified = self.getOtherListeners(c)
-        #self.onNewUpdate(('power_units',units),notified)
+    @setting(3, "Frequency", freq = 'v', returns='v')
+    def Frequency(self, c, freq=None):
+        '''Get or set the CW frequency (MHz)'''
+        if freq is not None:
+            self.checkFreq(freq)
+            command = self.FreqSetStr(freq)
+            yield self.ser.write(command)
+            self.marDict['freq'] = freq
+            #notified = self.getOtherListeners(c)
+            #self.onNewUpdate(('freq',freq),notified)
+        return self.marDict['freq']
 
-    @setting(9, "ClearStatus", returns = '')
-    def ClearStatus(self, c=None):
+    @setting(4, "Output_State", state= 'b', returns = "b")
+    def Output_State(self, c, state=None):
+        '''Get or set the on/off state of the CW signal'''
+        if state is not None:
+            command = self.OutputStateSetStr(state)
+            yield self.ser.write(command)
+            self.marDict['output_state'] = state
+            #notified = self.getOtherListeners(c)
+            #self.onStateUpdate(state,notified)
+        return self.marDict['output_state']    
+    
+    #@setting(8, "SetPowerUnits", units = 's', returns = '')
+    #def SetPowerUnits(self, c=None, units='DBM'):
+        #'''Sets power units, default is dBm'''
+        #command = self.PowerUnitsSetStr(units)
+        #yield self.ser.write(command)
+        #self.marDict['power_units'] = units
+        ##notified = self.getOtherListeners(c)
+        ##self.onNewUpdate(('power_units',units),notified)
+
+    @setting(10, "Clear", returns = '')
+    def Clear(self, c=None):
         '''Clear the event register and error queue'''
         command = self.ClearStatusStr()
         yield self.ser.write(command)
@@ -205,7 +197,7 @@ class MarconiServer(SerialDeviceServer):
     @inlineCallbacks
     @ann
     def _GetState(self):
-        command = self.StateReqStr()
+        command = self.OutputStateReqStr()
         yield self.ser.write(command)
         self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
@@ -268,11 +260,11 @@ class MarconiServer(SerialDeviceServer):
         '''String to set freq (in MHZ)'''
         return 'CFRQ:Value ' + str(freq) + 'MHZ' + '\n'
          
-    def StateReqStr(self):
+    def OutputStateReqStr(self):
         '''String to request on/off'''
         return 'OUTPUT?' + '\n'
 
-    def StateSetStr(self, state):
+    def OutputStateSetStr(self, state):
         '''String to set state on/off'''
         if state:
             return 'OUTPUT:ENABLE' + '\n'
@@ -287,9 +279,9 @@ class MarconiServer(SerialDeviceServer):
         '''String to set power (in dBm)'''
         return 'RFLV:Value ' +str(pwr) + ' DBM' + '\n'
         
-    def PowerUnitsSetStr(self, units='DBM'):
-        '''String to set power units (defaults to dBM)'''
-        return 'RFLV:UNITS ' + units
+    #def PowerUnitsSetStr(self, units='DBM'):
+        #'''String to set power units (defaults to dBM)'''
+        #return 'RFLV:UNITS ' + units
 
 
     # ===== PROLOGIX STR MESSAGES =====
