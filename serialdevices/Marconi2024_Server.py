@@ -86,8 +86,13 @@ class MarconiServer(SerialDeviceServer):
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
         d['power_units'] = None # power (will be) in dBm
+<<<<<<< HEAD
         d['power_range'] = None
         d['freq_range'] = None
+=======
+        d['power_range'] = [-100,30] # these are not quite right, but close
+        d['freq_range'] = [0, 1000]
+>>>>>>> 2d8992a2dbb7f084e5c0b02a0b8e97c87d6ecfbd
         self.marDict = d
     
     @inlineCallbacks
@@ -245,7 +250,7 @@ class MarconiServer(SerialDeviceServer):
 
     def checkFreq(self, freq):
         MIN, MAX = self.marDict['freq_range']
-        if no MIN <= freq <= MAX:
+        if not MIN <= freq <= MAX:
             raise Exception('Frequency out of allowed range')
 
 
@@ -284,7 +289,7 @@ class MarconiServer(SerialDeviceServer):
 
     def PowerSetStr(self,pwr):
         '''String to set power (in dBm)'''
-        return 'POW:AMPL ' +str(pwr) + 'DBM' + '\n'
+        return 'RFLV:Value ' +str(pwr) + ' DBM' + '\n'
         
     def PowerUnitsSetStr(self, units='DBM'):
         '''String to set power units (defaults to dBM)'''
