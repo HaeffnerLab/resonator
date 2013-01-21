@@ -99,7 +99,7 @@ class MarconiServer(SerialDeviceServer):
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
         self.marDict['power_units'] = 'DBM' # default
-        self.marDict['power_range'] = [-100, 30]
+        self.marDict['power_range'] = [-100, 13]
         self.marDict['freq_range'] = [0, 1000]
     
     #def initContext(self, c):
@@ -136,7 +136,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['power'] = level
             #notified = self.getOtherListeners(c)
             #self.onNewUpdate(('power',level),notified)
-        return self.marDict['power']
+        returnValue(self.marDict['power'])
     
     @setting(3, "Frequency", freq = 'v', returns='v')
     def Frequency(self, c, freq=None):
@@ -148,7 +148,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['freq'] = freq
             #notified = self.getOtherListeners(c)
             #self.onNewUpdate(('freq',freq),notified)
-        return self.marDict['freq']
+        returnValue(self.marDict['freq'])
 
     @setting(4, "Output_State", state= 'b', returns = "b")
     def Output_State(self, c, state=None):
@@ -159,7 +159,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['output_state'] = state
             #notified = self.getOtherListeners(c)
             #self.onStateUpdate(state,notified)
-        return self.marDict['output_state']    
+        returnValue(self.marDict['output_state'])    
     
     #@setting(8, "SetPowerUnits", units = 's', returns = '')
     #def SetPowerUnits(self, c=None, units='DBM'):
