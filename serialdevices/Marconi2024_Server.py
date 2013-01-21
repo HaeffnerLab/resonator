@@ -86,13 +86,13 @@ class MarconiServer(SerialDeviceServer):
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
         d['power_units'] = None # power (will be) in dBm
-        d['power_range'] = [-Inf, Inf]
-        d['freq_range'] = [-Inf, Inf]
+        d['power_range'] = None
+        d['freq_range'] = None
         self.marDict = d
     
     @inlineCallbacks
     def populateDict(self):
-        state = yield self._GetState() 
+        #state = yield self._GetState() 
         freq = yield self._GetFreq()
         power = yield self._GetPower()
         self.marDict['state'] = bool(state) 
@@ -217,12 +217,16 @@ class MarconiServer(SerialDeviceServer):
         returnValue(state)
     
     @inlineCallbacks
+    @ann
     def _GetFreq(self):
         command = self.FreqReqStr()
+        print "command is:", command
         yield self.ser.write(command)
         self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
+        print "msg is:", msg
         freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
+        print "freq is:", str(freq)
         returnValue(freq)
     
     @inlineCallbacks
