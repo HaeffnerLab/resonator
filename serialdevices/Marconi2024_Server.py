@@ -32,7 +32,6 @@ def ann(method):
     def wrapped(*args):
         print "Starting", method
         return method(*args)
-        print "Ending", method
     return wrapped
 
 
@@ -92,7 +91,7 @@ class MarconiServer(SerialDeviceServer):
     
     @inlineCallbacks
     def populateDict(self):
-        #state = yield self._GetState() 
+        state = yield self._GetState() 
         freq = yield self._GetFreq()
         power = yield self._GetPower()
         self.marDict['state'] = bool(state) 
@@ -204,12 +203,13 @@ class MarconiServer(SerialDeviceServer):
         yield self.ser.write(command)
     
     @inlineCallbacks
+    @ann
     def _GetState(self):
         command = self.StateReqStr()
         yield self.ser.write(command)
         self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
-        state_str = msg.split(':')[2]
+        state_str = 'ENABLED' # msg.split(':')[2]
         if state_str == 'ENABLED':
             state = True
         else:
@@ -225,17 +225,18 @@ class MarconiServer(SerialDeviceServer):
         self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
         print "msg is:", msg
-        freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
+        freq = 1 # float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
         print "freq is:", str(freq)
         returnValue(freq)
     
     @inlineCallbacks
+    @ann
     def _GetPower(self):
         command = self.PowerReqStr()
         yield self.ser.write(command)
         self.ForceRead() # expect a reply from instrument
         msg = yield self.ser.readline()
-        amp = float(msg.split(';')[2].split()[1])
+        amp = 1 # float(msg.split(';')[2].split()[1])
         returnValue(amp)
     
     def checkPower(self, level):
