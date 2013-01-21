@@ -73,10 +73,10 @@ class MarconiServer(SerialDeviceServer):
                 print 'Error opening serial connection'
                 print 'Check set up and restart serial server'
             else: raise
-        self.SetControllerMode(1) # prologix set to controller mode
+        #self.SetControllerMode(1) # prologix set to controller mode
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
         self.SetControllerWait(0) # turn off auto listen after talk, to stop line unterminated errors
-        #yield self.populateDict()
+        yield self.populateDict()
         self.listeners = set()
         print 'Finished initializing server'
     
@@ -86,13 +86,8 @@ class MarconiServer(SerialDeviceServer):
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
         d['power_units'] = None # power (will be) in dBm
-<<<<<<< HEAD
         d['power_range'] = None
         d['freq_range'] = None
-=======
-        d['power_range'] = [-100,30] # these are not quite right, but close
-        d['freq_range'] = [0, 1000]
->>>>>>> 2d8992a2dbb7f084e5c0b02a0b8e97c87d6ecfbd
         self.marDict = d
     
     @inlineCallbacks
@@ -103,9 +98,9 @@ class MarconiServer(SerialDeviceServer):
         self.marDict['state'] = bool(state) 
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
-        self.marDict['power_units'] = 'DBM' # because we set it, and default
-        self.marDict['power_range'] = [-Inf, Inf]
-        self.marDict['freq_range'] = [-Inf, Inf]
+        self.marDict['power_units'] = 'DBM' # default
+        self.marDict['power_range'] = [-100, 30]
+        self.marDict['freq_range'] = [0, 1000]
     
     #def initContext(self, c):
         #"""Initialize a new context object."""
