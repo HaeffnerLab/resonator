@@ -49,12 +49,11 @@ class MarconiServer(SerialDeviceServer):
     timeout = 1.0
     gpibaddr = 11
 
-    #onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
-    #onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
+    onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
+    onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
     
     @inlineCallbacks
     def initServer(self):
-        print 'Initializing server'
         self.createDict()
         if not self.regKey or not self.serNode: 
             raise SerialDeviceError('Must define regKey and serNode attributes')
@@ -72,14 +71,18 @@ class MarconiServer(SerialDeviceServer):
                 print 'Error opening serial connection'
                 print 'Check set up and restart serial server'
             else: raise
-        #self.SetControllerMode(1) # prologix set to controller mode
+
+        #self.SetControllerMode(1) # prologix set to controller mode, not necessary
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
         self.SetControllerWait(0)   # turn off auto listen after talk, 
                                     # to stop line unterminated errors
+        self.SetEOIState(1)         # enable EOI assertion at last written character
+                                    # frees the device to respond to the query
         yield self.populateDict()
+        if True:
+            print(self.marDict)
         self.listeners = set()
-        print 'Finished initializing server'
-    
+
     def createDict(self):
         d = {}
         d['state'] = None # state is boolean
@@ -95,24 +98,24 @@ class MarconiServer(SerialDeviceServer):
         state = yield self._GetState() 
         freq = yield self._GetFreq()
         power = yield self._GetPower()
-        self.marDict['state'] = bool(state) 
-        self.marDict['power'] = float(power)
-        self.marDict['freq'] = float(freq)
+        self.marDict['state'] = state #bool(state) 
+        self.marDict['power'] = power #float(power)
+        self.marDict['freq'] = freq #float(freq)
         self.marDict['power_units'] = 'DBM' # default
         self.marDict['power_range'] = [-100, 13]
         self.marDict['freq_range'] = [0, 1000]
     
-    #def initContext(self, c):
-        #"""Initialize a new context object."""
-        #self.listeners.add(c.ID)
+    def initContext(self, c):
+        """Initialize a new context object."""
+        self.listeners.add(c.ID)
     
-    #def expireContext(self, c):
-        #self.listeners.remove(c.ID)
+    def expireContext(self, c):
+        self.listeners.remove(c.ID)
         
-    #def getOtherListeners(self,c):
-        #notified = self.listeners.copy()
-        #notified.remove(c.ID)
-        #return notified
+    def getOtherListeners(self,c):
+        notified = self.listeners.copy()
+        notified.remove(c.ID)
+        return notified
     
 
     # ===== SETTINGS (available to user) ======
@@ -122,7 +125,7 @@ class MarconiServer(SerialDeviceServer):
         '''Ask instrument to identify itself'''
         command = self.IdenStr()
         yield self.ser.write(command)
-        self.ForceRead() # expect a reply from instrument
+        yield self.ForceRead() # expect a reply from instrument
         answer = yield self.ser.readline()
         returnValue(answer[:-1])
 
@@ -134,8 +137,8 @@ class MarconiServer(SerialDeviceServer):
             command = self.PowerSetStr(level)
             yield self.ser.write(command)
             self.marDict['power'] = level
-            #notified = self.getOtherListeners(c)
-            #self.onNewUpdate(('power',level),notified)
+            notified = self.getOtherListeners(c)
+            self.onNewUpdate(('power',level),notified)
         returnValue(self.marDict['power'])
     
     @setting(3, "Frequency", freq = 'v', returns='v')
@@ -146,8 +149,8 @@ class MarconiServer(SerialDeviceServer):
             command = self.FreqSetStr(freq)
             yield self.ser.write(command)
             self.marDict['freq'] = freq
-            #notified = self.getOtherListeners(c)
-            #self.onNewUpdate(('freq',freq),notified)
+            notified = self.getOtherListeners(c)
+            self.onNewUpdate(('freq',freq),notified)
         returnValue(self.marDict['freq'])
 
     @setting(4, "Output_State", state= 'b', returns = "b")
@@ -157,7 +160,7 @@ class MarconiServer(SerialDeviceServer):
             command = self.OutputStateSetStr(state)
             yield self.ser.write(command)
             self.marDict['output_state'] = state
-            #notified = self.getOtherListeners(c)
+            notified = self.getOtherListeners(c)
             #self.onStateUpdate(state,notified)
         returnValue(self.marDict['output_state'])    
     
@@ -167,8 +170,8 @@ class MarconiServer(SerialDeviceServer):
         #command = self.PowerUnitsSetStr(units)
         #yield self.ser.write(command)
         #self.marDict['power_units'] = units
-        ##notified = self.getOtherListeners(c)
-        ##self.onNewUpdate(('power_units',units),notified)
+        #notified = self.getOtherListeners(c)
+        #self.onNewUpdate(('power_units',units),notified)
 
     @setting(10, "Clear", returns = '')
     def Clear(self, c=None):
@@ -190,6 +193,11 @@ class MarconiServer(SerialDeviceServer):
         yield self.ser.write(command)
 
     @inlineCallbacks
+    def SetEOIState(self, state):
+        command = self.EOIStateStr(state)
+        yield self.ser.write(command)
+
+    @inlineCallbacks
     def ForceRead(self):
         command = self.ForceReadStr()
         yield self.ser.write(command)
@@ -199,37 +207,34 @@ class MarconiServer(SerialDeviceServer):
     def _GetState(self):
         command = self.OutputStateReqStr()
         yield self.ser.write(command)
-        self.ForceRead() # expect a reply from instrument
-        msg = yield self.ser.readline()
-        state_str = 'ENABLED' # msg.split(':')[2]
+        yield self.ForceRead() # expect a reply from instrument
+        response = yield self.ser.readline()
+        state_str = 'ENABLED' # response.split(':')[2]
         if state_str == 'ENABLED':
             state = True
         else:
             state = False
-        returnValue(state)
+        returnValue(response)
     
     @inlineCallbacks
     @ann
     def _GetFreq(self):
         command = self.FreqReqStr()
-        print "command is:", command
         yield self.ser.write(command)
-        self.ForceRead() # expect a reply from instrument
-        msg = yield self.ser.readline()
-        print "msg is:", msg
-        freq = 1 # float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
-        print "freq is:", str(freq)
-        returnValue(freq)
+        yield self.ForceRead() # expect a reply from instrument
+        response = yield self.ser.readline()
+        freq = 1 # float(response.split(';')[0].split()[1]) / 10**6 # freq is in MHz
+        returnValue(response)
     
     @inlineCallbacks
     @ann
     def _GetPower(self):
         command = self.PowerReqStr()
         yield self.ser.write(command)
-        self.ForceRead() # expect a reply from instrument
-        msg = yield self.ser.readline()
-        amp = 1 # float(msg.split(';')[2].split()[1])
-        returnValue(amp)
+        yield self.ForceRead() # expect a reply from instrument
+        response = yield self.ser.readline()
+        amp = 1 # float(response.split(';')[2].split()[1])
+        returnValue(response)
     
     def checkPower(self, level):
         MIN, MAX = self.marDict['power_range']
@@ -293,6 +298,11 @@ class MarconiServer(SerialDeviceServer):
     def WaitRespStr(self, wait):
         '''String for prologix to request a response from instrument'''
         return '++auto ' + str(wait) + '\n'
+
+    def EOIStateStr(self, state):
+        '''String to enable/disable EOI assertion with last character.
+        State = 1 for enable, 0 for disable.'''
+        return '++eoi ' + str(state) + '\n'
     
     def SetAddrStr(self, addr):
         '''String to set addressing of prologix'''
@@ -304,6 +314,5 @@ class MarconiServer(SerialDeviceServer):
 
 
 if __name__ == "__main__":
-    server = MarconiServer()
     from labrad import util
-    util.runServer(server)
+    util.runServer(MarconiServer())
