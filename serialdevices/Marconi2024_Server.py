@@ -98,9 +98,10 @@ class MarconiServer(SerialDeviceServer):
         state = yield self._GetState() 
         freq = yield self._GetFreq()
         power = yield self._GetPower()
-        self.marDict['state'] = state #bool(state) 
-        self.marDict['power'] = power #float(power)
-        self.marDict['freq'] = freq #float(freq)
+        State = self.parseState(state)
+        self.marDict['state'] = bool(State) 
+        self.marDict['power'] = float(power)
+        self.marDict['freq'] = float(freq)
         self.marDict['power_units'] = 'DBM' # default
         self.marDict['power_range'] = [-100, 13]
         self.marDict['freq_range'] = [0, 1000]
@@ -161,7 +162,7 @@ class MarconiServer(SerialDeviceServer):
             yield self.ser.write(command)
             self.marDict['output_state'] = state
             notified = self.getOtherListeners(c)
-            #self.onStateUpdate(state,notified)
+            self.onStateUpdate(state,notified)
         returnValue(self.marDict['output_state'])    
     
     #@setting(8, "SetPowerUnits", units = 's', returns = '')
@@ -203,21 +204,26 @@ class MarconiServer(SerialDeviceServer):
         yield self.ser.write(command)
     
     @inlineCallbacks
-    @ann
     def _GetState(self):
         command = self.OutputStateReqStr()
         yield self.ser.write(command)
         yield self.ForceRead() # expect a reply from instrument
+        print 'HERE'
         response = yield self.ser.readline()
-        state_str = 'ENABLED' # response.split(':')[2]
-        if state_str == 'ENABLED':
-            state = True
-        else:
-            state = False
+        #print "response is: ", str(response)
+        #state_str = str(response).split(':')[2]
+        #if state_str == 'ENABLE':
+        #    state = True
+        #else:
+        #    state = False
         returnValue(response)
     
+    def parseState(self, msg):
+        if msg == '':
+            raise Exception("State response is ''.")
+        return msg.split(":")[1]
+
     @inlineCallbacks
-    @ann
     def _GetFreq(self):
         command = self.FreqReqStr()
         yield self.ser.write(command)
@@ -227,7 +233,6 @@ class MarconiServer(SerialDeviceServer):
         returnValue(response)
     
     @inlineCallbacks
-    @ann
     def _GetPower(self):
         command = self.PowerReqStr()
         yield self.ser.write(command)
