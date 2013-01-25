@@ -16,7 +16,6 @@ timeout = 20
 
 ### END NODE INFO
 '''
-
 from labrad.server import LabradServer, setting, Signal, inlineCallbacks 
 from twisted.internet import reactor
 from twisted.internet.defer import returnValue
@@ -25,6 +24,7 @@ from scipy.interpolate import UnivariateSpline as UniSpline
 from time import *
 from numpy import *
 import sys
+sys.path.append('/home/resonator/labrad')
 from resonator.scripts.PulseSequences.advanceDACs import ADV_DAC
 
 SERVERNAME = 'CCTDAC Pulser v2'
