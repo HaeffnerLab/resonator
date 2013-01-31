@@ -82,6 +82,7 @@ class MarconiServer(SerialDeviceServer):
         ##    yield self.ForceRead()        # the buffer does not work!
         ##    yield self.ser.readline()
         yield self.populateDict()
+        self._Reset()
         self.listeners = set()
 
     def createDict(self):
@@ -168,15 +169,7 @@ class MarconiServer(SerialDeviceServer):
             self.onStateUpdate(state,notified)
         returnValue(self.marDict['output_state'])    
 
-    @setting(1000, "GetState", returns = 's')
-    def GetState(self, c):
-        command = self.OutputStateReqStr()
-        yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
-        response = yield self.ser.readline()
-        returnValue(response)
-
-    #@setting(8, "SetPowerUnits", units = 's', returns = '')
+    #@setting(5, "SetPowerUnits", units = 's', returns = '')
     #def SetPowerUnits(self, c=None, units='DBM'):
         #'''Sets power units, default is dBm'''
         #command = self.PowerUnitsSetStr(units)
@@ -186,13 +179,52 @@ class MarconiServer(SerialDeviceServer):
         #self.onNewUpdate(('power_units',units),notified)
 
     @setting(10, "Clear", returns = '')
-    def Clear(self, c=None):
+    def Clear(self, c):
         '''Clear the event register and error queue'''
         command = self.ClearStatusStr()
         yield self.ser.write(command)
 
+    
+    @setting(11, "GetStatusByte", returns = 's')
+    def GetStatusByte(self, c):
+        '''Return the status byte. Especially useful is the error queue bit
+        which is 1 if there are errors in the error event queue and 0
+        otherwise. This can be reset with Clear().'''
+        command = self.StatusByteReqStr()
+        yield self.ser.write(command)
+        yield self.ForceRead()
+        response = yield self.ser.readline()
+        try:
+            bits = bin(int(response))[2:]
+            statusbyte = '0'*(8-len(bits)) + bits
+        except ValueError:
+            statusbyte = 'buffernotcleared'
+        returnValue(statusbyte)
+    
+    @setting(12, "Reset", returns = '')
+    def Reset(self, c):
+        '''Resets to factory settings'''
+        self._Reset()
+
+    @setting(1000, "GetState", returns = 's')
+    def GetState(self, c):
+        command = self.OutputStateReqStr()
+        yield self.ser.write(command)
+        yield self.ForceRead() # expect a reply from instrument
+        response = yield self.ser.readline()
+        returnValue(response)
+
 
     # ===== HIDDEN METHODS =====
+
+    @inlineCallbacks
+    def _Reset(self):
+        command = self.ResetStr()
+        yield self.ser.write(command)
+        yield self.ForceRead()
+        self.marDict['state'] = True
+        self.marDict['power'] = -137
+        self.marDict['freq'] = 2400
 
     @inlineCallbacks
     def SetControllerMode(self, mode):
@@ -284,8 +316,16 @@ class MarconiServer(SerialDeviceServer):
         return '*IDN?' + '\n'
  
     def ClearStatusStr(self):
-        '''String to clear the envent register and error queue'''
+        '''String to clear the event register and error queue'''
         return '*CLS' + '\n'
+
+    def StatusByteReqStr(self):
+        '''String to request the status byte'''
+        return '*STB?' + '\n'
+
+    def ResetStr(self):
+        '''String to reset to factory settings'''
+        return '*RST' + '\n'
 
     def FreqReqStr(self):
         '''String to request current frequency'''
