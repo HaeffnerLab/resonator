@@ -78,9 +78,7 @@ class MarconiServer(SerialDeviceServer):
                                     # to stop line unterminated errors
         self.SetEOIState(1)         # enable EOI assertion at last written character
                                     # frees the device to respond to the query
-        yield self.populateDict()
-        if True:
-            print(self.marDict)
+        #yield self.populateDict()
         self.listeners = set()
 
     def createDict(self):
@@ -89,17 +87,19 @@ class MarconiServer(SerialDeviceServer):
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
         d['power_units'] = None # power (will be) in dBm
-        d['power_range'] = None
-        d['freq_range'] = None
+        d['power_range'] = [-100, 13] #None
+        d['freq_range'] = [0, 1000] #None
         self.marDict = d
     
     @inlineCallbacks
     def populateDict(self):
-        state = yield self._GetState() 
-        freq = yield self._GetFreq()
-        power = yield self._GetPower()
-        State = self.parseState(state)
-        self.marDict['state'] = bool(State) 
+        stateStr = yield self._GetState() 
+        freqStr = yield self._GetFreq()
+        powerStr = yield self._GetPower()
+        state = self.parseState(stateStr)
+        freq = self.parseFreq(freqStr)
+        power = self.parsePower(powerStr)
+        self.marDict['state'] = bool(state) 
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
         self.marDict['power_units'] = 'DBM' # default
@@ -154,7 +154,7 @@ class MarconiServer(SerialDeviceServer):
             self.onNewUpdate(('freq',freq),notified)
         returnValue(self.marDict['freq'])
 
-    @setting(4, "Output_State", state= 'b', returns = "b")
+    @setting(4, "Output_State", state= 'b', returns = 'b')
     def Output_State(self, c, state=None):
         '''Get or set the on/off state of the CW signal'''
         if state is not None:
@@ -164,7 +164,15 @@ class MarconiServer(SerialDeviceServer):
             notified = self.getOtherListeners(c)
             self.onStateUpdate(state,notified)
         returnValue(self.marDict['output_state'])    
-    
+
+    @setting(1000, "GetState", returns = 's')
+    def GetState(self, c):
+        command = self.OutputStateReqStr()
+        yield self.ser.write(command)
+        yield self.ForceRead() # expect a reply from instrument
+        response = yield self.ser.readline()
+        returnValue(response)
+
     #@setting(8, "SetPowerUnits", units = 's', returns = '')
     #def SetPowerUnits(self, c=None, units='DBM'):
         #'''Sets power units, default is dBm'''
@@ -208,20 +216,19 @@ class MarconiServer(SerialDeviceServer):
         command = self.OutputStateReqStr()
         yield self.ser.write(command)
         yield self.ForceRead() # expect a reply from instrument
-        print 'HERE'
         response = yield self.ser.readline()
-        #print "response is: ", str(response)
-        #state_str = str(response).split(':')[2]
-        #if state_str == 'ENABLE':
-        #    state = True
-        #else:
-        #    state = False
         returnValue(response)
     
+    @ann
     def parseState(self, msg):
         if msg == '':
-            raise Exception("State response is ''.")
-        return msg.split(":")[1]
+            raise Exception("State response is ''")
+        state_str =  msg.split(':')[1]
+        if state_str == 'ENABLE':
+            state = True
+        else:
+            state = False
+        return state
 
     @inlineCallbacks
     def _GetFreq(self):
@@ -229,8 +236,13 @@ class MarconiServer(SerialDeviceServer):
         yield self.ser.write(command)
         yield self.ForceRead() # expect a reply from instrument
         response = yield self.ser.readline()
-        freq = 1 # float(response.split(';')[0].split()[1]) / 10**6 # freq is in MHz
         returnValue(response)
+    
+    @ann
+    def parseFreq(self, msg):
+        if msg == '':
+            raise Exception("Frequency response is ''")
+        return float(response.split(';')[0].split()[1]) / 10**6 # freq is in MHz
     
     @inlineCallbacks
     def _GetPower(self):
@@ -238,9 +250,14 @@ class MarconiServer(SerialDeviceServer):
         yield self.ser.write(command)
         yield self.ForceRead() # expect a reply from instrument
         response = yield self.ser.readline()
-        amp = 1 # float(response.split(';')[2].split()[1])
         returnValue(response)
     
+    @ann
+    def parsePower(self, msg):
+        if msg == '':
+            raise Exception("Frequency response is ''")
+        return float(msg.split(';')[2].split()[1])
+
     def checkPower(self, level):
         MIN, MAX = self.marDict['power_range']
         if not MIN <= level <= MAX:
@@ -291,7 +308,7 @@ class MarconiServer(SerialDeviceServer):
         
     #def PowerUnitsSetStr(self, units='DBM'):
         #'''String to set power units (defaults to dBM)'''
-        #return 'RFLV:UNITS ' + units
+        #return 'RFLV:UNITS ' + '\n' + units
 
 
     # ===== PROLOGIX STR MESSAGES =====
@@ -307,11 +324,11 @@ class MarconiServer(SerialDeviceServer):
     def EOIStateStr(self, state):
         '''String to enable/disable EOI assertion with last character.
         State = 1 for enable, 0 for disable.'''
-        return '++eoi ' + str(state) + '\n'
+        return '++eoi ' +  str(state) + '\n'
     
     def SetAddrStr(self, addr):
         '''String to set addressing of prologix'''
-        return '++addr ' + str(addr) + '\n'
+        return '++addr ' +  str(addr) + '\n'
 
     def SetModeStr(self, mode):
         '''String to set prologix to CONTROLLER (1), or DEVICE (0) mode'''
