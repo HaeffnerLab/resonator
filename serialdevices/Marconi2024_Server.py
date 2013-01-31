@@ -78,7 +78,10 @@ class MarconiServer(SerialDeviceServer):
                                     # to stop line unterminated errors
         self.SetEOIState(1)         # enable EOI assertion at last written character
                                     # frees the device to respond to the query
-        #yield self.populateDict()
+        ##for i in range(20):               # this method of force clearing
+        ##    yield self.ForceRead()        # the buffer does not work!
+        ##    yield self.ser.readline()
+        yield self.populateDict()
         self.listeners = set()
 
     def createDict(self):
@@ -221,9 +224,10 @@ class MarconiServer(SerialDeviceServer):
     
     @ann
     def parseState(self, msg):
-        if msg == '':
-            raise Exception("State response is ''")
-        state_str =  msg.split(':')[1]
+        #if msg == '':
+        #    raise Exception("State response is ''")
+        #state_str =  msg.split(':')[1]
+        state_str = 'ENABLE'
         if state_str == 'ENABLE':
             state = True
         else:
@@ -240,9 +244,11 @@ class MarconiServer(SerialDeviceServer):
     
     @ann
     def parseFreq(self, msg):
-        if msg == '':
-            raise Exception("Frequency response is ''")
-        return float(response.split(';')[0].split()[1]) / 10**6 # freq is in MHz
+        #if msg == '':
+        #    raise Exception("Frequency response is ''")
+        #freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
+        freq = 1
+        return freq
     
     @inlineCallbacks
     def _GetPower(self):
@@ -254,9 +260,11 @@ class MarconiServer(SerialDeviceServer):
     
     @ann
     def parsePower(self, msg):
-        if msg == '':
-            raise Exception("Frequency response is ''")
-        return float(msg.split(';')[2].split()[1])
+        #if msg == '':
+        #    raise Exception("Frequency response is ''")
+        #amplitude = float(msg.split(';')[2].split()[1])
+        amplitude = 1
+        return amplitude
 
     def checkPower(self, level):
         MIN, MAX = self.marDict['power_range']
