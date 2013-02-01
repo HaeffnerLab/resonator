@@ -1,6 +1,10 @@
 # Serial version
 # Requires serial_server_v1_2.py to be running in labrad
 # Simply inherits from serialdeviceserver
+#
+# onNewUpdate and onStateUpdate are for "notifying" when settings change
+# this is because the OUTPUT:ENABLE/DISABLE capability allows updates
+# to be grouped together to be changed all at once
 
 #"""
 #### BEGIN NODE INFO
@@ -49,6 +53,9 @@ class MarconiServer(SerialDeviceServer):
     timeout = 1.0
     gpibaddr = 11
 
+    frequency_range = (0, 2400)     # (low, high) in MHZ
+    power_range = (-137, 15)        # (low, high) in DBM
+
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
     onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
     
@@ -91,8 +98,16 @@ class MarconiServer(SerialDeviceServer):
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
         #d['power_units'] = None # power (will be) in dBm
-        d['power_range'] = [-100, 13] #None
-        d['freq_range'] = [0, 1000] #None
+        d['power_range'] = power_range #None
+        d['freq_range'] = freq_range #None
+        d['carrier_mode'] = None # FIXED or SWEPT
+        d['sweep_range'] = None # (start, stop) in MHZ
+        d['sweep_step'] = None # MHZ
+        d['sweep_time'] = None # Seconds
+        d['sweep_mode'] = None # Single shot sweep (SNGL) or continuous (CONT)
+        d['sweep_shape'] = None # Linear (LIN) or logarithmic (LOG)
+        d['trig_mode'] = None # See SweepTrigModeSetStr
+        d['currently_sweeping'] = None # True if currently sweeping
         self.marDict = d
     
     @inlineCallbacks
@@ -103,12 +118,13 @@ class MarconiServer(SerialDeviceServer):
         state = self.parseState(stateStr)
         freq = self.parseFreq(freqStr)
         power = self.parsePower(powerStr)
+        
         self.marDict['carrier_state'] = bool(state) 
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
         #self.marDict['power_units'] = 'DBM' # default
-        self.marDict['power_range'] = [-100, 13]
-        self.marDict['freq_range'] = [0, 1000]
+        #self.marDict['power_range'] = [-100, 13] already set
+        #self.marDict['freq_range'] = [0, 1000] already set
     
     def initContext(self, c):
         """Initialize a new context object."""
@@ -117,7 +133,7 @@ class MarconiServer(SerialDeviceServer):
     def expireContext(self, c):
         self.listeners.remove(c.ID)
         
-    def getOtherListeners(self,c):
+    def getOtherListeners(self, c):
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified
@@ -184,6 +200,16 @@ class MarconiServer(SerialDeviceServer):
     # ===== SWEEP SETTINGS  ======
     # ++++++++++++++++++++++++++++
 
+    @setting(21, "CarrierMode", mode = 's', returns = 's') # or 's'
+    def CarrierMode(self, c, mode=None):
+        '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
+        if mode is not None:
+            command = self.CarrierModeSetStr(self, mode)
+            yield self.ser.write(command)
+            yield self.ForceRead()
+            self.marDict['carrier_mode'] = mode
+        returnValue(self.marDict['carrier_mode'])
+            
 
 
     # +++++++++++++++++++++++++
@@ -230,6 +256,8 @@ class MarconiServer(SerialDeviceServer):
     # ===== HIDDEN METHODS =====
     # ++++++++++++++++++++++++++
 
+    # ===== META =====
+
     @inlineCallbacks
     def _Reset(self):
         command = self.ResetStr()
@@ -238,6 +266,8 @@ class MarconiServer(SerialDeviceServer):
         self.marDict['carrier_state'] = True
         self.marDict['power'] = -137
         self.marDict['freq'] = 2400
+
+    # ===== PROLOGIX =====
 
     @inlineCallbacks
     def SetControllerMode(self, mode):
@@ -259,6 +289,8 @@ class MarconiServer(SerialDeviceServer):
         command = self.ForceReadStr()
         yield self.ser.write(command)
     
+    # ===== BASIC =====
+
     @inlineCallbacks
     def _GetCarrierState(self):
         command = self.CarrierStateReqStr()
@@ -321,6 +353,10 @@ class MarconiServer(SerialDeviceServer):
         if not MIN <= freq <= MAX:
             raise Exception('Frequency out of allowed range')
 
+    # ===== SWEEP =====
+
+
+
 
     # ++++++++++++++++++++++++++++++++
     # ===== MARCONI STR MESSAGES =====
@@ -381,6 +417,7 @@ class MarconiServer(SerialDeviceServer):
     
     def CarrierModeSetStr(self, mode):
         '''String to set carrier to FIXED or SWEPT mode'''
+        mode = mode.upper()
         if not mode in ('FIXED', 'SWEPT'):
             raise ValueError("Carrier mode is 'FIXED' or 'SWEPT'")
         return 'CFRQ:MODE ' + mode + '\n'
@@ -403,12 +440,14 @@ class MarconiServer(SerialDeviceServer):
 
     def SweepModeSetStr(self, mode):
         '''String to set sweep mode to SNGL shot or CONT sweep'''
+        mode = mode.upper()
         if not mode in ('SNGL', 'CONT'):
             raise ValueError("Sweep mode is 'SNGL' or 'CONT'")
         return 'SWEEP:MODE ' + mode + '\n'
 
     def SweepShapeSetStr(self, shape):
         '''String to set shape of sweep to linear (LIN) or logarithmic (LOG)'''
+        shape = shape.upper()
         if not shape in ('LIN', 'LOG'):
             raise ValueError("Sweep shape is 'LIN' or 'LOG'")
         return 'SWEEP:TYPE ' + shape + '\n'
@@ -416,6 +455,7 @@ class MarconiServer(SerialDeviceServer):
     def SweepTrigModeSetStr(self, trig_mode):
         '''String to set trigger mode to OFF, START, STARTSTOP, or STEP
         as described in the Marconi Manual'''
+        trig_mode = trig_mode.upper()
         if not trig_mode in ('OFF', 'START', 'STARTSTOP', 'STEP'):
             raise ValueError("Sweep trigger mode is "\
                             "'OFF', 'START', 'STARTSTOP', or 'STEP'")
@@ -437,10 +477,7 @@ class MarconiServer(SerialDeviceServer):
         '''String to reset sweeping point to start'''
         return 'SWEEP:RESET' + '\n'
 
-
-    # +++++++++++++++++++++++++++++++++
-    # ===== PROLOGIX STR MESSAGES =====
-    # +++++++++++++++++++++++++++++++++
+    # ===== PROLOGIX =====
 
     def ForceReadStr(self):
         '''String to force progolix to read device response'''
