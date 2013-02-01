@@ -241,6 +241,7 @@ class MarconiServer(SerialDeviceServer):
 
     @setting(23, "SweepStep", step = 'v', returns = 'v')
     def SweepStep(self, c, step=None):
+        '''Get or set the sweep step (MHZ)'''
         self.checkCarrierMode()
         if step is not None:
             command = self.SweepStepSetStr(step)
@@ -250,6 +251,7 @@ class MarconiServer(SerialDeviceServer):
 
     @setting(24, "SweepTime", time = 'v', returns = 'v')
     def SweepTime(self, c, time=None):
+        '''Get or set the time to complete one sweep step (Seconds)'''
         self.checkCarrierMode()
         if time is not None:
             command = self.SweepTimeSetStr(time)
@@ -259,6 +261,7 @@ class MarconiServer(SerialDeviceServer):
 
     @setting(25, "SweepMode", mode = 's', returns = 's')
     def SweepMode(self, c, mode=None):
+        '''Get or set the sweep mode to single shot (SNGL) or continuous (CONT)'''
         self.checkCarrierMode()
         if mode is not None:
             command = self.SweepModeSetStr(mode)
@@ -268,6 +271,7 @@ class MarconiServer(SerialDeviceServer):
 
     @setting(26, "SweepShape", shape = 's', returns = 's')
     def SweepShape(self, c, shape=None):
+        '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
         self.checkCarrierMode()
         if shape is not None:
             command = self.SweepShapeSetStr(shape)
@@ -277,6 +281,8 @@ class MarconiServer(SerialDeviceServer):
 
     @setting(27, "SweepTrigMode", tig_mode = 's', returns = 's')
     def SweepTrigMode(self, c, trig_mode=None):
+        '''Get or set the external trigger mode.
+        Options are: OFF, START, STARTSTOP, STEP'''
         self.checkCarrierMode()
         if trig_mode is not None:
             command = self.SweepTrigModeSetStr(tig_mode)
@@ -286,24 +292,28 @@ class MarconiServer(SerialDeviceServer):
 
     @setting(28, "SweepBegin", returns = '')
     def SweepBegin(self, c):
+        '''Start a sweep'''
         self.checkCarrierMode()
         command = self.SweepBeginStr()
         yield self.ser.write(command)
 
     @setting(29, "SweepPause", returns = '')
     def SweepPause(self, c):
+        '''Pause the current sweep'''
         self.checkCarrierMode()
         command = self.SweepPauseStr()
         yield self.ser.write(command)
 
     @setting(30, "SweepContinue", returns = '')
     def SweepContinue(self, c):
+        '''Continue the currently paused sweep'''
         self.checkCarrierMode()
         command = self.SweepContinueStr()
         yield self.ser.write(command)
 
     @setting(31, "SweepReset", returns = '')
     def SweepReset(self, c):
+        '''Reset the current sweep to the start frequency'''
         self.checkCarrierMode()
         command = self.SweepResetStr()
         yield self.ser.write(command)
