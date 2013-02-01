@@ -1,6 +1,10 @@
 # Serial version
 # Requires serial_server_v1_2.py to be running in labrad
 # Simply inherits from serialdeviceserver
+#
+# onNewUpdate and onStateUpdate are for "notifying" when settings change
+# this is because the OUTPUT:ENABLE/DISABLE capability allows updates
+# to be grouped together to be changed all at once
 
 #"""
 #### BEGIN NODE INFO
@@ -49,6 +53,9 @@ class MarconiServer(SerialDeviceServer):
     timeout = 1.0
     gpibaddr = 11
 
+    frequency_range = (0, 2400)     # (low, high) in MHZ
+    power_range = (-137, 15)        # (low, high) in DBM
+
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
     onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
     
@@ -87,12 +94,20 @@ class MarconiServer(SerialDeviceServer):
 
     def createDict(self):
         d = {}
-        d['state'] = None # state is boolean
+        d['carrier_state'] = None # state is boolean
         d['freq'] = None # frequency in MHz
         d['power'] = None # power in dBm
-        d['power_units'] = None # power (will be) in dBm
-        d['power_range'] = [-100, 13] #None
-        d['freq_range'] = [0, 1000] #None
+        #d['power_units'] = None # power (will be) in dBm
+        d['power_range'] = power_range #None
+        d['freq_range'] = freq_range #None
+        d['carrier_mode'] = None # FIXED or SWEPT
+        d['sweep_range'] = None # (start, stop) in MHZ
+        d['sweep_step'] = None # MHZ
+        d['sweep_time'] = None # Seconds
+        d['sweep_mode'] = None # Single shot sweep (SNGL) or continuous (CONT)
+        d['sweep_shape'] = None # Linear (LIN) or logarithmic (LOG)
+        d['trig_mode'] = None # See SweepTrigModeSetStr
+        d['currently_sweeping'] = None # True if currently sweeping
         self.marDict = d
     
     @inlineCallbacks
@@ -103,12 +118,13 @@ class MarconiServer(SerialDeviceServer):
         state = self.parseState(stateStr)
         freq = self.parseFreq(freqStr)
         power = self.parsePower(powerStr)
-        self.marDict['state'] = bool(state) 
+        
+        self.marDict['carrier_state'] = bool(state) 
         self.marDict['power'] = float(power)
         self.marDict['freq'] = float(freq)
-        self.marDict['power_units'] = 'DBM' # default
-        self.marDict['power_range'] = [-100, 13]
-        self.marDict['freq_range'] = [0, 1000]
+        #self.marDict['power_units'] = 'DBM' # default
+        #self.marDict['power_range'] = [-100, 13] already set
+        #self.marDict['freq_range'] = [0, 1000] already set
     
     def initContext(self, c):
         """Initialize a new context object."""
@@ -117,15 +133,17 @@ class MarconiServer(SerialDeviceServer):
     def expireContext(self, c):
         self.listeners.remove(c.ID)
         
-    def getOtherListeners(self,c):
+    def getOtherListeners(self, c):
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified
     
 
-    # ===== SETTINGS (available to user) ======
+    # +++++++++++++++++++++++++++
+    # ===== BASIC SETTINGS ======
+    # +++++++++++++++++++++++++++
 
-    @setting(1, "Identify", returns='s')
+    @setting(10, "Identify", returns = 's')
     def Identify(self, c):
         '''Ask instrument to identify itself'''
         command = self.IdenStr()
@@ -134,7 +152,7 @@ class MarconiServer(SerialDeviceServer):
         answer = yield self.ser.readline()
         returnValue(answer[:-1])
 
-    @setting(2, "Amplitude", level = 'v',returns = "v")
+    @setting(11, "Amplitude", level = 'v', returns = "v")
     def Amplitude(self, c, level=None):
         '''Sets power level, enter power in dBm'''
         if level is not None:
@@ -146,7 +164,7 @@ class MarconiServer(SerialDeviceServer):
             self.onNewUpdate(('power',level),notified)
         returnValue(self.marDict['power'])
     
-    @setting(3, "Frequency", freq = 'v', returns='v')
+    @setting(12, "Frequency", freq = 'v', returns='v')
     def Frequency(self, c, freq=None):
         '''Get or set the CW frequency (MHz)'''
         if freq is not None:
@@ -158,38 +176,58 @@ class MarconiServer(SerialDeviceServer):
             self.onNewUpdate(('freq',freq),notified)
         returnValue(self.marDict['freq'])
 
-    @setting(4, "Output_State", state= 'b', returns = 'b')
-    def Output_State(self, c, state=None):
+    @setting(13, "CarrierState", state = 'b', returns = 'b')
+    def CarrierState(self, c, state=None):
         '''Get or set the on/off state of the CW signal'''
         if state is not None:
-            command = self.OutputStateSetStr(state)
+            command = self.CarrierStateSetStr(state)
             yield self.ser.write(command)
-            self.marDict['output_state'] = state
+            self.marDict['carrier_state'] = state
             notified = self.getOtherListeners(c)
             self.onStateUpdate(state,notified)
-        returnValue(self.marDict['output_state'])    
+        returnValue(self.marDict['carrier_state'])    
 
-    #@setting(5, "SetPowerUnits", units = 's', returns = '')
-    #def SetPowerUnits(self, c=None, units='DBM'):
-        #'''Sets power units, default is dBm'''
-        #command = self.PowerUnitsSetStr(units)
-        #yield self.ser.write(command)
-        #self.marDict['power_units'] = units
-        #notified = self.getOtherListeners(c)
-        #self.onNewUpdate(('power_units',units),notified)
+    #@setting(14, "SetPowerUnits", units = 's', returns = '')
+        #def SetPowerUnits(self, c=None, units='DBM'):
+            #'''Sets power units, default is dBm'''
+            #command = self.PowerUnitsSetStr(units)
+            #yield self.ser.write(command)
+            #self.marDict['power_units'] = units
+            #notified = self.getOtherListeners(c)
+            #self.onNewUpdate(('power_units',units),notified)
 
-    @setting(10, "Clear", returns = '')
+    # ++++++++++++++++++++++++++++
+    # ===== SWEEP SETTINGS  ======
+    # ++++++++++++++++++++++++++++
+
+    @setting(21, "CarrierMode", mode = 's', returns = 's') # or 's'
+    def CarrierMode(self, c, mode=None):
+        '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
+        if mode is not None:
+            command = self.CarrierModeSetStr(self, mode)
+            yield self.ser.write(command)
+            yield self.ForceRead()
+            self.marDict['carrier_mode'] = mode
+        returnValue(self.marDict['carrier_mode'])
+            
+
+
+    # +++++++++++++++++++++++++
+    # ===== META SETTINGS =====
+    # +++++++++++++++++++++++++
+
+    @setting(100, "Clear", returns = '')
     def Clear(self, c):
         '''Clear the event register and error queue'''
         command = self.ClearStatusStr()
         yield self.ser.write(command)
 
     
-    @setting(11, "GetStatusByte", returns = 's')
+    @setting(101, "GetStatusByte", returns = 's')
     def GetStatusByte(self, c):
-        '''Return the status byte. Especially useful is the error queue bit
-        which is 1 if there are errors in the error event queue and 0
-        otherwise. This can be reset with Clear().'''
+        '''Return the status byte. Especially useful is the error queue bit (7)
+        which is 1 if there are errors in the error event queue and 0 otherwise.
+        This can be reset with Clear().'''
         command = self.StatusByteReqStr()
         yield self.ser.write(command)
         yield self.ForceRead()
@@ -201,30 +239,35 @@ class MarconiServer(SerialDeviceServer):
             statusbyte = 'buffernotcleared'
         returnValue(statusbyte)
     
-    @setting(12, "Reset", returns = '')
+    @setting(102, "Reset", returns = '')
     def Reset(self, c):
         '''Resets to factory settings'''
         self._Reset()
 
-    @setting(1000, "GetState", returns = 's')
-    def GetState(self, c):
-        command = self.OutputStateReqStr()
-        yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
-        response = yield self.ser.readline()
-        returnValue(response)
+    #@setting(1000, "GetState", returns = 's')
+    #def GetState(self, c):
+        #command = self.CarrierStateReqStr()
+        #yield self.ser.write(command)
+        #yield self.ForceRead() # expect a reply from instrument
+        #response = yield self.ser.readline()
+        #returnValue(response)
 
-
+    # ++++++++++++++++++++++++++
     # ===== HIDDEN METHODS =====
+    # ++++++++++++++++++++++++++
+
+    # ===== META =====
 
     @inlineCallbacks
     def _Reset(self):
         command = self.ResetStr()
         yield self.ser.write(command)
         yield self.ForceRead()
-        self.marDict['state'] = True
+        self.marDict['carrier_state'] = True
         self.marDict['power'] = -137
         self.marDict['freq'] = 2400
+
+    # ===== PROLOGIX =====
 
     @inlineCallbacks
     def SetControllerMode(self, mode):
@@ -246,9 +289,11 @@ class MarconiServer(SerialDeviceServer):
         command = self.ForceReadStr()
         yield self.ser.write(command)
     
+    # ===== BASIC =====
+
     @inlineCallbacks
-    def _GetState(self):
-        command = self.OutputStateReqStr()
+    def _GetCarrierState(self):
+        command = self.CarrierStateReqStr()
         yield self.ser.write(command)
         yield self.ForceRead() # expect a reply from instrument
         response = yield self.ser.readline()
@@ -259,8 +304,8 @@ class MarconiServer(SerialDeviceServer):
         #if msg == '':
         #    raise Exception("State response is ''")
         #state_str =  msg.split(':')[1]
-        state_str = 'ENABLE'
-        if state_str == 'ENABLE':
+        state_str = 'ON'
+        if state_str == 'ON':
             state = True
         else:
             state = False
@@ -308,9 +353,17 @@ class MarconiServer(SerialDeviceServer):
         if not MIN <= freq <= MAX:
             raise Exception('Frequency out of allowed range')
 
+    # ===== SWEEP =====
 
+
+
+
+    # ++++++++++++++++++++++++++++++++
     # ===== MARCONI STR MESSAGES =====
+    # ++++++++++++++++++++++++++++++++
 
+    # ===== META =====
+    
     def IdenStr(self):
         '''String to request machine to identify itself'''
         return '*IDN?' + '\n'
@@ -327,6 +380,8 @@ class MarconiServer(SerialDeviceServer):
         '''String to reset to factory settings'''
         return '*RST' + '\n'
 
+    # ===== BASIC =====
+
     def FreqReqStr(self):
         '''String to request current frequency'''
         return 'CFRQ?' + '\n'
@@ -335,16 +390,16 @@ class MarconiServer(SerialDeviceServer):
         '''String to set freq (in MHZ)'''
         return 'CFRQ:Value ' + str(freq) + 'MHZ' + '\n'
          
-    def OutputStateReqStr(self):
-        '''String to request on/off'''
-        return 'OUTPUT?' + '\n'
+    def CarrierStateReqStr(self):
+        '''String to request carrier on/off state'''
+        return 'RFLV?' + '\n'
 
-    def OutputStateSetStr(self, state):
-        '''String to set state on/off'''
+    def CarrierStateSetStr(self, state):
+        '''String to set carrier state on/off'''
         if state:
-            return 'OUTPUT:ENABLE' + '\n'
+            return 'RFLV:ON' + '\n'
         else:
-            return 'OUTPUT:DISABLE' + '\n'
+            return 'RFLV:OFF' + '\n'
 
     def PowerReqStr(self):
         '''String to request current power'''
@@ -353,13 +408,76 @@ class MarconiServer(SerialDeviceServer):
     def PowerSetStr(self,pwr):
         '''String to set power (in dBm)'''
         return 'RFLV:Value ' +str(pwr) + ' DBM' + '\n'
-        
+
     #def PowerUnitsSetStr(self, units='DBM'):
-        #'''String to set power units (defaults to dBM)'''
-        #return 'RFLV:UNITS ' + '\n' + units
+            #'''String to set power units (defaults to dBM)'''
+            #return 'RFLV:UNITS ' + '\n' + units
+    
+    # ===== SWEEP =====
+    
+    def CarrierModeSetStr(self, mode):
+        '''String to set carrier to FIXED or SWEPT mode'''
+        mode = mode.upper()
+        if not mode in ('FIXED', 'SWEPT'):
+            raise ValueError("Carrier mode is 'FIXED' or 'SWEPT'")
+        return 'CFRQ:MODE ' + mode + '\n'
 
+    def SweepStartSetStr(self, start):
+        '''String to set starting frequency for carrier sweep (MHZ)'''
+        return 'SWEEP:START ' + str(start) + ' MHZ' + '\n'
 
-    # ===== PROLOGIX STR MESSAGES =====
+    def SweepStopSetStr(self, stop):
+        '''String to set stopping frequency for carrier sweep (MHZ)'''
+        return 'SWEEP:STOP ' + str(stop) + ' MHZ' + '\n'
+
+    def SweepStepSetStr(self, step):
+        '''String to set frequency step size for carrier sweep (MHZ)'''
+        return 'SWEEP:INC ' + str(step) + ' MHZ' + '\n'
+
+    def SweepTimeSetStr(self, time):
+        '''String to set time to complete a step of carrier sweep (S)'''
+        return 'SWEEP:TIME ' + str(step) + ' S' + '\n'
+
+    def SweepModeSetStr(self, mode):
+        '''String to set sweep mode to SNGL shot or CONT sweep'''
+        mode = mode.upper()
+        if not mode in ('SNGL', 'CONT'):
+            raise ValueError("Sweep mode is 'SNGL' or 'CONT'")
+        return 'SWEEP:MODE ' + mode + '\n'
+
+    def SweepShapeSetStr(self, shape):
+        '''String to set shape of sweep to linear (LIN) or logarithmic (LOG)'''
+        shape = shape.upper()
+        if not shape in ('LIN', 'LOG'):
+            raise ValueError("Sweep shape is 'LIN' or 'LOG'")
+        return 'SWEEP:TYPE ' + shape + '\n'
+
+    def SweepTrigModeSetStr(self, trig_mode):
+        '''String to set trigger mode to OFF, START, STARTSTOP, or STEP
+        as described in the Marconi Manual'''
+        trig_mode = trig_mode.upper()
+        if not trig_mode in ('OFF', 'START', 'STARTSTOP', 'STEP'):
+            raise ValueError("Sweep trigger mode is "\
+                            "'OFF', 'START', 'STARTSTOP', or 'STEP'")
+        return 'SWEEP:TRIG ' + trig_mode + '\n'
+
+    def SweepBeginStr(self):
+        '''String to begin sweeping'''
+        return 'SWEEP:GO' + '\n'
+
+    def SweepPauseStr(self):
+        '''String to pause sweeping (at current location in sweep)'''
+        return 'SWEEP:HALT' + '\n'
+
+    def SweepContinueStr(self):
+        '''String to continue sweeping (from pause point)'''
+        return 'SWEEP:CONT' + '\n'
+
+    def SweepResetStr(self):
+        '''String to reset sweeping point to start'''
+        return 'SWEEP:RESET' + '\n'
+
+    # ===== PROLOGIX =====
 
     def ForceReadStr(self):
         '''String to force progolix to read device response'''
