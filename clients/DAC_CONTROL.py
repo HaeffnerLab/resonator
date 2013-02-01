@@ -115,7 +115,7 @@ class MULTIPOLE_CONTROL(QtGui.QWidget):
 		print 'n'
 	    except: print "previous Cfile also had one well"
 	yield self.followSignal(0, 0)
-	
+
         
     @inlineCallbacks
     def connect(self):
@@ -171,7 +171,7 @@ class CHANNEL_CONTROL (QtGui.QWidget):
         self.controlLabels = []
         for i in range(1, Nelectrodes+1):
 	    self.controlLabels.append(str(i))
-	    
+    
         self.controls = {}
         for label in self.controlLabels:
 	    if int(label) < 15: 
@@ -196,7 +196,7 @@ class CHANNEL_CONTROL (QtGui.QWidget):
 	elecLayout = QtGui.QGridLayout()
 	elecBox.setLayout(elecLayout)
 	layout.addWidget(elecBox, 0, 0)
-	
+
         for j in range(1, 12):
 	    elecLayout.addWidget(self.controls[str(j)],12 - j,1)
 	for j in range(12, 23):
@@ -216,7 +216,7 @@ class CHANNEL_CONTROL (QtGui.QWidget):
             self.controls[k].onNewValues.connect(self.inputHasUpdated(k))
                    
         self.setLayout(layout)
-	
+
             
     @inlineCallbacks
     def connect(self):
@@ -282,12 +282,11 @@ class CHANNEL_MONITOR(QtGui.QWidget):
        
         self.posDisplay = QCustomSpinBoxION((-2000, 2000))
         
-	
         elecBox = QtGui.QGroupBox('Electrode Voltages')
         elecLayout = QtGui.QGridLayout()
         elecBox.setLayout(elecLayout)
         layout.addWidget(elecBox, 0, 0)
-	
+
         for j in range(1, 12):
             elecLayout.addWidget(QtGui.QLabel(str(j)),12 - j,0)
             elecLayout.addWidget(self.electrodes[j-1],12 - j,1)
@@ -296,7 +295,7 @@ class CHANNEL_MONITOR(QtGui.QWidget):
             elecLayout.addWidget(QtGui.QLabel(str(j)),23 - j,4)
             elecLayout.addWidget(self.electrodes[j-1],23 - j,5)
             elecLayout.setColumnStretch(5, 1)
-	
+
         elecLayout.addWidget(QtGui.QLabel('CNT'), 12, 2)
         elecLayout.addWidget(self.electrodes[Nelectrodes-1], 12, 3)
         elecLayout.addWidget(self.posDisplay, 0, 3)
