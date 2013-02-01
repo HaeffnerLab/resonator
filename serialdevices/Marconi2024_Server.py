@@ -101,7 +101,7 @@ class MarconiServer(SerialDeviceServer):
         d['power_range'] = power_range #None
         d['freq_range'] = freq_range #None
         d['carrier_mode'] = None # FIXED or SWEPT
-        d['sweep_range'] = None # (start, stop) in MHZ
+        d['sweep_range'] = None # [start, stop] in MHZ
         d['sweep_step'] = None # MHZ
         d['sweep_time'] = None # Seconds
         d['sweep_mode'] = None # Single shot sweep (SNGL) or continuous (CONT)
@@ -206,10 +206,107 @@ class MarconiServer(SerialDeviceServer):
         if mode is not None:
             command = self.CarrierModeSetStr(self, mode)
             yield self.ser.write(command)
-            yield self.ForceRead()
             self.marDict['carrier_mode'] = mode
         returnValue(self.marDict['carrier_mode'])
-            
+
+    def checkCarrierMode(self, setting):
+        '''Throws an exception if carrier mode is not 'FIXED'. Carrier mode
+        must be 'FIXED' before any other sweep method is used.'''
+        if self.marDict['carrier_mode'] != 'FIXED':
+            raise Exception("Carrier mode must be 'FIXED' to use"\
+                            + " other sweep methods")
+
+    @setting(22, "SweepRange", start = 'v', stop = 'v', returns = '*v')
+    def SweepRange(self, c, start=None, stop=None):
+        '''Get or set the frequency sweep range, start to stop (MHZ)'''
+        self.checkCarrierMode()
+        if start is None and stop is not None:
+            start = self.marDict['sweep_range'][0]
+        elif start is not None and stop is None:
+            stop = self.marDict['sweep_range'][1]
+        
+        if start is not None and stop is not None:
+            if start <= stop:
+                raise ValueError("Sweep start frequency must be greater"\
+                                 + "than stop frequency")
+            self.checkFreq(start)
+            self.checkFreq(stop)
+            command1 = self.SweepStartSetStr(start)
+            command2 = self.SweepStopSetStr(stop)
+            yield self.ser.write(command1)
+            yield self.ser.write(command2)
+            self.marDict['sweep_range'][0] = start
+            self.marDict['sweep_range'][1] = stop
+        return self.marDict['sweep_range']
+
+    @setting(23, "SweepStep", step = 'v', returns = 'v')
+    def SweepStep(self, c, step=None):
+        self.checkCarrierMode()
+        if step is not None:
+            command = self.SweepStepSetStr(step)
+            yield self.ser.write(command)
+            self.marDict['sweep_step'] = step
+        return self.marDict['sweep_step']
+
+    @setting(24, "SweepTime", time = 'v', returns = 'v')
+    def SweepTime(self, c, time=None):
+        self.checkCarrierMode()
+        if time is not None:
+            command = self.SweepTimeSetStr(time)
+            yield self.ser.write(command)
+            self.marDict['sweep_time'] = time
+        return self.marDict['sweep_time']
+
+    @setting(25, "SweepMode", mode = 's', returns = 's')
+    def SweepMode(self, c, mode=None):
+        self.checkCarrierMode()
+        if mode is not None:
+            command = self.SweepModeSetStr(mode)
+            yield self.ser.write(command)
+            self.marDict['sweep_mode'] = mode
+        return self.marDict['sweep_mode']
+
+    @setting(26, "SweepShape", shape = 's', returns = 's')
+    def SweepShape(self, c, shape=None):
+        self.checkCarrierMode()
+        if shape is not None:
+            command = self.SweepShapeSetStr(shape)
+            yield self.ser.write(command)
+            self.marDict['sweep_shape'] = shape
+        return self.marDict['sweep_shape']
+
+    @setting(27, "SweepTrigMode", tig_mode = 's', returns = 's')
+    def SweepTrigMode(self, c, trig_mode=None):
+        self.checkCarrierMode()
+        if trig_mode is not None:
+            command = self.SweepTrigModeSetStr(tig_mode)
+            yield self.ser.write(command)
+            self.marDict['trig_mode'] = trig_mode
+        return self.marDict['trig_mode']
+
+    @setting(28, "SweepBegin", returns = '')
+    def SweepBegin(self, c):
+        self.checkCarrierMode()
+        command = self.SweepBeginStr()
+        yield self.ser.write(command)
+
+    @setting(29, "SweepPause", returns = '')
+    def SweepPause(self, c):
+        self.checkCarrierMode()
+        command = self.SweepPauseStr()
+        yield self.ser.write(command)
+
+    @setting(30, "SweepContinue", returns = '')
+    def SweepContinue(self, c):
+        self.checkCarrierMode()
+        command = self.SweepContinueStr()
+        yield self.ser.write(command)
+
+    @setting(31, "SweepReset", returns = '')
+    def SweepReset(self, c):
+        self.checkCarrierMode()
+        command = self.SweepResetStr()
+        yield self.ser.write(command)
 
 
     # +++++++++++++++++++++++++
