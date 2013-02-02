@@ -6,8 +6,10 @@ def wait(fn=None):
         raw_input("<Enter> to continue test")
     elif hasattr(fn, '__call__'):
         def waitAfterFn(*args):
-            fn(*args)
+            print "next test is: " + str(fn)
             wait()
+            fn(*args)
+            print "test at: " + str(fn) + " is completed"
         return waitAfterFn
 
 @wait
@@ -16,33 +18,44 @@ def init_marconi(ms):
     ms.amplitude(1)
     ms.carrierstate(False)
 
-@wait
-def sweep_test(ms):
-    print "Starting sweep test"
-
+def init_sweep_test(ms):
     ms.carriermode('SWEPT')
     ms.sweepmode('SNGL')
     ms.sweepshape('LIN')
-    ms.sweeprange(0, 1)
-    ms.sweepstep(0.1)
-    ms.sweeptime(5)
-    
-    wait()
 
+@wait
+def sweep_test(ms, start, stop, step, time, triggered):
+    print "Starting sweep test: initializing values"
+    wait()
+    init_sweep_test(ms)
+    ms.sweeprange(start, stop)
+    ms.sweepstep(step)
+    ms.sweeptime(time)
+    if triggered:
+        ms.sweeptrigmode('STARTSTOP')
+
+    print "starting first sweep: allow to finish"
+    wait()
     ms.sweepbegin()
-    wait()
 
+    print "reset sweep"
+    wait()
     ms.sweepreset()
-    wait()
 
+    print "start second sweep: pause in middle"
+    wait()
     ms.sweepbegin()
+    print "prepare to pause"
     wait()
     ms.sweeppause()
+    print "ok. time to continue"
     wait()
     ms.sweepcontinue()
-    wait()
 
-    "Sweep test completed"
+    print "<ENTER> to reset the sweep and end the test"
+    wait()
+    ms.sweepreset()
+    print "Sweep test completed"
 
 
 def marconi_test():
@@ -50,8 +63,7 @@ def marconi_test():
     ms = cxn.marconi_server()
 
     init_marconi(ms)
-    sweep_test(ms)
-
+    sweep_test(ms, 1, 3, .01, .1, True)
 
 
 if __name__ == "__main__":

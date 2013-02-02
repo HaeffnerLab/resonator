@@ -53,8 +53,8 @@ class MarconiServer(SerialDeviceServer):
     timeout = 1.0
     gpibaddr = 11
 
-    frequency_range = (0, 2400)     # (low, high) in MHZ
-    power_range = (-137, 15)        # (low, high) in DBM
+    frequency_range = (0.009, 2400)     # (low, high) in MHZ
+    power_range = (-137, 13)        # (low, high) in DBM
 
     onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
     onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
@@ -285,7 +285,7 @@ class MarconiServer(SerialDeviceServer):
         Options are: OFF, START, STARTSTOP, STEP'''
         self.checkCarrierMode()
         if trig_mode is not None:
-            command = self.SweepTrigModeSetStr(tig_mode)
+            command = self.SweepTrigModeSetStr(trig_mode)
             yield self.ser.write(command)
             self.marDict['trig_mode'] = trig_mode
         returnValue(self.marDict['trig_mode'])
