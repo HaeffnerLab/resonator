@@ -30,13 +30,20 @@ class SWEEP_WIDGET(QTGui.QWidget):
         # topLayout
         self.carrierModeButton = QtQui.QPushButton() # change FIXED or SWEPT
         self.sweepTrigModeToggle = QtGui.QPushButton     # make it a menu button 
+        #needs a menu
         topLayout = QtGui.QGridLayout()
         topLayout.addWidget(self.carrierModeButton, 0, 0)
         topLayout.addWidget(self.sweepTrigModeToggle, 0, 1)
 
         # upperMiddleLayout
         self.sweepRangeStartCtrl = QtGui.QDoubleSpinBox() # change sweep start freq
+        #self.sweepRangeStartCtrl.setRange()
+        self.sweepRangeStartCtrl.setDecimals(5)
+        self.sweepRangeStartCtrl.setSingleStep(SWEEP_RANGE_STEP)
         self.sweepRangeStopCtrl = QtGui.QDoubleSpinBox() # change sweep stop freq
+        #self.sweepRangeStartCtrl.setRange()
+        self.sweepRangeStopCtrl.setDecimals(5)
+        self.sweepRangeStopCtrl.setSingleStep(SWEEP_RANGE_STEP)
         upperMiddleLayout = QtGui.QGridLayout()
         upperMiddleLayout.addWidget(self.sweepRangeStartCtrl, 0, 0)
         upperMiddleLayout.addWidget(self.sweepRangeStopCtrl, 0, 1)
@@ -45,11 +52,11 @@ class SWEEP_WIDGET(QTGui.QWidget):
         self.sweepStepCtrl = QtGui.QDoubleSpinBox()      # change sweep step
         #self.sweepStepCtrl.setRange(
         self.sweepStepCtrl.setDecimals(5)
-        self.sweepStepCtrl.setSingleStep(0.05)
+        self.sweepStepCtrl.setSingleStep(SWEEP_STEP_STEP)
         self.sweepTimeCtrl = QtGui.QDoubleSpinBox()      # change sweep time/step
         #self.sweepTimeCtrl.setRange(
         self.sweepTimeCtrl.setDecimals(1)
-        self.sweepTimeCtrl.setSingleStep(10)
+        self.sweepTimeCtrl.setSingleStep(SWEEP_TIME_STEP)
         lowerMiddleLayout = QtGui.QGridLayout()
         lowerMiddleLayout.addWidget(QtGui.QLabel('Sweep Step [MHz]'), 0, 0)
         lowerMiddleLayout.addWidget(self.sweepStepCtrl, 1, 0)
