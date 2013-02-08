@@ -222,7 +222,7 @@ class MarconiServer(SerialDeviceServer):
         '''Get or set the starting point for carrier frequency sweeps (MHZ)'''
         self.checkCarrierMode()
         if start is not None:
-            if start >= self.marDict['sweep_range_stop']:
+            if start > self.marDict['sweep_range_stop']:
                 raise ValueError("Sweep start frequency must be greater"\
                                 + "than stop frequency")
             self.checkFreq(start)
@@ -236,7 +236,7 @@ class MarconiServer(SerialDeviceServer):
         '''Get or set the ending point for carrier frequency sweeps (MHZ)'''
         self.checkCarrierMode()
         if stop is not None:
-            if stop <= self.marDict['sweep_range_start']:
+            if stop < self.marDict['sweep_range_start']:
                 raise ValueError("Sweep start frequency must be greater"\
                                 + "than stop frequency")
             self.checkFreq(stop)
