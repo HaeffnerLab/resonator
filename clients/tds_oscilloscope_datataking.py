@@ -15,10 +15,10 @@ while(1):
         outstring = outstring + ' '
         outstring = outstring + str(( (answer[x])[1] ).value )
         outstring = outstring + '\n'
-    filename='data_resonator/curve_osci_'+time.strftime("%d%m%Y_%H%M_")+optstr+'.csv'
+    filename='c:/data_resonator/curve_osci_'+time.strftime("%d%m%Y_%H%M_")+optstr+'.csv'
     #numpy.savetxt(filename,outstring)
     f = open(filename, 'w')
     f.write(outstring)
-    f.close
+    f.close()
 
     #time.sleep(60)
