@@ -74,8 +74,6 @@ class SWEEP_WIDGET(QTGui.QWidget):
 
         # bottomLayout
         bottomLayout = QtGui.Layout()
-        #
-        # ...
         #bottomLayout.addWidget(sweepBeginButton)
         #bottomLayout.addWidget(sweepPauseButton)
         #bottomLayout.addWidget(sweepContinueButton)
@@ -96,7 +94,11 @@ class SWEEP_WIDGET(QTGui.QWidget):
     @inlineCallbacks
     def update(self):
         '''Sets the initial values of controls based on server's records'''
-        #self.carrierModeButton.state = ...     # query server and convert ans
+        ModeState = self.server.CarrierMode()
+        if ModeState == "FIXED":
+            state = True
+        else:
+            state = False
         #self.sweepTrigModeToggle.setValue(...) # query server and convert ans
         self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
         self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
