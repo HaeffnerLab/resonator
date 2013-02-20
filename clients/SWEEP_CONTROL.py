@@ -74,16 +74,16 @@ class SWEEP_WIDGET(QTGui.QWidget):
 
         # bottomLayout
         bottomLayout = QtGui.Layout()
-        #bottomLayout.addWidget(sweepBeginButton)
-        #bottomLayout.addWidget(sweepPauseButton)
-        #bottomLayout.addWidget(sweepContinueButton)
-        #bottomLayout.addWidget(sweepResetButton)
+        bottomLayout.addWidget(sweepBeginButton)
+        bottomLayout.addWidget(sweepPauseButton)
+        bottomLayout.addWidget(sweepContinueButton)
+        bottomLayout.addWidget(sweepResetButton)
 
         # order layouts in the groupboxLayout
         groupboxLayout.addLayout(topLayout, 0, 0)
         groupboxLayout.addLayout(upperMiddleLayout, 1, 0)
         groupboxLayout.addLayout(lowerMiddleLayout, 2, 0)
-        #groupboxLayout.addLayout(bottomLayout, 3, 0)
+        groupboxLayout.addLayout(bottomLayout, 3, 0)
         
         # everything goes in the mainLayout
         groupbox.setLayout(groupboxLayout) # set the groupboxLayout in the groupbox
@@ -94,18 +94,22 @@ class SWEEP_WIDGET(QTGui.QWidget):
     @inlineCallbacks
     def update(self):
         '''Sets the initial values of controls based on server's records'''
-        ModeState = self.server.CarrierMode()
-        if ModeState == "FIXED":
-            state = True
-        elif ModeState == "SWEPT":
-            state = False
-        else:
-            raise ValueError("Carrier mode not defined")
+        # Should assume everything is FIXED to begin with
+
+        # == LEFT OUT FOR TESTING ==
+        #CarrierModeState = self.server.CarrierMode()
+        #if CarrierModeState == "FIXED":
+            #self.carrierModeButton.state = "FIXED"
+        #elif CarrierModeState == "SWEPT":
+            #state = False
+        #else:
+            #raise ValueError("Carrier mode not defined")
         #self.sweepTrigModeToggle.setValue(...) # query server and convert ans
         #self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
         #self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
         #self.sweepStepCtrl.setValue(self.server.SweepStep())
         #self.sweepTimeCtrl.setValue(self.server.SweepTime())
+        pass
 
 
     # +++++++++++++++++++++++++++++++++
@@ -116,18 +120,19 @@ class SWEEP_WIDGET(QTGui.QWidget):
     def makeCarrierModeButton(self):
         carrierModeButton = QtGui.QPushButton()
         carrierModeButton.setText('FIXED')
-        carrierModeButton.state = True
+        carrierModeButton.state = 'FIXED'
         
         @inlineCallbacks
         def onCarrierModeChange(): # does this need other parameters?
-            if not carrierModeButton.state:
-                carrierModeButton.setText('FIXED')
+            if carrierModeButton.state == 'SWEPT':
+                carrierModeButton.setText('FIXED') # set to fixed
                 yield self.server.CarrierMode('FIXED')
+                carrierModeButton.state = 'FIXED'
             else:
-                carrierModeButton.setText('SWEPT')
+                carrierModeButton.setText('SWEPT') # set to swept
                 yield self.server.CarrierMode('SWEPT')
-            carrierModeButton.state = not carrierModeButton.state
-            
+                carrierModeButton.state = 'SWEPT'
+
         carrierModeButton.clicked.connect(onCarrierModeChange)
         return carrierModeButton
 
