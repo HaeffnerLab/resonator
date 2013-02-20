@@ -11,11 +11,11 @@ from labrad.types import Error
 FREQ_MIN = 0.009    # 9 KHz
 FREQ_MAX = 2400     # 2400 MHz
 SWEEP_RANGE_STEP = 0.05
-SWEEP_STEP_STEP = 0.0
+SWEEP_STEP_STEP = 0.1 # 100 Hz
 STEP_MIN = 0.001    # 1 Hz
 STEP_MAX = 1000     # 1 MHz
-SWEEP_TIME_STEP
-TIME_MIN = 1        # 1 ms
+SWEEP_TIME_STEP = 5 # 10 ms
+TIME_MIN = 20       # 20 ms
 TIME_MAX = 100000   # 100 seconds
 
 
@@ -97,13 +97,15 @@ class SWEEP_WIDGET(QTGui.QWidget):
         ModeState = self.server.CarrierMode()
         if ModeState == "FIXED":
             state = True
-        else:
+        elif ModeState == "SWEPT":
             state = False
+        else:
+            raise ValueError("Carrier mode not defined")
         #self.sweepTrigModeToggle.setValue(...) # query server and convert ans
-        self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
-        self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
-        self.sweepStepCtrl.setValue(self.server.SweepStep())
-        self.sweepTimeCtrl.setValue(self.server.SweepTime())
+        #self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
+        #self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
+        #self.sweepStepCtrl.setValue(self.server.SweepStep())
+        #self.sweepTimeCtrl.setValue(self.server.SweepTime())
 
 
     # +++++++++++++++++++++++++++++++++
@@ -194,16 +196,24 @@ class SWEEP_WIDGET(QTGui.QWidget):
         return sweepTimeCtrl
 
     def makeSweepBeginButton(self):
-        pass
+        sweepBeginButton = QtGui.QPushButton()
+        #
+        return sweepBeginButton
 
     def makeSweepPauseButton(self):
-        pass
+        sweepPauseButton = QtGui.QPushButton()
+        #
+        return sweepPauseButton
 
     def makeSweepContinueButton(self):
-        pass
+        sweepContinueButton = QtGui.QPushButton()
+        #
+        return sweepContinueButton
 
     def makeSweepResetButton(self):
-        pass
+        sweepResetButton = QtGui.QPushButton()
+        #
+        return sweepResetButton
 
 
 class SWEEP_CONTROL(QTGui.QMainWindow):
