@@ -81,15 +81,11 @@ class MarconiServer(SerialDeviceServer):
 
         #self.SetControllerMode(1) # prologix set to controller mode, not necessary
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
-        self.SetControllerWait(0)   # turn off auto listen after talk, 
-                                    # to stop line unterminated errors
-        self.SetEOIState(1)         # enable EOI assertion at last written character
-                                    # frees the device to respond to the query
-        ##for i in range(20):               # this method of force clearing
-        ##    yield self.ForceRead()        # the buffer does not work!
-        ##    yield self.ser.readline()
+        self.SetControllerWait(0)   # turn off auto listen after talk 
+        self.SetEOIState(1)         # enable EOI assertion
         yield self.populateDict()
         self._Reset()
+        self._Default_Sweep_Settings()
         self.listeners = set()
 
     def createDict(self):
@@ -204,11 +200,12 @@ class MarconiServer(SerialDeviceServer):
     @setting(21, "CarrierMode", mode = 's', returns = 's') # or 's'
     def CarrierMode(self, c, mode=None):
         '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
-        if mode is not None:
-            command = self.CarrierModeSetStr(mode)
-            yield self.ser.write(command)
-            self.marDict['carrier_mode'] = mode
-        returnValue(self.marDict['carrier_mode'])
+        #if mode is not None:
+            #command = self.CarrierModeSetStr(mode)
+            #yield self.ser.write(command)
+            #self.marDict['carrier_mode'] = mode
+        #returnValue(self.marDict['carrier_mode'])
+        returnValue(self._CarrierMode(mode))
 
     def checkCarrierMode(self):
         '''Throws an exception if carrier mode is not 'FIXED'. Carrier mode
@@ -412,7 +409,6 @@ class MarconiServer(SerialDeviceServer):
         response = yield self.ser.readline()
         returnValue(response)
     
-    @ann
     def parseState(self, msg):
         #if msg == '':
         #    raise Exception("State response is ''")
@@ -432,7 +428,6 @@ class MarconiServer(SerialDeviceServer):
         response = yield self.ser.readline()
         returnValue(response)
     
-    @ann
     def parseFreq(self, msg):
         #if msg == '':
         #    raise Exception("Frequency response is ''")
@@ -448,7 +443,6 @@ class MarconiServer(SerialDeviceServer):
         response = yield self.ser.readline()
         returnValue(response)
     
-    @ann
     def parsePower(self, msg):
         #if msg == '':
         #    raise Exception("Frequency response is ''")
@@ -468,6 +462,17 @@ class MarconiServer(SerialDeviceServer):
 
     # ===== SWEEP =====
 
+    def _Default_Sweep_Settings(self):
+        self._CarrierMode(mode="FIXED")
+
+    @inlineCallbacks
+    def _CarrierMode(self, mode=None):
+        if mode is not None:
+            command = self.CarrierModeSetStr(mode)
+            yield self.ser.write(command)
+            self.marDict['carrier_mode'] = mode
+        returnValue(self.marDict['carrier_mode'])
+        
 
 
 
@@ -609,7 +614,7 @@ class MarconiServer(SerialDeviceServer):
         '''String to set addressing of prologix'''
         return '++addr ' +  str(addr) + '\n'
 
-    def SetModeStr(self, mode):
+    def SetModeStr(self, mode): ## unused
         '''String to set prologix to CONTROLLER (1), or DEVICE (0) mode'''
         return '++mode ' + str(mode) + '\n'
 
