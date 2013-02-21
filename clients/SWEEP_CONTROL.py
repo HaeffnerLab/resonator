@@ -1,10 +1,10 @@
 import os
 
 from PyQt4 import QtGui
-#from PyQt import QtCore, uic                                   ## may need this
+from PyQt4 import QtCore, uic                                   ## may need this
 from twisted.internet.defer import inlineCallbacks, returnValue
 
-from labrad.wrapper import connectAsync
+from labrad.wrappers import connectAsync
 from labrad.types import Error
 
 
@@ -19,7 +19,7 @@ TIME_MIN = 20       # 20 ms
 TIME_MAX = 100000   # 100 seconds
 
 
-class SWEEP_WIDGET(QTGui.QWidget):
+class SWEEP_WIDGET(QtGui.QWidget):
     '''Blueprint for a widget that interfaces with the sweep functionality
     of a signal generator.'''
 
@@ -58,9 +58,9 @@ class SWEEP_WIDGET(QTGui.QWidget):
         upperMiddleLayout = QtGui.QGridLayout()
         self.sweepRangeStartCtrl = self.makeSweepRangeStartCtrl()
         self.sweepRangeStopCtrl = self.makeSweepRangeStopCtrl()
-        upperMiddleLayout.addWidget(QtGui.QLabel("Start Frequency (MHz)", 0, 0)
+        upperMiddleLayout.addWidget(QtGui.QLabel("Start Frequency (MHz)"), 0, 0)
         upperMiddleLayout.addWidget(self.sweepRangeStartCtrl, 0, 1)
-        upperMiddleLayout.addWidget(QtGui.Qlabel("Stop Frequency (MHz)", 1, 0))
+        upperMiddleLayout.addWidget(QtGui.QLabel("Stop Frequency (MHz)"), 1, 0)
         upperMiddleLayout.addWidget(self.sweepRangeStopCtrl, 1, 1)
 
         # lowerMiddleLayout
@@ -68,16 +68,20 @@ class SWEEP_WIDGET(QTGui.QWidget):
         self.sweepStepCtrl = self.makeSweepStepCtrl()
         self.sweepTimeCtrl = self.makeSweepTimeCtrl()
         lowerMiddleLayout.addWidget(QtGui.QLabel("Step Size (KHz)"), 0, 0)
-        lowerMiddleLayout.addWidget(self.sweepStepCtrl), 0, 1)
+        lowerMiddleLayout.addWidget(self.sweepStepCtrl, 0, 1)
         lowerMiddleLayout.addWidget(QtGui.QLabel("Time/Step (ms)"), 1, 0)
-        lowerMiddleLayout.addWidget(self.sweepTimeCtrl), 1, 1)
+        lowerMiddleLayout.addWidget(self.sweepTimeCtrl, 1, 1)
 
         # bottomLayout
-        bottomLayout = QtGui.Layout()
-        bottomLayout.addWidget(sweepBeginButton)
-        bottomLayout.addWidget(sweepPauseButton)
-        bottomLayout.addWidget(sweepContinueButton)
-        bottomLayout.addWidget(sweepResetButton)
+        bottomLayout = QtGui.QGridLayout()
+        self.sweepBeginButton = self.makeSweepBeginButton()
+        self.sweepPauseButton = self.makeSweepPauseButton()
+        self.sweepContinueButton = self.makeSweepContinueButton()
+        self.sweepResetButton = self.makeSweepResetButton()
+        bottomLayout.addWidget(self.sweepBeginButton)
+        bottomLayout.addWidget(self.sweepPauseButton)
+        bottomLayout.addWidget(self.sweepContinueButton)
+        bottomLayout.addWidget(self.sweepResetButton)
 
         # order layouts in the groupboxLayout
         groupboxLayout.addLayout(topLayout, 0, 0)
@@ -91,7 +95,7 @@ class SWEEP_WIDGET(QTGui.QWidget):
         self.setLayout(mainLayout) # set this widget's main layout
 
 
-    @inlineCallbacks
+    #@inlineCallbacks
     def update(self):
         '''Sets the initial values of controls based on server's records'''
         # Should assume everything is FIXED to begin with
@@ -138,11 +142,11 @@ class SWEEP_WIDGET(QTGui.QWidget):
 
 
     def makeSweepTrigModeToggle(self):
-        sweepTrigModeToggle = Qt.QPushButton()
+        sweepTrigModeToggle = QtGui.QPushButton()
         # needs a menu
 
         @inlineCallbacks
-        def onSweepTrigModeChange()
+        def onSweepTrigModeChange():
             pass
 
         return sweepTrigModeToggle
@@ -188,7 +192,7 @@ class SWEEP_WIDGET(QTGui.QWidget):
 
     def makeSweepStepCtrl(self):
         sweepStepCtrl = QtGui.QDoubleSpinBox()
-        sweepStepCtrl.setRange(, TIME_MAX)
+        sweepStepCtrl.setRange(TIME_MIN, TIME_MAX)
         sweepStepCtrl.setDecimals(1)
         sweepStepCtrl.setSingleStep(SWEEP_TIME_STEP)
         return sweepStepCtrl
@@ -221,7 +225,7 @@ class SWEEP_WIDGET(QTGui.QWidget):
         return sweepResetButton
 
 
-class SWEEP_CONTROL(QTGui.QMainWindow):
+class SWEEP_CONTROL(QtGui.QMainWindow):
     '''Blueprint for a widget (actually a main window) that controls the 
     sweep functionality of a function generator server.'''
 
@@ -240,8 +244,8 @@ class SWEEP_CONTROL(QTGui.QMainWindow):
 def main():                                                 # necessary?
     import qt4reactor
     from twisted.internet import reactor
-    app = QtQui.QApplication( [] )                          # what does this do?
-    qt4reactor.install()
+    app = QtGui.QApplication( [] )                          # what does this do?
+    #qt4reactor.install()
     sweepUI = SWEEP_CONTROL(reactor)
     sweepUI.show()
     reactor.run()
