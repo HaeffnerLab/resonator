@@ -463,7 +463,7 @@ class MarconiServer(SerialDeviceServer):
     # ===== SWEEP =====
 
     def _Default_Sweep_Settings(self):
-        self._CarrierMode(mode="FIXED")
+        yield self._CarrierMode(mode="FIXED")
 
     @inlineCallbacks
     def _CarrierMode(self, mode=None):
