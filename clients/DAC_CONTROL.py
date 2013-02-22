@@ -10,7 +10,7 @@ UpdateTime = 100 # ms
 SIGNALID = 270836
 SIGNALID2 = 270835
 Nelectrodes = 28
-Centernumber = 24
+Centernumber = 23-1
 
 class MULTIPOLE_CONTROL(QtGui.QWidget):
     def __init__(self, reactor, parent=None):
@@ -297,7 +297,8 @@ class CHANNEL_MONITOR(QtGui.QWidget):
             elecLayout.setColumnStretch(5, 1)
 
         elecLayout.addWidget(QtGui.QLabel('CNT'), 12, 2)
-        elecLayout.addWidget(self.electrodes[Nelectrodes-1], 12, 3)
+        elecLayout.addWidget(self.electrodes[Centernumber], 12, 3)
+        
         elecLayout.addWidget(self.posDisplay, 0, 3)
         elecLayout.addWidget(self.slider, 4, 3, 7, 1)
         elecLayout.setColumnStretch(3, 1)
