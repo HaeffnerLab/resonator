@@ -1,12 +1,5 @@
-import os
-
 from PyQt4 import QtGui
-from PyQt4 import QtCore, uic                                   ## may need this
-from twisted.internet.defer import inlineCallbacks, returnValue
-
-from labrad.wrappers import connectAsync
-from labrad.types import Error
-
+from twisted.internet.defer import inlineCallbacks
 
 FREQ_MIN = 0.009    # 9 KHz
 FREQ_MAX = 2400     # 2400 MHz
@@ -32,6 +25,8 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
+        from labrad.wrappers import connectAsync
+
         self.cxn = yield connectAsync()                     # '192.168.169.30'
         self.server = yield self.cxn.marconi_server
         
@@ -44,7 +39,6 @@ class SWEEP_WIDGET(QtGui.QWidget):
         mainLayout = QtGui.QGridLayout()
         groupbox = QtGui.QGroupBox('Sweep Control (Marconi)')
         groupboxLayout = QtGui.QGridLayout()
-
         # topLayout
         topLayout = QtGui.QGridLayout()
         self.carrierModeButton = self.makeCarrierModeButton()
@@ -241,14 +235,14 @@ class SWEEP_CONTROL(QtGui.QMainWindow):
         self.reactor.stop()
 
 
-def main():                                                 # necessary?
+#def main():                                                 # necessary?
+
+
+if __name__ == "__main__":
+    a = QtGui.QApplication( [] )
     import qt4reactor
+    qt4reactor.install()
     from twisted.internet import reactor
-    app = QtGui.QApplication( [] )                          # what does this do?
-    #qt4reactor.install()
     sweepUI = SWEEP_CONTROL(reactor)
     sweepUI.show()
     reactor.run()
-
-if __name__ == "__main__":
-    main()
