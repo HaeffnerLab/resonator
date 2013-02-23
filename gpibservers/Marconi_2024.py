@@ -19,7 +19,7 @@ timeout = 5
 """
 
 from labrad.server import setting
-from labrad.gpib import GPIBManagedServer, GPIBDeviceWarapper
+from labrad.gpib import GPIBManagedServer, GPIBDeviceWrapper
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 class Marconi2024Wrapper(GPIBDeviceWrapper):  
