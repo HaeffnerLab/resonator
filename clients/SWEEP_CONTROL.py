@@ -72,10 +72,10 @@ class SWEEP_WIDGET(QtGui.QWidget):
         self.sweepPauseButton = self.makeSweepPauseButton()
         self.sweepContinueButton = self.makeSweepContinueButton()
         self.sweepResetButton = self.makeSweepResetButton()
-        bottomLayout.addWidget(self.sweepBeginButton)
-        bottomLayout.addWidget(self.sweepPauseButton)
-        bottomLayout.addWidget(self.sweepContinueButton)
-        bottomLayout.addWidget(self.sweepResetButton)
+        bottomLayout.addWidget(self.sweepBeginButton, 0, 0)
+        bottomLayout.addWidget(self.sweepPauseButton, 1, 0)
+        bottomLayout.addWidget(self.sweepContinueButton, 1, 1)
+        bottomLayout.addWidget(self.sweepResetButton, 0, 1)
 
         # order layouts in the groupboxLayout
         groupboxLayout.addLayout(topLayout, 0, 0)
@@ -121,7 +121,8 @@ class SWEEP_WIDGET(QtGui.QWidget):
         carrierModeButton.state = 'FIXED'
         
         @inlineCallbacks
-        def onCarrierModeChange(): # does this need other parameters?
+        def onCarrierModeChange(state): # does this need other parameters?
+            print state
             if carrierModeButton.state == 'SWEPT':
                 carrierModeButton.setText('FIXED') # set to fixed
                 yield self.server.CarrierMode('FIXED')
@@ -156,7 +157,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         def onSweepRangeStartChange(start):
             try:
                 yield self.server.SweepRangeStart(start) # could this be just value instead?
-            except ValuerError:
+            except ValueError:
                 # this might occur if one attempt to set start > stop freq
                 stop = yield self.server.SweepRangeStop()
                 sweepRangeStartCtrl.setValue(stop)
@@ -200,22 +201,22 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     def makeSweepBeginButton(self):
         sweepBeginButton = QtGui.QPushButton()
-        #
+        sweepBeginButton.setText("Start")
         return sweepBeginButton
 
     def makeSweepPauseButton(self):
         sweepPauseButton = QtGui.QPushButton()
-        #
+        sweepPauseButton.setText("Pause")
         return sweepPauseButton
 
     def makeSweepContinueButton(self):
         sweepContinueButton = QtGui.QPushButton()
-        #
+        sweepContinueButton.setText("Continue")
         return sweepContinueButton
 
     def makeSweepResetButton(self):
         sweepResetButton = QtGui.QPushButton()
-        #
+        sweepResetButton.setText("Reset")
         return sweepResetButton
 
 
@@ -229,7 +230,7 @@ class SWEEP_CONTROL(QtGui.QMainWindow):
 
         sweepWidget = SWEEP_WIDGET(self.reactor)
         self.setCentralWidget(sweepWidget)
-        #self.setWindowTitle('Sweep Control (Marconi)')
+        self.setWindowTitle('Sweep Control (Marconi)')
 
     def closeEvent(self, x):
         self.reactor.stop()
