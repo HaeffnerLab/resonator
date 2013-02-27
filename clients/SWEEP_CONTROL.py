@@ -1,15 +1,15 @@
 from PyQt4 import QtGui
 from twisted.internet.defer import inlineCallbacks
 
-FREQ_MIN = 0.009    # 9 KHz
-FREQ_MAX = 2400     # 2400 MHz
-SWEEP_RANGE_STEP = 0.05
-SWEEP_STEP_STEP = 0.1 # 100 Hz
-STEP_MIN = 0.001    # 1 Hz
-STEP_MAX = 1000     # 1 MHz
-SWEEP_TIME_STEP = 5 # 10 ms
-TIME_MIN = 20       # 20 ms
-TIME_MAX = 100000   # 100 seconds
+FREQ_MIN = 0.009        # 9 KHz
+FREQ_MAX = 2400         # 2400 MHz
+SWEEP_RANGE_STEP = 0.05 # 50 kHz
+SWEEP_STEP_STEP = 0.1   # 100 Hz
+STEP_MIN = 0.001        # 1 Hz
+STEP_MAX = 1000         # 1 MHz
+SWEEP_TIME_STEP = 5     # 10 ms
+TIME_MIN = 20           # 20 ms
+TIME_MAX = 100000       # 100 sec
 
 
 class SWEEP_WIDGET(QtGui.QWidget):
@@ -122,7 +122,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         
         @inlineCallbacks
         def onCarrierModeChange(state): # does this need other parameters?
-            print state
+            print "CarrierMode state is: ", state
             if carrierModeButton.state == 'SWEPT':
                 carrierModeButton.setText('FIXED') # set to fixed
                 yield self.server.CarrierMode('FIXED')
@@ -221,7 +221,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
 
 class SWEEP_CONTROL(QtGui.QMainWindow):
-    '''Blueprint for a widget (actually a main window) that controls the 
+    '''A main window providing a widget that gives access to the 
     sweep functionality of a function generator server.'''
 
     def __init__(self, reactor, parent=None):
@@ -234,9 +234,6 @@ class SWEEP_CONTROL(QtGui.QMainWindow):
 
     def closeEvent(self, x):
         self.reactor.stop()
-
-
-#def main():                                                 # necessary?
 
 
 if __name__ == "__main__":
