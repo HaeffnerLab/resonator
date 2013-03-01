@@ -1,10 +1,5 @@
-# Serial version
-# Requires serial_server_v1_2.py to be running in labrad
-# Simply inherits from serialdeviceserver
-#
-# onNewUpdate and onStateUpdate are for "notifying" when settings change
-# this is because the OUTPUT:ENABLE/DISABLE capability allows updates
-# to be grouped together to be changed all at once
+# MarconiServer, serial version
+# Requires serial_server_v1_2.py (serial device manager) to be running in labrad
 
 #"""
 #### BEGIN NODE INFO
@@ -23,42 +18,46 @@
 #### END NODE INFO
 #"""
 
-from serialdeviceserver import SerialDeviceServer, setting, inlineCallbacks,\
-                                    SerialDeviceError, SerialConnectionError
-from twisted.internet import reactor
+from serialdeviceserver import SerialDeciveServer
+from serialdeviceserver import SerialDeciveError, SerialConnectionError
+from serialdeviceserver import setting, inlineCallbacks
 from twisted.internet.defer import returnValue
-from labrad.server import Signal
-#from labrad.types import Error
 
+# Default Startup Values
+ON_OFF = True
+AMP = -30
+FREQ = 1
 
-# DEBUGGING TOOL
-def ann(method):
-    def wrapped(*args):
-        print "Starting", method
-        return method(*args)
-    return wrapped
+CARRIER_MODE = 'FIXED'
+SWEEP_RANGE_START = 1
+SWEEP_RANGE_STOP = 2
+SWEEP_STEP = 0.05
+SWEEP_TIME = 50
+SWEEP_MODE = 'SNGL'
+SWEEP_SHAPE = 'LIN'
+SWEEP_TRIG_MODE = 'OFF'
 
+# Marconi Extreme Values, don't change
+FREQ_MIN = 0.009    # 9 KHz
+FREQ_MAX = 2400     # 2400 MHz
+POWER_MIN = -137    # -137 dBm
+POWER_MAX = 10      # 10 dBm
 
-SIGNALID = 209057
-SIGNALID1 = 209058
+# CONSTANTS used by SweepRangeException, don't change
+START = 0
+STOP = 1
 
 class MarconiServer(SerialDeviceServer):
     """Server for basic CW control of Marconi RF Generator"""
-    
+    # set MarconiKey in reg to ttyUSB# (# is USB port connection)
+
     name = 'Marconi Server'
     regKey = 'MarconiKey' 
-    # set MarconiKey in registry to ttyUSB# (# is USB port connection)
     port = None
     serNode = 'resonatormain' # labradnode
     timeout = 1.0
     gpibaddr = 11
 
-    frequency_range = (0.009, 2400)     # (low, high) in MHZ
-    power_range = (-137, 13)        # (low, high) in DBM
-
-    onNewUpdate = Signal(SIGNALID, 'signal: settings updated', '(sv)')
-    onStateUpdate = Signal(SIGNALID1, 'signal: state updated', 'b')  
-    
     @inlineCallbacks
     def initServer(self):
         self.createDict()
@@ -79,62 +78,46 @@ class MarconiServer(SerialDeviceServer):
                 print 'Check set up and restart serial server'
             else: raise
 
-        #self.SetControllerMode(1) # prologix set to controller mode, not necessary
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
-        self.SetControllerWait(0)   # turn off auto listen after talk 
-        self.SetEOIState(1)         # enable EOI assertion
-        yield self.populateDict()
-        self._Reset()
-        self._Default_Sweep_Settings()
-        self.listeners = set()
+        yield self._SetControllerWait(0)   # turn off auto listen after talk 
+        self.SetInitialValues()
 
     def createDict(self):
         d = {}
-        d['carrier_state'] = None # state is boolean
-        d['freq'] = None # frequency in MHz
-        d['power'] = None # power in dBm
-        #d['power_units'] = None # power (will be) in dBm
-        d['power_range'] = self.power_range #None
-        d['freq_range'] = self.frequency_range #None
-        d['carrier_mode'] = None # FIXED or SWEPT
-        d['sweep_range_start'] = None  # start in MHZ
-        d['sweep_range_stop'] = None    # stop in MHZ
-        d['sweep_step'] = None # MHZ
-        d['sweep_time'] = None # Milliseconds
-        d['sweep_mode'] = None # Single shot sweep (SNGL) or continuous (CONT)
-        d['sweep_shape'] = None # Linear (LIN) or logarithmic (LOG)
-        d['trig_mode'] = None # See SweepTrigModeSetStr
-        d['currently_sweeping'] = None # True if currently sweeping
+
+        # == BASIC SETTINGS ==
+        d['on_off'] = None                      # True (ON) or False (OFF)
+        d['power'] = None                       # power in dBm
+        d['power_min'] = POWER_MIN              # min power in dBm
+        d['power_max'] = POWER_MAX              # max power in dBm
+        d['freq'] = None                        # frequency in MHz
+        d['freq_min'] = FREQ_MIN                # min freq  in MHz
+        d['freq_max'] = FREQ_MAX                # max freq in MHz
+
+        # == SWEEP SETTINGS ==
+        d['carrier_mode'] = None                # True (FIXED) or False (SWEPT)
+        d['sweep_range_start'] = None           # start freq in MHz
+        d['sweep_range_stop'] = None            # stop freq in MHz
+        d['sweep_step'] = None                  # freq step in MHz
+        d['sweep_time'] = None                  # time per step in ms
+        d['sweep_mode'] = None                  # True (SNGL) or False (CONT)
+        d['sweep_shape'] = None                 # True (LIN) or False (LOG)
+        d['trig_mode'] = None                   # See SweepTrigModeSetStr
+        d['currently_sweeping'] = None          # True if currently sweeping
         self.marDict = d
     
-    @inlineCallbacks
-    def populateDict(self):
-        stateStr = yield self._GetCarrierState() 
-        freqStr = yield self._GetFreq()
-        powerStr = yield self._GetPower()
-        state = self.parseState(stateStr)
-        freq = self.parseFreq(freqStr)
-        power = self.parsePower(powerStr)
-        
-        self.marDict['carrier_state'] = bool(state) 
-        self.marDict['power'] = float(power)
-        self.marDict['freq'] = float(freq)
-        #self.marDict['power_units'] = 'DBM' # default
-        #self.marDict['power_range'] = [-100, 13] already set
-        #self.marDict['freq_range'] = [0, 1000] already set
-    
-    def initContext(self, c):
-        """Initialize a new context object."""
-        self.listeners.add(c.ID)
-    
-    def expireContext(self, c):
-        self.listeners.remove(c.ID)
-        
-    def getOtherListeners(self, c):
-        notified = self.listeners.copy()
-        notified.remove(c.ID)
-        return notified
-    
+    def SetInitialValues(self):
+        _CarrierOnOff(ON_OFF)
+        _Amplitude(AMP)
+        _Frequency(FREQ)
+        _CarrierMode(CARRIER_MODE)
+        _SweepRangeStart(SWEEP_RANGE_START)
+        _SweepRangeStop(SWEEP_RANGE_STOP)
+        _SweepStep(SWEEP_STEP)
+        _SweepTime(SWEEP_TIME)
+        _SweepMode(SWEEP_MODE)
+        _SweepShape(SWEEP_SHAPE)
+        _SweepTrigMode(SWEEP_TRIG_MODE)
 
     # +++++++++++++++++++++++++++
     # ===== BASIC SETTINGS ======
@@ -143,362 +126,358 @@ class MarconiServer(SerialDeviceServer):
     @setting(10, "Identify", returns = 's')
     def Identify(self, c):
         '''Ask instrument to identify itself'''
-        command = self.IdenStr()
-        yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
-        answer = yield self.ser.readline()
-        returnValue(answer[:-1])
+        return _Identify()
 
-    @setting(11, "Amplitude", level = 'v', returns = "v")
+    @setting(11, "CarrierOnOff", state = 'b', returns = 'b')
+    def CarrierOnOff(self, c, state=None):
+        '''Get or set the on/off state of the CW signal'''       
+        return _CarrierOnOff(state)
+
+    @setting(12, "Amplitude", level = 'v', returns = "v")
     def Amplitude(self, c, level=None):
-        '''Sets power level, enter power in dBm'''
-        if level is not None:
-            self.checkPower(level)
-            command = self.PowerSetStr(level)
-            yield self.ser.write(command)
-            self.marDict['power'] = level
-            notified = self.getOtherListeners(c)
-            self.onNewUpdate(('power',level),notified)
-        returnValue(self.marDict['power'])
+        '''Get or set the power level (dBm)'''
+        return _Amplitude(level)
     
-    @setting(12, "Frequency", freq = 'v', returns='v')
+    @setting(13, "Frequency", freq = 'v', returns='v')
     def Frequency(self, c, freq=None):
         '''Get or set the CW frequency (MHz)'''
-        if freq is not None:
-            self.checkFreq(freq)
-            command = self.FreqSetStr(freq)
-            yield self.ser.write(command)
-            self.marDict['freq'] = freq
-            notified = self.getOtherListeners(c)
-            self.onNewUpdate(('freq',freq),notified)
-        returnValue(self.marDict['freq'])
-
-    @setting(13, "CarrierState", state = 'b', returns = 'b')
-    def CarrierState(self, c, state=None):
-        '''Get or set the on/off state of the CW signal'''
-        if state is not None:
-            command = self.CarrierStateSetStr(state)
-            yield self.ser.write(command)
-            self.marDict['carrier_state'] = state
-            notified = self.getOtherListeners(c)
-            self.onStateUpdate(state,notified)
-        returnValue(self.marDict['carrier_state'])    
-
-    #@setting(14, "SetPowerUnits", units = 's', returns = '')
-        #def SetPowerUnits(self, c=None, units='DBM'):
-            #'''Sets power units, default is dBm'''
-            #command = self.PowerUnitsSetStr(units)
-            #yield self.ser.write(command)
-            #self.marDict['power_units'] = units
-            #notified = self.getOtherListeners(c)
-            #self.onNewUpdate(('power_units',units),notified)
+        return _Frequency(freq)
+        
 
     # ++++++++++++++++++++++++++++
     # ===== SWEEP SETTINGS  ======
     # ++++++++++++++++++++++++++++
 
-    @setting(21, "CarrierMode", mode = 's', returns = 's') # or 's'
+    @setting(20, "CarrierMode", mode = 's', returns = 's') # or 's'
     def CarrierMode(self, c, mode=None):
         '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
-        #if mode is not None:
-            #command = self.CarrierModeSetStr(mode)
-            #yield self.ser.write(command)
-            #self.marDict['carrier_mode'] = mode
-        #returnValue(self.marDict['carrier_mode'])
-        returnValue(self._CarrierMode(mode))
+        return _CarrierMode(mode)
 
-    def checkCarrierMode(self):
-        '''Throws an exception if carrier mode is not 'FIXED'. Carrier mode
-        must be 'FIXED' before any other sweep method is used.'''
-        if self.marDict['carrier_mode'] != 'SWEPT':
-            raise Exception("Carrier mode must be 'FIXED' to use"\
-                            + " other sweep methods")
-
-    @setting(22, "SweepRangeStart", start = 'v', returns = 'v')
+    @setting(21, "SweepRangeStart", start = 'v', returns = 'v')
     def SweepRangeStart(self, c, start=None):
         '''Get or set the starting point for carrier frequency sweeps (MHZ)'''
-        self.checkCarrierMode()
-        if start is not None:
-            if start > self.marDict['sweep_range_stop']:
-                raise ValueError("Sweep start frequency must be greater"\
-                                + "than stop frequency")
-            self.checkFreq(start)
-            command = self.SweepStartSetStr(start)
-            yield self.ser.write(command)
-            self.marDict['sweep_range_start'] = start
-        returnValue(self.marDict['sweep_range_start'])
+        return _SweeoRangeStart(start)
 
-    @setting(23, "SweepRangeStop", stop = 'v', returns = 'v')
+    @setting(22, "SweepRangeStop", stop = 'v', returns = 'v')
     def SweepRangeStop(self, c, stop=None):
         '''Get or set the ending point for carrier frequency sweeps (MHZ)'''
-        self.checkCarrierMode()
-        if stop is not None:
-            if stop < self.marDict['sweep_range_start']:
-                raise ValueError("Sweep start frequency must be greater"\
-                                + "than stop frequency")
-            self.checkFreq(stop)
-            command = self.SweepStopSetStr(stop)
-            yield self.ser.write(command)
-            self.marDict['sweep_range_stop'] = stop
-        returnValue(self.marDict['sweep_range_stop'])
+        return _SweepRangeStop(stop)
 
-    @setting(24, "SweepStep", step = 'v', returns = 'v')
+    @setting(23, "SweepStep", step = 'v', returns = 'v')
     def SweepStep(self, c, step=None):
         '''Get or set the sweep step (MHZ)'''
-        self.checkCarrierMode()
-        if step is not None:
-            command = self.SweepStepSetStr(step)
-            yield self.ser.write(command)
-            self.marDict['sweep_step'] = step
-        returnValue(self.marDict['sweep_step'])
+        return _SweepStep(step)
 
-    @setting(25, "SweepTime", time = 'v', returns = 'v')
+    @setting(24, "SweepTime", time = 'v', returns = 'v')
     def SweepTime(self, c, time=None):
         '''Get or set the time to complete one sweep step (ms)'''
-        self.checkCarrierMode()
-        if time is not None:
-            command = self.SweepTimeSetStr(time)
-            yield self.ser.write(command)
-            self.marDict['sweep_time'] = time
-        returnValue(self.marDict['sweep_time'])
+        return _SweepTime(time)
 
-    @setting(26, "SweepMode", mode = 's', returns = 's')
+    @setting(25, "SweepMode", mode = 's', returns = 's')
     def SweepMode(self, c, mode=None):
         '''Get or set the sweep mode to single shot (SNGL) or continuous (CONT)'''
-        self.checkCarrierMode()
-        if mode is not None:
-            command = self.SweepModeSetStr(mode)
-            yield self.ser.write(command)
-            self.marDict['sweep_mode'] = mode
-        returnValue(self.marDict['sweep_mode'])
+        return _SweepMode(mode)
 
-    @setting(27, "SweepShape", shape = 's', returns = 's')
+    @setting(26, "SweepShape", shape = 's', returns = 's')
     def SweepShape(self, c, shape=None):
         '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
-        self.checkCarrierMode()
-        if shape is not None:
-            command = self.SweepShapeSetStr(shape)
-            yield self.ser.write(command)
-            self.marDict['sweep_shape'] = shape
-        returnValue(self.marDict['sweep_shape'])
+        return _SweepShape(shape)
 
-    @setting(28, "SweepTrigMode", trig_mode = 's', returns = 's')
+    @setting(27, "SweepTrigMode", trig_mode = 's', returns = 's')
     def SweepTrigMode(self, c, trig_mode=None):
         '''Get or set the external trigger mode.
         Options are: OFF, START, STARTSTOP, STEP'''
-        self.checkCarrierMode()
-        if trig_mode is not None:
-            command = self.SweepTrigModeSetStr(trig_mode)
-            yield self.ser.write(command)
-            self.marDict['trig_mode'] = trig_mode
-        returnValue(self.marDict['trig_mode'])
+        return _SweepTrigMode(trig_mode)
 
-    @setting(29, "SweepBegin", returns = '')
+    @setting(30, "SweepBegin", returns = '')
     def SweepBegin(self, c):
         '''Start a sweep'''
-        self.checkCarrierMode()
-        command = self.SweepBeginStr()
-        yield self.ser.write(command)
+        return _SweeoBegin()
 
-    @setting(30, "SweepPause", returns = '')
+    @setting(31, "SweepPause", returns = '')
     def SweepPause(self, c):
         '''Pause the current sweep'''
-        self.checkCarrierMode()
-        command = self.SweepPauseStr()
-        yield self.ser.write(command)
+        return _SweepPause()
 
-    @setting(31, "SweepContinue", returns = '')
+    @setting(32, "SweepContinue", returns = '')
     def SweepContinue(self, c):
         '''Continue the currently paused sweep'''
-        self.checkCarrierMode()
-        command = self.SweepContinueStr()
-        yield self.ser.write(command)
+        return _SweepContinue()
 
-    @setting(32, "SweepReset", returns = '')
+    @setting(33, "SweepReset", returns = '')
     def SweepReset(self, c):
         '''Reset the current sweep to the start frequency'''
-        self.checkCarrierMode()
-        command = self.SweepResetStr()
-        yield self.ser.write(command)
+        return _SweepReset()
 
-
-    # +++++++++++++++++++++++++
-    # ===== META SETTINGS =====
-    # +++++++++++++++++++++++++
-
-    @setting(100, "Clear", returns = '')
-    def Clear(self, c):
-        '''Clear the event register and error queue'''
-        command = self.ClearStatusStr()
-        yield self.ser.write(command)
-
-    
-    @setting(101, "GetStatusByte", returns = 's')
-    def GetStatusByte(self, c):
-        '''Return the status byte. Especially useful is the error queue bit (7)
-        which is 1 if there are errors in the error event queue and 0 otherwise.
-        This can be reset with Clear().'''
-        command = self.StatusByteReqStr()
-        yield self.ser.write(command)
-        yield self.ForceRead()
-        response = yield self.ser.readline()
-        try:
-            bits = bin(int(response))[2:]
-            statusbyte = '0'*(8-len(bits)) + bits
-        except ValueError:
-            statusbyte = 'buffernotcleared'
-        returnValue(statusbyte)
-    
-    @setting(102, "Reset", returns = '')
-    def Reset(self, c):
-        '''Resets to factory settings'''
-        self._Reset()
-
-    #@setting(1000, "GetState", returns = 's')
-    #def GetState(self, c):
-        #command = self.CarrierStateReqStr()
-        #yield self.ser.write(command)
-        #yield self.ForceRead() # expect a reply from instrument
-        #response = yield self.ser.readline()
-        #returnValue(response)
 
     # ++++++++++++++++++++++++++
     # ===== HIDDEN METHODS =====
     # ++++++++++++++++++++++++++
 
-    # ===== META =====
-
-    @inlineCallbacks
-    def _Reset(self):
-        command = self.ResetStr()
-        yield self.ser.write(command)
-        yield self.ForceRead()
-        self.marDict['carrier_state'] = True
-        self.marDict['power'] = -137
-        self.marDict['freq'] = 2400
-
-    # ===== PROLOGIX =====
-
-    @inlineCallbacks
-    def SetControllerMode(self, mode):
-        command = self.SetModeStr(mode)
-        yield self.ser.write(command)
-
-    @inlineCallbacks
-    def SetControllerWait(self, status):
-        command = self.WaitRespStr(status)
-        yield self.ser.write(command)
-
-    @inlineCallbacks
-    def SetEOIState(self, state):
-        command = self.EOIStateStr(state)
-        yield self.ser.write(command)
-
-    @inlineCallbacks
-    def ForceRead(self):
-        command = self.ForceReadStr()
-        yield self.ser.write(command)
-    
     # ===== BASIC =====
 
     @inlineCallbacks
-    def _GetCarrierState(self):
-        command = self.CarrierStateReqStr()
+    def _Identify(self):
+        '''Ask instrument to identify itself'''
+        command = self.IdenStr()
         yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
-        response = yield self.ser.readline()
-        returnValue(response)
-    
-    def parseState(self, msg):
-        #if msg == '':
-        #    raise Exception("State response is ''")
-        #state_str =  msg.split(':')[1]
-        state_str = 'ON'
-        if state_str == 'ON':
-            state = True
-        else:
-            state = False
-        return state
+        yield self._ForceRead()
+        answer = yield self.ser.readline()
+        returnValue(answer[:-1])
 
     @inlineCallbacks
-    def _GetFreq(self):
-        command = self.FreqReqStr()
-        yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
-        response = yield self.ser.readline()
-        returnValue(response)
-    
-    def parseFreq(self, msg):
-        #if msg == '':
-        #    raise Exception("Frequency response is ''")
-        #freq = float(msg.split(';')[0].split()[1]) / 10**6 # freq is in MHz
-        freq = 1
-        return freq
-    
-    @inlineCallbacks
-    def _GetPower(self):
-        command = self.PowerReqStr()
-        yield self.ser.write(command)
-        yield self.ForceRead() # expect a reply from instrument
-        response = yield self.ser.readline()
-        returnValue(response)
-    
-    def parsePower(self, msg):
-        #if msg == '':
-        #    raise Exception("Frequency response is ''")
-        #amplitude = float(msg.split(';')[2].split()[1])
-        amplitude = 1
-        return amplitude
+    def _CarrierOnOff(self, state=None):
+        '''Get or set the on/off state of the CW signal'''
+        if state is not None:
+            command = self.CarrierStateSetStr(state)
+            yield self.ser.write(command)
+            self.marDict['on_off'] = state
+        returnValue(self.marDict['on_off'])
 
+    @inlineCallbacks
+    def _Amplitude(self, level=None):
+        '''Sets power level, enter power in dBm'''
+        if level is not None:
+            checkedLevel = self.checkPower(level)
+            command = self.PowerSetStr(checkedLevel)
+            yield self.ser.write(command)
+            self.marDict['power'] = checkedLevel
+        returnValue(self.marDict['power'])
+    
     def checkPower(self, level):
-        MIN, MAX = self.marDict['power_range']
-        if not MIN <= level <= MAX:
-            raise Exception('Power out of allowed range')
+        if level < marDict['power_min']:
+            print "*** WARNING: attempt to set power below minimum value."
+            print "*** WARNING: setting to minimum value instead."
+            return marDict['power_min']
+        else if level > marDict['power_max']:
+            print "*** WARNING: attempt to set power above maximum value."
+            print "*** WARNING: setting to maximum value instad."
+            return marDict['power_max']
+        return level
+
+    @inlineCallbacks
+    def _Frequency(self, freq=None):
+        '''Get or set the CW frequency (MHz)'''
+        if freq is not None:
+            checkedFreq = self.checkFreq(freq)
+            command = self.FreqSetStr(checkedFreq)
+            yield self.ser.write(command)
+            self.marDict['freq'] = checkedFreq
+        returnValue(self.marDict['freq'])
 
     def checkFreq(self, freq):
-        MIN, MAX = self.marDict['freq_range']
-        if not MIN <= freq <= MAX:
-            raise Exception('Frequency out of allowed range')
+        if freq < marDict['freq_min']:
+            print "*** WARNING: attempt to set frequency below minimum value."
+            print "*** WARNING: setting to minimum value instead."
+            return marDict['freq_min']
+        else if freq > marDict['freq_max']:
+            print "*** WARNING: attempt to set frequency above maximum value."
+            print "*** WARNING: setting to maximum value instad."
+            return marDict['freq_max']
+        return freq
 
     # ===== SWEEP =====
 
-    def _Default_Sweep_Settings(self):
-        yield self._CarrierMode(mode="FIXED")
-
     @inlineCallbacks
     def _CarrierMode(self, mode=None):
+        '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
         if mode is not None:
+            if mode not in ('FIXED', 'SWEPT'):
+                raise ValueError("Carrier mode must be 'FIXED', or 'SWEPT'")
             command = self.CarrierModeSetStr(mode)
             yield self.ser.write(command)
             self.marDict['carrier_mode'] = mode
         returnValue(self.marDict['carrier_mode'])
-        
+    
+    class SweepRangeException(Exception):
+        '''Raise when start frequency is greater than or equal to stop
+        frequency. Contains information about whether the user attempted
+        to set the start above stop, or stop below start. This is encoded in
+        the wasUpdating field, which should use the values START and STOP.'''
 
+        def __init__(self, wasUpdating, msg=None):
+            super(SweepRangeException, self).__init__(msg)
+            wasUpdating = wasUpdating
+
+    @inlineCallbacks
+    def _SweepRangeStart(self, start=None):
+        '''Get or set the starting point for carrier frequency sweeps (MHZ).
+        Car raise SweepRangeException(START)'''
+        if start is not None:
+            #self.checkCarrierMode()
+            checkedStart = self.checkFreq(start)
+            if checkedStart >= self.marDict['sweep_range_stop']:
+                raise SweepRangeException(START, "Sweep start frequency cannot"\
+                                            + "be greater than stop frequency")
+            command = self.SweepStartSetStr(checkedStart)
+            yield self.ser.write(command)
+            self.marDict['sweep_range_start'] = checkedStart
+        returnValue(self.marDict['sweep_range_start'])
+
+    @inlineCallbacks
+    def _SweepRangeStop(self, stop=None):
+        '''Get or set the stoping point for carrier frequency sweeps (MHZ).
+        Car raise SweepRangeException(STOP)'''
+        if stop is not None:
+            #self.checkCarrierMode()
+            checkedStop = self.checkFreq(stop)
+            if checkedStop <= self.marDict['sweep_range_start']:
+                raise SweepRangeException(STOP, "Sweep stop frequency cannot"\
+                                            + "be smaller than start frequency")
+            command = self.SweepStartSetStr(checkedStop)
+            yield self.ser.write(command)
+            self.marDict['sweep_range_stop'] = checkedStop
+        returnValue(self.marDict['sweep_range_stop'])
+
+    @inlineCallbacks
+    def _SweepStep(self, step=None):
+        '''Get or set the sweep step (MHz)'''
+        if step is not None:
+            #self.checkCarrierMode()
+            command = self.SweepStepSetStr(step)
+            yield self.ser.write(command)
+            self.marDict['sweep_step'] = step
+        returnValue(self.marDict['sweep_step'])
+
+    @inelineCallbacks
+    def _SweepTime(self, time=None):
+        '''Get or set the time to complete one sweep step (ms)'''
+        if time is not None:
+            #self.checkCarrierMode()
+            command = self.SweepTimeSetStr(time)
+            yield self.ser.write(command)
+            self.marDict['sweep_time'] = time
+        returnValue(self.marDict['sweep_time'])
+
+    @inelineCallbacks
+    def _SweepMode(self, mode=None):
+        '''Get or set the sweep mode to single (SNGL) or continuous (CONT)'''
+        if mode is not None:
+            #self.checkCarrierMode()
+            command = self.SweepModeSetStr(mode)
+            yield self.ser.write(command)
+            self.marDict['sweep_mode'] = mode
+        returnValue(self.marDict['sweep_mode'])
+
+    @inelineCallbacks
+    def _SweepShape(self, shape=None):
+        '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
+        if shape is not None:
+            #self.checkCarrierMode()
+            command = self.SweepShapeSetStr(shape)
+            yield self.ser.write(command)
+            self.marDict['sweep_shape'] = shape
+        returnValue(self.marDict['sweep_shape'])
+
+    @inelineCallbacks
+    def _SweepTrigMode(self, trig_mode=None):
+        '''Get or set the external trigger mode.
+        Options are: OFF, START, STARTSTOP, STEP'''
+        if trig_mode is not None:
+            #self.checkCarrierMode()
+            command = self.SweepTrigModeSetStr(trig_mode)
+            yield self.ser.write(command)
+            self.marDict['trig_mode'] = trig_mode
+        returnValue(self.marDict['trig_mode'])
+
+    class CarrierModeException(Exception):
+        '''Raised when attempting to access sweep functionality while
+        CarrierMode is 'FIXED'. Contains the current CarrierMode as the
+        field 'currentMode'.'''
+
+        def __init__(self, msg=None):
+            super(CarrierModeException, self).__init__(msg)
+            currentMode = marDict['carrier_mode']
+
+    def checkCarrierMode(self):
+        '''Throws a CarrierModeException if the carrier mode is not 'SWEPT'.
+        Carrier mode must be swept before other sweep methods are used.'''
+        if self.marDict['carrier_mode'] != 'SWEPT':
+            raise CarrierModeException("Carrier mode is not 'SWEPT'")
+
+    @inelineCallbacks
+    def _SweepBegin(self):
+        '''Start a sweep'''
+        self.checkCarrierMode()
+        command = self.SweepBeginStr()
+        yield self.ser.write(command)
+
+    @inelineCallbacks
+    def _SweepPause(self):
+        '''Pause the current sweep'''
+        self.checkCarrierMode()
+        command = self.SweepPauseStr()
+        yield self.ser.write(command)
+
+    @inelineCallbacks
+    def _SweepContinue(self):
+        '''Continue the currently paused sweep'''
+        self.checkCarrierMode()
+        command = self.SweepContinueStr()
+        yield self.ser.write(command)
+
+    @inelineCallbacks
+    def _SweepReset(self):
+        '''Reset the current sweep to the start frequency'''
+        self.checkCarrierMode()
+        command = self.SweepResetStr()
+        yield self.ser.write(command)
+
+    # ===== META =====
+
+    
+
+    # ===== PROLOGIX =====
+
+    @inlineCallbacks
+    def _ForceRead(self):
+        command = self.ForceReadStr()
+        yield self.ser.write(command)
+
+    @inlineCallbacks
+    def _SetControllerWait(self, status):
+        command = self.WaitRespStr(status)
+        yield self.ser.write(command)
+
+    @inlineCallbacks
+    def _SetEOIState(self, state):
+        command = self.EOIStateStr(state)
+        yield self.ser.write(command)
+
+    @inlineCallbacks
+    def _SetAddr(self):
+        command = self.SetAddrStr(self.gpibaddr)
+        yield self.ser.write(command)
 
 
     # ++++++++++++++++++++++++++++++++
     # ===== MARCONI STR MESSAGES =====
     # ++++++++++++++++++++++++++++++++
 
-    # ===== META =====
+    # ===== BASIC =====
     
     def IdenStr(self):
         '''String to request machine to identify itself'''
         return '*IDN?' + '\n'
- 
-    def ClearStatusStr(self):
-        '''String to clear the event register and error queue'''
-        return '*CLS' + '\n'
 
-    def StatusByteReqStr(self):
-        '''String to request the status byte'''
-        return '*STB?' + '\n'
+    def CarrierOnOffReqStr(self):
+        '''String to request carrier on/off state'''
+        return 'RFLV?' + '\n'
 
-    def ResetStr(self):
-        '''String to reset to factory settings'''
-        return '*RST' + '\n'
+    def CarrierOnOffSetStr(self, state):
+        '''String to set carrier state on/off. True (ON) or False (OFF)'''
+        if state:
+            return 'RFLV:ON' + '\n'
+        else:
+            return 'RFLV:OFF' + '\n'
+     
+    def PowerReqStr(self):
+        '''String to request current power'''
+        return 'RFLV?' + '\n'
 
-    # ===== BASIC =====
+    def PowerSetStr(self, pwr):
+        '''String to set power (in dBm)'''
+        return 'RFLV:Value ' + str(pwr) + ' DBM' + '\n'
 
     def FreqReqStr(self):
         '''String to request current frequency'''
@@ -507,30 +486,8 @@ class MarconiServer(SerialDeviceServer):
     def FreqSetStr(self,freq):
         '''String to set freq (in MHZ)'''
         return 'CFRQ:Value ' + str(freq) + 'MHZ' + '\n'
-         
-    def CarrierStateReqStr(self):
-        '''String to request carrier on/off state'''
-        return 'RFLV?' + '\n'
 
-    def CarrierStateSetStr(self, state):
-        '''String to set carrier state on/off'''
-        if state:
-            return 'RFLV:ON' + '\n'
-        else:
-            return 'RFLV:OFF' + '\n'
 
-    def PowerReqStr(self):
-        '''String to request current power'''
-        return 'RFLV?' + '\n'
-
-    def PowerSetStr(self,pwr):
-        '''String to set power (in dBm)'''
-        return 'RFLV:Value ' +str(pwr) + ' DBM' + '\n'
-
-    #def PowerUnitsSetStr(self, units='DBM'):
-            #'''String to set power units (defaults to dBM)'''
-            #return 'RFLV:UNITS ' + '\n' + units
-    
     # ===== SWEEP =====
     
     def CarrierModeSetStr(self, mode):
@@ -575,7 +532,7 @@ class MarconiServer(SerialDeviceServer):
         as described in the Marconi Manual'''
         trig_mode = trig_mode.upper()
         if not trig_mode in ('OFF', 'START', 'STARTSTOP', 'STEP'):
-            raise ValueError("Sweep trigger mode is "\
+            raise ValueError("Sweep trigger mode must be one of: "\
                             "'OFF', 'START', 'STARTSTOP', or 'STEP'")
         return 'SWEEP:TRIG ' + trig_mode + '\n'
 
@@ -613,11 +570,6 @@ class MarconiServer(SerialDeviceServer):
     def SetAddrStr(self, addr):
         '''String to set addressing of prologix'''
         return '++addr ' +  str(addr) + '\n'
-
-    def SetModeStr(self, mode): ## unused
-        '''String to set prologix to CONTROLLER (1), or DEVICE (0) mode'''
-        return '++mode ' + str(mode) + '\n'
-
 
 if __name__ == "__main__":
     from labrad import util
