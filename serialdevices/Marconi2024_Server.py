@@ -289,15 +289,15 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['carrier_mode'] = mode
         returnValue(self.marDict['carrier_mode'])
     
-    class SweepRangeException(Exception):
-        '''Raise when start frequency is greater than or equal to stop
-        frequency. Contains information about whether the user attempted
-        to set the start above stop, or stop below start. This is encoded in
-        the wasUpdating field, which should use the values START and STOP.'''
+    #class SweepRangeException(Exception):
+        #'''Raise when start frequency is greater than or equal to stop
+        #frequency. Contains information about whether the user attempted
+        #to set the start above stop, or stop below start. This is encoded in
+        #the wasUpdating field, which should use the values START and STOP.'''
 
-        def __init__(self, wasUpdating, msg=None):
-            super(SweepRangeException, self).__init__(msg)
-            wasUpdating = wasUpdating
+        #def __init__(self, wasUpdating, msg=None):
+            #super(SweepRangeException, self).__init__(msg)
+            #wasUpdating = wasUpdating
 
     @inlineCallbacks
     def _SweepRangeStart(self, start=None):
@@ -306,9 +306,9 @@ class MarconiServer(SerialDeviceServer):
         if start is not None:
             #self.checkCarrierMode()
             checkedStart = self.checkFreq(start)
-            if checkedStart >= self.marDict['sweep_range_stop']:
-                raise SweepRangeException(START, "Sweep start frequency cannot"\
-                                            + "be greater than stop frequency")
+            #if checkedStart > self.marDict['sweep_range_stop']:
+                #raise SweepRangeException(START, "Sweep start frequency cannot"\
+                                            #+ "be greater than stop frequency")
             command = self.SweepStartSetStr(checkedStart)
             yield self.ser.write(command)
             self.marDict['sweep_range_start'] = checkedStart
@@ -321,9 +321,9 @@ class MarconiServer(SerialDeviceServer):
         if stop is not None:
             #self.checkCarrierMode()
             checkedStop = self.checkFreq(stop)
-            if checkedStop <= self.marDict['sweep_range_start']:
-                raise SweepRangeException(STOP, "Sweep stop frequency cannot"\
-                                            + "be smaller than start frequency")
+            #if checkedStop < self.marDict['sweep_range_start']:
+                #raise SweepRangeException(STOP, "Sweep stop frequency cannot"\
+                                            #+ "be smaller than start frequency")
             command = self.SweepStartSetStr(checkedStop)
             yield self.ser.write(command)
             self.marDict['sweep_range_stop'] = checkedStop
