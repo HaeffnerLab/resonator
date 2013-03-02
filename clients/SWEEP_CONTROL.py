@@ -91,7 +91,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     #@inlineCallbacks
     def update(self):
-        '''Sets the initial values of controls based on server's records'''
+        '''Updates values of controls based on server's records'''
         # Should assume everything is FIXED to begin with
 
         # == LEFT OUT FOR TESTING ==
@@ -117,27 +117,24 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     def makeCarrierModeButton(self):
         carrierModeButton = QtGui.QPushButton()
-        carrierModeButton.setText('FIXED')
-        carrierModeButton.state = 'FIXED'
+        carrierModeButton.setText('Unknown')
         
         @inlineCallbacks
-        def onCarrierModeChange(state): # does this need other parameters?
+        def onCarrierModeChange(_): # does this need other parameters?
             print "CarrierMode state is: ", state
-            if carrierModeButton.state == 'SWEPT':
+            if self.server.CarrierMode() == 'SWEPT':
                 carrierModeButton.setText('FIXED') # set to fixed
                 yield self.server.CarrierMode('FIXED')
-                carrierModeButton.state = 'FIXED'
             else:
                 carrierModeButton.setText('SWEPT') # set to swept
                 yield self.server.CarrierMode('SWEPT')
-                carrierModeButton.state = 'SWEPT'
 
         carrierModeButton.clicked.connect(onCarrierModeChange)
         return carrierModeButton
 
-
     def makeSweepTrigModeToggle(self):
         sweepTrigModeToggle = QtGui.QPushButton()
+        sweepTrigModeToggle.setText("Trig Mode, N/A")
         # needs a menu
 
         @inlineCallbacks
@@ -145,7 +142,6 @@ class SWEEP_WIDGET(QtGui.QWidget):
             pass
 
         return sweepTrigModeToggle
-
 
     def makeSweepRangeStartCtrl(self):
         sweepRangeStartCtrl = QtGui.QDoubleSpinBox()
@@ -155,16 +151,10 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepRangeStartChange(start):
-            try:
-                yield self.server.SweepRangeStart(start) # could this be just value instead?
-            except ValueError:
-                # this might occur if one attempt to set start > stop freq
-                stop = yield self.server.SweepRangeStop()
-                sweepRangeStartCtrl.setValue(stop)
+            yield self.server.SweepRangeStart(start)
 
         sweepRangeStartCtrl.valueChanged.connect(onSweepRangeStartChange)
         return sweepRangeStartCtrl
-
 
     def makeSweepRangeStopCtrl(self):
         sweepRangeStopCtrl = QtGui.QDoubleSpinBox()
@@ -174,22 +164,22 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepRangeStopChange(stop):
-            try:
-                yield self.server.SweepRangeStop(stop) # could this be just value instead?
-            except ValuerError:
-                # this might occur if one attempt to set stop < start freq
-                stop = yield self.server.SweepRangeStop()
-                sweepRangeStopCtrl.setValue(stop)
+            yield self.server.SweepRangeStop(stop)
 
         sweepRangeStopCtrl.valueChanged.connect(onSweepRangeStopChange)
         return sweepRangeStopCtrl
-
 
     def makeSweepStepCtrl(self):
         sweepStepCtrl = QtGui.QDoubleSpinBox()
         sweepStepCtrl.setRange(TIME_MIN, TIME_MAX)
         sweepStepCtrl.setDecimals(1)
         sweepStepCtrl.setSingleStep(SWEEP_TIME_STEP)
+
+        @inlineCallbacks
+        def onSweepStepCtrlChange(step):
+            yield self.server.SweepStep(step)
+
+        sweepStepCtrl.valueChanged.connect(onSweepStepCtrlChange)
         return sweepStepCtrl
 
     def makeSweepTimeCtrl(self):
@@ -197,26 +187,56 @@ class SWEEP_WIDGET(QtGui.QWidget):
         sweepTimeCtrl.setRange(TIME_MIN, TIME_MAX)
         sweepTimeCtrl.setDecimals(1)
         sweepTimeCtrl.setSingleStep(SWEEP_STEP_STEP)
+
+        @inelineCallbacks
+        def onSweepTimeCtrlChange(time):
+            yield self.server.SweepTime(time)
+
+        sweepTimeCtrl.valueChanged.connect(onSweepTimeCtrlChange)
         return sweepTimeCtrl
 
     def makeSweepBeginButton(self):
         sweepBeginButton = QtGui.QPushButton()
         sweepBeginButton.setText("Start")
+
+        @inlineCallbacks
+        def onSweepBeginButtonChange(_):
+            yield self.server.SweepBegin()
+        
+        sweepBeginButton.clicked.connect(onSweepBeginButtonChange)
         return sweepBeginButton
 
     def makeSweepPauseButton(self):
         sweepPauseButton = QtGui.QPushButton()
         sweepPauseButton.setText("Pause")
+
+        @inlineCallbacks
+        def onSweepPauseButton(_):
+            yield self.server.SweepPause()
+
+        sweepPauseButton.clicked.connect(onSweepPauseButton)
         return sweepPauseButton
 
     def makeSweepContinueButton(self):
         sweepContinueButton = QtGui.QPushButton()
         sweepContinueButton.setText("Continue")
+
+        @inlineCallbacks
+        def onSweepContinueButton(_):
+            yield self.server.SweepContinue()
+
+        sweepContinueButton.clicked.connect(onSweepContinueButton)
         return sweepContinueButton
 
     def makeSweepResetButton(self):
         sweepResetButton = QtGui.QPushButton()
         sweepResetButton.setText("Reset")
+
+        @inlineCallbacks
+        def onSweepResetButton(_):
+            yield self.server.SweepReset()
+
+        sweepResetButton.clicked.connect(onSweepResetButton)
         return sweepResetButton
 
 
