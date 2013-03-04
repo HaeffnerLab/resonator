@@ -4,3 +4,5 @@
 .project
 .pydevproject
 twistd.pid
+
+*.DS_Store
