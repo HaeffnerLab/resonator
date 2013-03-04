@@ -1,7 +1,7 @@
 import labrad
 import numpy
 import time
-import voltage_conversion as cF
+import voltage_conversion as vc
 
 cxn = labrad.connect()
 kdmm = cxn.Keithley_2100 _DMM()
