@@ -10,17 +10,17 @@ kdmm = cxn.Keithley_2100 _DMM()
 
 filename='c:/data_resonator/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
 numpy.savetxt(filename,time.strftime("%H%M"),voltage,tempK)
+f.open(filename,"w")
 
 while(1):
-    voltage=[]
-    tempK=[]
+    optstr=""
     voltage_array = kdmm.getdcVolts().asarray
-    #voltage.append(kdmm.getdcVolts())
-    tempK_array= cF.converter(kdmm.getdcVolts()).asarray
-    #tempK.append(cF.converter(kdmm.getdcVolts())
+    tempK_array= vc.converter(kdmm.getdcVolts()).asarray
+    optstr+= str(time.strftime("%H%M")) + " "
+    optstr+= str(kdmm.getdcVolts()) + " "
+    oprstr+=str(vc.converter(kdmm.getdcVolts()))+"\n"
     #time.sleep(60)
     
-f.open(filename,"w")
-f.write("%d%m%Y_%H%M",voltage_array,tempK_array)
+f.write(oprstr)
 f.close()
     
