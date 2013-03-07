@@ -27,8 +27,10 @@ class SWEEP_WIDGET(QtGui.QWidget):
     def connect(self):
         from labrad.wrappers import connectAsync
 
+        print "***********************************************************"
         self.cxn = yield connectAsync()                     # '192.168.169.30'
         self.server = yield self.cxn.marconi_server
+        print "HELLO!"
         
         ## if have more than one marconi connecting to marconi server
         ## it may be necessary to specify the serial port or GPIB
@@ -95,19 +97,18 @@ class SWEEP_WIDGET(QtGui.QWidget):
         # Should assume everything is FIXED to begin with
 
         # == LEFT OUT FOR TESTING ==
-        #CarrierModeState = self.server.CarrierMode()
-        #if CarrierModeState == "FIXED":
-            #self.carrierModeButton.state = "FIXED"
-        #elif CarrierModeState == "SWEPT":
-            #state = False
-        #else:
-            #raise ValueError("Carrier mode not defined")
+        CarrierModeState = self.server.CarrierMode()
+        if CarrierModeState == "FIXED":
+            self.carrierModeButton.setText("FIXED")
+        elif CarrierModeState == "SWEPT":
+            self.carrierModeButton.setText("SWEPT")
+        else:
+            raise ValueError("Carrier mode not defined")
         #self.sweepTrigModeToggle.setValue(...) # query server and convert ans
-        #self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
-        #self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
-        #self.sweepStepCtrl.setValue(self.server.SweepStep())
-        #self.sweepTimeCtrl.setValue(self.server.SweepTime())
-        pass
+        self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
+        self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
+        self.sweepStepCtrl.setValue(self.server.SweepStep())
+        self.sweepTimeCtrl.setValue(self.server.SweepTime())
 
 
     # +++++++++++++++++++++++++++++++++
@@ -121,7 +122,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         
         @inlineCallbacks
         def onCarrierModeChange(_): # does this need other parameters?
-            print "CarrierMode state is: ", state
+            print "CarrierMode state is: ", _
             if self.server.CarrierMode() == 'SWEPT':
                 carrierModeButton.setText('FIXED') # set to fixed
                 yield self.server.CarrierMode('FIXED')
@@ -188,7 +189,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         sweepTimeCtrl.setDecimals(1)
         sweepTimeCtrl.setSingleStep(SWEEP_STEP_STEP)
 
-        @inelineCallbacks
+        @inlineCallbacks
         def onSweepTimeCtrlChange(time):
             yield self.server.SweepTime(time)
 
