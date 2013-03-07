@@ -18,8 +18,8 @@
 #### END NODE INFO
 #"""
 
-from serialdeviceserver import SerialDeciveServer
-from serialdeviceserver import SerialDeciveError, SerialConnectionError
+from serialdeviceserver import SerialDeviceServer
+from serialdeviceserver import SerialDeviceError, SerialConnectionError
 from serialdeviceserver import setting, inlineCallbacks
 from twisted.internet.defer import returnValue
 
@@ -107,17 +107,17 @@ class MarconiServer(SerialDeviceServer):
         self.marDict = d
     
     def SetInitialValues(self):
-        _CarrierOnOff(ON_OFF)
-        _Amplitude(AMP)
-        _Frequency(FREQ)
-        _CarrierMode(CARRIER_MODE)
-        _SweepRangeStart(SWEEP_RANGE_START)
-        _SweepRangeStop(SWEEP_RANGE_STOP)
-        _SweepStep(SWEEP_STEP)
-        _SweepTime(SWEEP_TIME)
-        _SweepMode(SWEEP_MODE)
-        _SweepShape(SWEEP_SHAPE)
-        _SweepTrigMode(SWEEP_TRIG_MODE)
+        self._CarrierOnOff(ON_OFF)
+        self._Amplitude(AMP)
+        self._Frequency(FREQ)
+        self._CarrierMode(CARRIER_MODE)
+        self._SweepRangeStart(SWEEP_RANGE_START)
+        self._SweepRangeStop(SWEEP_RANGE_STOP)
+        self._SweepStep(SWEEP_STEP)
+        self._SweepTime(SWEEP_TIME)
+        self._SweepMode(SWEEP_MODE)
+        self._SweepShape(SWEEP_SHAPE)
+        self._SweepTrigMode(SWEEP_TRIG_MODE)
 
     # +++++++++++++++++++++++++++
     # ===== BASIC SETTINGS ======
@@ -126,22 +126,22 @@ class MarconiServer(SerialDeviceServer):
     @setting(10, "Identify", returns = 's')
     def Identify(self, c):
         '''Ask instrument to identify itself'''
-        return _Identify()
+        return self._Identify()
 
     @setting(11, "CarrierOnOff", state = 'b', returns = 'b')
     def CarrierOnOff(self, c, state=None):
         '''Get or set the on/off state of the CW signal'''       
-        return _CarrierOnOff(state)
+        return self._CarrierOnOff(state)
 
     @setting(12, "Amplitude", level = 'v', returns = "v")
     def Amplitude(self, c, level=None):
         '''Get or set the power level (dBm)'''
-        return _Amplitude(level)
+        return self._Amplitude(level)
     
     @setting(13, "Frequency", freq = 'v', returns='v')
     def Frequency(self, c, freq=None):
         '''Get or set the CW frequency (MHz)'''
-        return _Frequency(freq)
+        return self._Frequency(freq)
         
 
     # ++++++++++++++++++++++++++++
@@ -151,63 +151,63 @@ class MarconiServer(SerialDeviceServer):
     @setting(20, "CarrierMode", mode = 's', returns = 's') # or 's'
     def CarrierMode(self, c, mode=None):
         '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
-        return _CarrierMode(mode)
+        return self._CarrierMode(mode)
 
     @setting(21, "SweepRangeStart", start = 'v', returns = 'v')
     def SweepRangeStart(self, c, start=None):
         '''Get or set the starting point for carrier frequency sweeps (MHZ)'''
-        return _SweeoRangeStart(start)
+        return self._SweeoRangeStart(start)
 
     @setting(22, "SweepRangeStop", stop = 'v', returns = 'v')
     def SweepRangeStop(self, c, stop=None):
         '''Get or set the ending point for carrier frequency sweeps (MHZ)'''
-        return _SweepRangeStop(stop)
+        return self._SweepRangeStop(stop)
 
     @setting(23, "SweepStep", step = 'v', returns = 'v')
     def SweepStep(self, c, step=None):
         '''Get or set the sweep step (MHZ)'''
-        return _SweepStep(step)
+        return self._SweepStep(step)
 
     @setting(24, "SweepTime", time = 'v', returns = 'v')
     def SweepTime(self, c, time=None):
         '''Get or set the time to complete one sweep step (ms)'''
-        return _SweepTime(time)
+        return self._SweepTime(time)
 
     @setting(25, "SweepMode", mode = 's', returns = 's')
     def SweepMode(self, c, mode=None):
         '''Get or set the sweep mode to single shot (SNGL) or continuous (CONT)'''
-        return _SweepMode(mode)
+        return self._SweepMode(mode)
 
     @setting(26, "SweepShape", shape = 's', returns = 's')
     def SweepShape(self, c, shape=None):
         '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
-        return _SweepShape(shape)
+        return self._SweepShape(shape)
 
     @setting(27, "SweepTrigMode", trig_mode = 's', returns = 's')
     def SweepTrigMode(self, c, trig_mode=None):
         '''Get or set the external trigger mode.
         Options are: OFF, START, STARTSTOP, STEP'''
-        return _SweepTrigMode(trig_mode)
+        return self._SweepTrigMode(trig_mode)
 
     @setting(30, "SweepBegin", returns = '')
     def SweepBegin(self, c):
         '''Start a sweep'''
-        return _SweeoBegin()
+        return self._SweepBegin()
 
     @setting(31, "SweepPause", returns = '')
     def SweepPause(self, c):
         '''Pause the current sweep'''
-        return _SweepPause()
+        return self._SweepPause()
 
     @setting(32, "SweepContinue", returns = '')
     def SweepContinue(self, c):
         '''Continue the currently paused sweep'''
-        return _SweepContinue()
+        return self._SweepContinue()
 
     @setting(33, "SweepReset", returns = '')
     def SweepReset(self, c):
         '''Reset the current sweep to the start frequency'''
-        return _SweepReset()
+        return self._SweepReset()
 
 
     # ++++++++++++++++++++++++++
@@ -229,7 +229,7 @@ class MarconiServer(SerialDeviceServer):
     def _CarrierOnOff(self, state=None):
         '''Get or set the on/off state of the CW signal'''
         if state is not None:
-            command = self.CarrierStateSetStr(state)
+            command = self.CarrierOnOffSetStr(state)
             yield self.ser.write(command)
             self.marDict['on_off'] = state
         returnValue(self.marDict['on_off'])
@@ -245,14 +245,14 @@ class MarconiServer(SerialDeviceServer):
         returnValue(self.marDict['power'])
     
     def checkPower(self, level):
-        if level < marDict['power_min']:
+        if level < self.marDict['power_min']:
             print "*** WARNING: attempt to set power below minimum value."
             print "*** WARNING: setting to minimum value instead."
-            return marDict['power_min']
-        else if level > marDict['power_max']:
+            return self.marDict['power_min']
+        elif level > self.marDict['power_max']:
             print "*** WARNING: attempt to set power above maximum value."
             print "*** WARNING: setting to maximum value instad."
-            return marDict['power_max']
+            return self.marDict['power_max']
         return level
 
     @inlineCallbacks
@@ -266,14 +266,14 @@ class MarconiServer(SerialDeviceServer):
         returnValue(self.marDict['freq'])
 
     def checkFreq(self, freq):
-        if freq < marDict['freq_min']:
+        if freq < self.marDict['freq_min']:
             print "*** WARNING: attempt to set frequency below minimum value."
             print "*** WARNING: setting to minimum value instead."
-            return marDict['freq_min']
-        else if freq > marDict['freq_max']:
+            return self.marDict['freq_min']
+        elif freq > self.marDict['freq_max']:
             print "*** WARNING: attempt to set frequency above maximum value."
             print "*** WARNING: setting to maximum value instad."
-            return marDict['freq_max']
+            return self.marDict['freq_max']
         return freq
 
     # ===== SWEEP =====
@@ -339,7 +339,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['sweep_step'] = step
         returnValue(self.marDict['sweep_step'])
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepTime(self, time=None):
         '''Get or set the time to complete one sweep step (ms)'''
         if time is not None:
@@ -349,7 +349,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['sweep_time'] = time
         returnValue(self.marDict['sweep_time'])
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepMode(self, mode=None):
         '''Get or set the sweep mode to single (SNGL) or continuous (CONT)'''
         if mode is not None:
@@ -359,7 +359,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['sweep_mode'] = mode
         returnValue(self.marDict['sweep_mode'])
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepShape(self, shape=None):
         '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
         if shape is not None:
@@ -369,7 +369,7 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['sweep_shape'] = shape
         returnValue(self.marDict['sweep_shape'])
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepTrigMode(self, trig_mode=None):
         '''Get or set the external trigger mode.
         Options are: OFF, START, STARTSTOP, STEP'''
@@ -387,7 +387,7 @@ class MarconiServer(SerialDeviceServer):
 
         def __init__(self, msg=None):
             super(CarrierModeException, self).__init__(msg)
-            currentMode = marDict['carrier_mode']
+            currentMode = self.marDict['carrier_mode']
 
     def checkCarrierMode(self):
         '''Throws a CarrierModeException if the carrier mode is not 'SWEPT'.
@@ -395,28 +395,28 @@ class MarconiServer(SerialDeviceServer):
         if self.marDict['carrier_mode'] != 'SWEPT':
             raise CarrierModeException("Carrier mode is not 'SWEPT'")
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepBegin(self):
         '''Start a sweep'''
         self.checkCarrierMode()
         command = self.SweepBeginStr()
         yield self.ser.write(command)
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepPause(self):
         '''Pause the current sweep'''
         self.checkCarrierMode()
         command = self.SweepPauseStr()
         yield self.ser.write(command)
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepContinue(self):
         '''Continue the currently paused sweep'''
         self.checkCarrierMode()
         command = self.SweepContinueStr()
         yield self.ser.write(command)
 
-    @inelineCallbacks
+    @inlineCallbacks
     def _SweepReset(self):
         '''Reset the current sweep to the start frequency'''
         self.checkCarrierMode()
