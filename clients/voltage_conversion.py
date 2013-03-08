@@ -13,7 +13,6 @@ class voltage_conversion:
     
     def conversion(self,voltage):
         #This is a conversion function:
-        #I
         
         #coeffecients
         #voltage from 1.333V-1.627V

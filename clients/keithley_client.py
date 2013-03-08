@@ -8,8 +8,6 @@ VC=voltage_conversion()
 cxn = labrad.connect()
 kdmm = cxn.Keithley_2100_DMM()
 
-
-
 filename='c:/data_resonator/Voltage_Temperature/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
 #numpy.savetxt(filename,time.strftime("%H%M"),voltage,tempK)
 fcsv=csv.writer(file(filename,"w"),lineterminator="\n")
