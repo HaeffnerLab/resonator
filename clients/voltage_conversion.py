@@ -12,7 +12,7 @@ class voltage_conversion:
         plt.show()
     
     def conversion(self,voltage):
-        #This is a conversion function:
+        #This is a conversion function: Convert voltage into Temperature in Kelvin
         
         #coeffecients
         #voltage from 1.333V-1.627V
