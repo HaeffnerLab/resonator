@@ -1,9 +1,5 @@
-import os
-
 from PyQt4 import QtGui
-from PyQt4 import QtCore,uic
 from twisted.internet.defer import inlineCallbacks, returnValue
-from Devices_config import Device_config
 
 
 MinPower = -36 #dbM
@@ -58,14 +54,7 @@ class TD(QtGui.QWidget):
         from labrad import types as T
         self.T = T
         self.cxn = yield connectAsync('192.168.169.30')
-        self.server = yield self.cxn.rohdeschwarz_server
-        self.SMAGPIB = Device_config.TD_SMA
-        try:
-            #yield self.server.select_device('GPIB Bus - USB0::0x0AAD::0x0054::102542')
-            yield self.server.select_device(self.SMAGPIB)
-        except Error:
-            self.setEnabled(False)
-            return
+        self.server = yield self.cxn.marconi_server
         self.update(0)
         self.powerCtrl.valueChanged.connect(self.onPowerChange)
         self.frequencyCtrl.valueChanged.connect(self.onFreqChange)
@@ -75,10 +64,10 @@ class TD(QtGui.QWidget):
     @inlineCallbacks
     def onOutputChange(self, state):
         if self.state:
-            self.stateButton.setText('Rohde&Schwarz: OFF')
+            self.stateButton.setText('Marconi: OFF')
             yield self.server.onoff(False)
         if not self.state:
-            self.stateButton.setText('Rohde&Schwarz: ON')
+            self.stateButton.setText('Marconi: ON')
             yield self.server.onoff(True)
         self.state = not self.state
 
@@ -87,22 +76,22 @@ class TD(QtGui.QWidget):
     def update(self, c):
         currentpower = yield self.server.amplitude()
         currentfreq = yield self.server.frequency()
-        currentstate = yield self.server.onoff()
+        currentstate = yield self.server.carrieronoff()
         self.powerCtrl.setValue(currentpower)
         self.frequencyCtrl.setValue(currentfreq)
         if currentstate:
-            self.stateButton.setText('Rohde&Schwarz: ON')
+            self.stateButton.setText('Marconi: ON')
         else:
-            self.stateButton.setText('Rohde&Schwarz: OFF')
+            self.stateButton.setText('Marconi: OFF')
         self.state = currentstate
         
     @inlineCallbacks
     def onFreqChange(self, f):
-        yield self.server.frequency(self.T.Value(self.frequencyCtrl.value(), 'MHz'))
+        yield self.server.frequency(f)
 
     @inlineCallbacks
     def onPowerChange(self, p):
-        yield self.server.amplitude(self.T.Value(self.powerCtrl.value(), 'dBm'))
+        yield self.server.amplitude(p)
     
     def closeEvent(self, x):
         self.reactor.stop()
