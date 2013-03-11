@@ -9,8 +9,9 @@ cxn = labrad.connect()
 kdmm = cxn.Keithley_2100_DMM()
 kdmm.select_device()
 
-filename='c:/data_resonator_voltage/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
-fcsv=csv.writer(file(filename,"w"),lineterminator="\n")
+filedirectly='c:/data_resonator_voltage/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
+filename=open(filedirectly,"wb")
+fcsv=csv.writer(filename,lineterminator="\n")
 t=time.strftime("%H%M")
 while(1):
     v=kdmm.getdcVolts()
