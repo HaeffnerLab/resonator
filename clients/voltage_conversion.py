@@ -2,7 +2,7 @@ import math
 import matplotlib.pyplot as plt
 
 
-class voltage_conversion:
+class voltage_conversion(object):
     #This class contains helper functions to convert input voltages into associated temperature in Kelvin
     
     def plot(self,x,y):
