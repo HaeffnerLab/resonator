@@ -20,5 +20,5 @@ while(1):
     voltage = kdmm.get_dc_volts()
     tempK=vc.conversion(voltage)
     fcsv.writerow([t,voltage,tempK])
-time.sleep(60)
+    time.sleep(60)
     
