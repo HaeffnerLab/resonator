@@ -19,18 +19,18 @@ class SWEEP_WIDGET(QtGui.QWidget):
     def __init__(self, reactor, parent=None):
         super(SWEEP_WIDGET, self).__init__(parent)
         self.reactor = reactor
-        self.connect()
         self.makeGui()
-        self.update()
+        self.connect()
 
     @inlineCallbacks
     def connect(self):
         from labrad.wrappers import connectAsync
 
-        print "***********************************************************"
+        print "**************************************************** CONNECT"
         self.cxn = yield connectAsync()                     # '192.168.169.30'
         self.server = yield self.cxn.marconi_server
-        print "HELLO!"
+        self.update()
+        print "**************************************************** CONNECT"
         
         ## if have more than one marconi connecting to marconi server
         ## it may be necessary to specify the serial port or GPIB
@@ -38,6 +38,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
 
     def makeGui(self):
+        print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& MAKE GUI"
         mainLayout = QtGui.QGridLayout()
         groupbox = QtGui.QGroupBox('Sweep Control (Marconi)')
         groupboxLayout = QtGui.QGridLayout()
@@ -89,15 +90,15 @@ class SWEEP_WIDGET(QtGui.QWidget):
         groupbox.setLayout(groupboxLayout) # set the groupboxLayout in the groupbox
         mainLayout.addWidget(groupbox) # put the groupbox in the mainLayout
         self.setLayout(mainLayout) # set this widget's main layout
+        print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& MAKE GUI"
 
 
     #@inlineCallbacks
     def update(self):
         '''Updates values of controls based on server's records'''
-        # Should assume everything is FIXED to begin with
-
-        # == LEFT OUT FOR TESTING ==
-        CarrierModeState = self.server.CarrierMode()
+        print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ UPDATE"
+        CarrierModeState = yield self.server.carriermode()
+        print CarrierModeState
         if CarrierModeState == "FIXED":
             self.carrierModeButton.setText("FIXED")
         elif CarrierModeState == "SWEPT":
@@ -109,6 +110,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
         self.sweepStepCtrl.setValue(self.server.SweepStep())
         self.sweepTimeCtrl.setValue(self.server.SweepTime())
+        print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ UPDATE"
 
 
     # +++++++++++++++++++++++++++++++++
