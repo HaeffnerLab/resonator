@@ -128,7 +128,7 @@ class MarconiServer(SerialDeviceServer):
         '''Ask instrument to identify itself'''
         return self._Identify()
 
-    @setting(11, "CarrierOnOff", state = 'b', returns = 'b')
+    @setting(11, "Carrier On Off", state = 'b', returns = 'b')
     def CarrierOnOff(self, c, state=None):
         '''Get or set the on/off state of the CW signal'''       
         return self._CarrierOnOff(state)
@@ -148,63 +148,63 @@ class MarconiServer(SerialDeviceServer):
     # ===== SWEEP SETTINGS  ======
     # ++++++++++++++++++++++++++++
 
-    @setting(20, "CarrierMode", mode = 's', returns = 's') # or 's'
+    @setting(20, "Carrier Mode", mode = 's', returns = 's') # or 's'
     def CarrierMode(self, c, mode=None):
         '''Get or set the carrier mode to 'FIXED' or 'SWEPT' '''
         return self._CarrierMode(mode)
 
-    @setting(21, "SweepRangeStart", start = 'v', returns = 'v')
+    @setting(21, "Sweep Range Start", start = 'v', returns = 'v')
     def SweepRangeStart(self, c, start=None):
         '''Get or set the starting point for carrier frequency sweeps (MHZ)'''
-        return self._SweeoRangeStart(start)
+        return self._SweepRangeStart(start)
 
-    @setting(22, "SweepRangeStop", stop = 'v', returns = 'v')
+    @setting(22, "Sweep Range Stop", stop = 'v', returns = 'v')
     def SweepRangeStop(self, c, stop=None):
         '''Get or set the ending point for carrier frequency sweeps (MHZ)'''
         return self._SweepRangeStop(stop)
 
-    @setting(23, "SweepStep", step = 'v', returns = 'v')
+    @setting(23, "Sweep Step", step = 'v', returns = 'v')
     def SweepStep(self, c, step=None):
         '''Get or set the sweep step (MHZ)'''
         return self._SweepStep(step)
 
-    @setting(24, "SweepTime", time = 'v', returns = 'v')
+    @setting(24, "Sweep Time", time = 'v', returns = 'v')
     def SweepTime(self, c, time=None):
         '''Get or set the time to complete one sweep step (ms)'''
         return self._SweepTime(time)
 
-    @setting(25, "SweepMode", mode = 's', returns = 's')
+    @setting(25, "Sweep Mode", mode = 's', returns = 's')
     def SweepMode(self, c, mode=None):
         '''Get or set the sweep mode to single shot (SNGL) or continuous (CONT)'''
         return self._SweepMode(mode)
 
-    @setting(26, "SweepShape", shape = 's', returns = 's')
+    @setting(26, "Sweep Shape", shape = 's', returns = 's')
     def SweepShape(self, c, shape=None):
         '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
         return self._SweepShape(shape)
 
-    @setting(27, "SweepTrigMode", trig_mode = 's', returns = 's')
+    @setting(27, "Sweep Trig Mode", trig_mode = 's', returns = 's')
     def SweepTrigMode(self, c, trig_mode=None):
         '''Get or set the external trigger mode.
         Options are: OFF, START, STARTSTOP, STEP'''
         return self._SweepTrigMode(trig_mode)
 
-    @setting(30, "SweepBegin", returns = '')
+    @setting(30, "Sweep Begin", returns = '')
     def SweepBegin(self, c):
         '''Start a sweep'''
         return self._SweepBegin()
 
-    @setting(31, "SweepPause", returns = '')
+    @setting(31, "Sweep Pause", returns = '')
     def SweepPause(self, c):
         '''Pause the current sweep'''
         return self._SweepPause()
 
-    @setting(32, "SweepContinue", returns = '')
+    @setting(32, "Sweep Continue", returns = '')
     def SweepContinue(self, c):
         '''Continue the currently paused sweep'''
         return self._SweepContinue()
 
-    @setting(33, "SweepReset", returns = '')
+    @setting(33, "Sweep Reset", returns = '')
     def SweepReset(self, c):
         '''Reset the current sweep to the start frequency'''
         return self._SweepReset()
