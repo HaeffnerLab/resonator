@@ -4,7 +4,7 @@ from twisted.internet.defer import inlineCallbacks
 FREQ_MIN = 0.009        # 9 KHz
 FREQ_MAX = 2400         # 2400 MHz
 SWEEP_RANGE_STEP = 0.05 # 50 kHz
-SWEEP_STEP_STEP = 0.1   # 100 Hz
+SWEEP_STEP_STEP = 1     # 1 kHz
 STEP_MIN = 0.001        # 1 Hz
 STEP_MAX = 1000         # 1 MHz
 SWEEP_TIME_STEP = 5     # 10 ms
@@ -26,11 +26,9 @@ class SWEEP_WIDGET(QtGui.QWidget):
     def connect(self):
         from labrad.wrappers import connectAsync
 
-        print "**************************************************** CONNECT"
         self.cxn = yield connectAsync()                     # '192.168.169.30'
         self.server = yield self.cxn.marconi_server
         self.update()
-        print "**************************************************** CONNECT"
         
         ## if have more than one marconi connecting to marconi server
         ## it may be necessary to specify the serial port or GPIB
@@ -38,10 +36,10 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
 
     def makeGui(self):
-        print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& MAKE GUI"
         mainLayout = QtGui.QGridLayout()
         groupbox = QtGui.QGroupBox('Sweep Control (Marconi)')
         groupboxLayout = QtGui.QGridLayout()
+
         # topLayout
         topLayout = QtGui.QGridLayout()
         self.carrierModeButton = self.makeCarrierModeButton()
@@ -90,27 +88,29 @@ class SWEEP_WIDGET(QtGui.QWidget):
         groupbox.setLayout(groupboxLayout) # set the groupboxLayout in the groupbox
         mainLayout.addWidget(groupbox) # put the groupbox in the mainLayout
         self.setLayout(mainLayout) # set this widget's main layout
-        print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& MAKE GUI"
 
 
-    #@inlineCallbacks
+    @inlineCallbacks
     def update(self):
         '''Updates values of controls based on server's records'''
-        print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ UPDATE"
-        CarrierModeState = yield self.server.carriermode()
-        print CarrierModeState
+        CarrierModeState = yield self.server.carrier_mode()
         if CarrierModeState == "FIXED":
             self.carrierModeButton.setText("FIXED")
         elif CarrierModeState == "SWEPT":
             self.carrierModeButton.setText("SWEPT")
-        else:
-            raise ValueError("Carrier mode not defined")
+
+        trig = yield self.server.sweep_trig_mode()
         #self.sweepTrigModeToggle.setValue(...) # query server and convert ans
-        self.sweepRangeStartCtrl.setValue(self.server.SweepRangeStart())
-        self.sweepRangeStopCtrl.setValue(self.server.SweepRangeStop())
-        self.sweepStepCtrl.setValue(self.server.SweepStep())
-        self.sweepTimeCtrl.setValue(self.server.SweepTime())
-        print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ UPDATE"
+        
+        start = yield self.server.sweep_range_start()
+        stop = yield self.server.sweep_range_stop()
+        step = yield self.server.sweep_step()
+        time = yield self.server.sweep_time()
+
+        self.sweepRangeStartCtrl.setValue(start)
+        self.sweepRangeStopCtrl.setValue(stop)
+        self.sweepStepCtrl.setValue(step)
+        self.sweepTimeCtrl.setValue(time)
 
 
     # +++++++++++++++++++++++++++++++++
@@ -120,24 +120,24 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     def makeCarrierModeButton(self):
         carrierModeButton = QtGui.QPushButton()
-        carrierModeButton.setText('Unknown')
+        carrierModeButton.setText('Carrier Mode, Unknown')
         
         @inlineCallbacks
         def onCarrierModeChange(_): # does this need other parameters?
-            print "CarrierMode state is: ", _
-            if self.server.CarrierMode() == 'SWEPT':
+            mode = yield self.server.carrier_mode()
+            if mode == 'SWEPT':
                 carrierModeButton.setText('FIXED') # set to fixed
-                yield self.server.CarrierMode('FIXED')
+                yield self.server.carrier_mode('FIXED')
             else:
                 carrierModeButton.setText('SWEPT') # set to swept
-                yield self.server.CarrierMode('SWEPT')
+                yield self.server.carrier_mode('SWEPT')
 
         carrierModeButton.clicked.connect(onCarrierModeChange)
         return carrierModeButton
 
     def makeSweepTrigModeToggle(self):
         sweepTrigModeToggle = QtGui.QPushButton()
-        sweepTrigModeToggle.setText("Trig Mode, N/A")
+        sweepTrigModeToggle.setText("Trig Mode, Unknown")
         # needs a menu
 
         @inlineCallbacks
@@ -154,7 +154,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepRangeStartChange(start):
-            yield self.server.SweepRangeStart(start)
+            yield self.server.sweep_range_start(start)
 
         sweepRangeStartCtrl.valueChanged.connect(onSweepRangeStartChange)
         return sweepRangeStartCtrl
@@ -167,7 +167,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepRangeStopChange(stop):
-            yield self.server.SweepRangeStop(stop)
+            yield self.server.sweep_range_stop(stop)
 
         sweepRangeStopCtrl.valueChanged.connect(onSweepRangeStopChange)
         return sweepRangeStopCtrl
@@ -176,11 +176,11 @@ class SWEEP_WIDGET(QtGui.QWidget):
         sweepStepCtrl = QtGui.QDoubleSpinBox()
         sweepStepCtrl.setRange(TIME_MIN, TIME_MAX)
         sweepStepCtrl.setDecimals(1)
-        sweepStepCtrl.setSingleStep(SWEEP_TIME_STEP)
+        sweepStepCtrl.setSingleStep(SWEEP_STEP_STEP)
 
         @inlineCallbacks
         def onSweepStepCtrlChange(step):
-            yield self.server.SweepStep(step)
+            yield self.server.sweep_step(step)
 
         sweepStepCtrl.valueChanged.connect(onSweepStepCtrlChange)
         return sweepStepCtrl
@@ -189,11 +189,11 @@ class SWEEP_WIDGET(QtGui.QWidget):
         sweepTimeCtrl = QtGui.QDoubleSpinBox()
         sweepTimeCtrl.setRange(TIME_MIN, TIME_MAX)
         sweepTimeCtrl.setDecimals(1)
-        sweepTimeCtrl.setSingleStep(SWEEP_STEP_STEP)
+        sweepTimeCtrl.setSingleStep(SWEEP_TIME_STEP)
 
         @inlineCallbacks
         def onSweepTimeCtrlChange(time):
-            yield self.server.SweepTime(time)
+            yield self.server.sweep_time(time)
 
         sweepTimeCtrl.valueChanged.connect(onSweepTimeCtrlChange)
         return sweepTimeCtrl
@@ -204,7 +204,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepBeginButtonChange(_):
-            yield self.server.SweepBegin()
+            yield self.server.sweep_begin()
         
         sweepBeginButton.clicked.connect(onSweepBeginButtonChange)
         return sweepBeginButton
@@ -215,7 +215,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepPauseButton(_):
-            yield self.server.SweepPause()
+            yield self.server.sweep_pause()
 
         sweepPauseButton.clicked.connect(onSweepPauseButton)
         return sweepPauseButton
@@ -226,7 +226,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepContinueButton(_):
-            yield self.server.SweepContinue()
+            yield self.server.sweep_continue()
 
         sweepContinueButton.clicked.connect(onSweepContinueButton)
         return sweepContinueButton
@@ -237,7 +237,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepResetButton(_):
-            yield self.server.SweepReset()
+            yield self.server.sweep_reset()
 
         sweepResetButton.clicked.connect(onSweepResetButton)
         return sweepResetButton
