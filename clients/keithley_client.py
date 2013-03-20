@@ -22,3 +22,4 @@ while(1):
     fcsv.writerow([t,voltage,tempK])
     time.sleep(60)
     
+filename.close()
