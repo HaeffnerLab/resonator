@@ -105,7 +105,7 @@ class MarconiServer(SerialDeviceServer):
         d['sweep_mode'] = None                  # True (SNGL) or False (CONT)
         d['sweep_shape'] = None                 # True (LIN) or False (LOG)
         d['trig_mode'] = None                   # See SweepTrigModeSetStr
-        d['currently_sweeping'] = None          # True if currently sweeping
+        #d['currently_sweeping'] = None          # True if currently sweeping
         self.marDict = d
     
     def SetInitialValues(self):
