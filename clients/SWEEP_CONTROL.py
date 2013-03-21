@@ -138,12 +138,25 @@ class SWEEP_WIDGET(QtGui.QWidget):
     def makeSweepTrigModeToggle(self):
         sweepTrigModeToggle = QtGui.QPushButton()
         sweepTrigModeToggle.setText("Trig Mode, Unknown")
-        # needs a menu
+        sweepTrigModeToggle.setMenu(makeSweepTrigModeMenu())
 
         @inlineCallbacks
         def onSweepTrigModeChange():
-            pass
+            mode = yield self.server.sweep_trig_mode()
+            if mode == 'OFF':
+                sweepTrigModeToggle.setText('START')
+                yield self.server.sweep_trig_mode('START')
+            elif mode == 'START':
+                sweepTrigModeToggle.setText('STOP')
+                yield self.server.sweep_trig_mode('STOP')
+            elif mode == 'STOP':
+                sweepTrigModeToggle.setText('STARTSTOP')
+                yield self.server.sweep_trig_mode('STARTSTOP')
+            elif mode == 'STARTSTOP':
+                sweepTrigModeToggle.setText('OFF')
+                yield self.server.sweep_trig_mode('OFF')
 
+        sweepTrigModeToggle.clicked.connet(onSweepTrigModeChange)
         return sweepTrigModeToggle
 
     def makeSweepRangeStartCtrl(self):
