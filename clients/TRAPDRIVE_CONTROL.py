@@ -65,10 +65,10 @@ class TD(QtGui.QWidget):
     def onOutputChange(self, state):
         if self.state:
             self.stateButton.setText('Marconi: OFF')
-            yield self.server.onoff(False)
+            yield self.server.carrier_on_off(False)
         if not self.state:
             self.stateButton.setText('Marconi: ON')
-            yield self.server.onoff(True)
+            yield self.server.carrier_on_off(True)
         self.state = not self.state
 
         
@@ -76,7 +76,7 @@ class TD(QtGui.QWidget):
     def update(self, c):
         currentpower = yield self.server.amplitude()
         currentfreq = yield self.server.frequency()
-        currentstate = yield self.server.carrieronoff()
+        currentstate = yield self.server.carrier_on_off()
         self.powerCtrl.setValue(currentpower)
         self.frequencyCtrl.setValue(currentfreq)
         if currentstate:

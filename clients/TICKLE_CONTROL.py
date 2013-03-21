@@ -1,6 +1,4 @@
-import os
 from PyQt4 import QtGui
-from PyQt4 import QtCore,uic
 from twisted.internet.defer import inlineCallbacks, returnValue
 
 MinPower = -100 #dbM
