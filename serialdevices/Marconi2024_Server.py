@@ -24,7 +24,9 @@ from serialdeviceserver import setting, inlineCallbacks
 from twisted.internet.defer import returnValue
 
 # Default Startup Values
-ON_OFF = True
+# Change these values to give the Marconi particular initial settings
+# when the server is started.
+ON_OFF = False
 AMP = -30
 FREQ = 1
 

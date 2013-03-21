@@ -10,6 +10,8 @@ STEP_MAX = 1000         # 1 MHz
 SWEEP_TIME_STEP = 5     # 10 ms
 TIME_MIN = 20           # 20 ms
 TIME_MAX = 100000       # 100 sec
+# Change these values to give the Marconi particular initial settings
+# when the server is started.
 
 
 class SWEEP_WIDGET(QtGui.QWidget):
@@ -100,7 +102,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
             self.carrierModeButton.setText("SWEPT")
 
         trig = yield self.server.sweep_trig_mode()
-        #self.sweepTrigModeToggle.setValue(...) # query server and convert ans
+        self.sweepTrigModeToggle.setText(trig)
         
         start = yield self.server.sweep_range_start()
         stop = yield self.server.sweep_range_stop()
@@ -138,25 +140,24 @@ class SWEEP_WIDGET(QtGui.QWidget):
     def makeSweepTrigModeToggle(self):
         sweepTrigModeToggle = QtGui.QPushButton()
         sweepTrigModeToggle.setText("Trig Mode, Unknown")
-        sweepTrigModeToggle.setMenu(makeSweepTrigModeMenu())
 
         @inlineCallbacks
-        def onSweepTrigModeChange():
+        def onSweepTrigModeChange(_):
             mode = yield self.server.sweep_trig_mode()
             if mode == 'OFF':
                 sweepTrigModeToggle.setText('START')
                 yield self.server.sweep_trig_mode('START')
             elif mode == 'START':
-                sweepTrigModeToggle.setText('STOP')
-                yield self.server.sweep_trig_mode('STOP')
-            elif mode == 'STOP':
                 sweepTrigModeToggle.setText('STARTSTOP')
                 yield self.server.sweep_trig_mode('STARTSTOP')
             elif mode == 'STARTSTOP':
+                sweepTrigModeToggle.setText('STEP')
+                yield self.server.sweep_trig_mode('STEP')
+            elif mode == 'STEP':
                 sweepTrigModeToggle.setText('OFF')
                 yield self.server.sweep_trig_mode('OFF')
 
-        sweepTrigModeToggle.clicked.connet(onSweepTrigModeChange)
+        sweepTrigModeToggle.clicked.connect(onSweepTrigModeChange)
         return sweepTrigModeToggle
 
     def makeSweepRangeStartCtrl(self):
@@ -187,7 +188,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     def makeSweepStepCtrl(self):
         sweepStepCtrl = QtGui.QDoubleSpinBox()
-        sweepStepCtrl.setRange(TIME_MIN, TIME_MAX)
+        sweepStepCtrl.setRange(STEP_MIN, STEP_MAX)
         sweepStepCtrl.setDecimals(1)
         sweepStepCtrl.setSingleStep(SWEEP_STEP_STEP)
 
