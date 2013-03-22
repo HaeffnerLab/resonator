@@ -3,10 +3,14 @@ import numpy as np
 import time
 import traceback # for debugging
 
-nodeDict = {'node_resonatormain':
-					['GPIB Device Manager','Data Vault','Pulser','RohdeSchwarz Server','Tektronix Server','NormalPMTFlow', 'Serial Server'],
-		}
+nodeDict =  {'node_resonatormain':
+                ['Data Vault','Pulser','Tektronix Server','NormalPMTFlow',
+                 'Serial Server','Marconi Server']
+            }
 # Ryan: removed "CCTDAC Pulser v2" from startup, I believe this is unused
+# Ryan: removed GPIB Device Manage, and RohdeSchwarz Server,
+#       because we only need to connect to the instances
+# 	of these servers running on the Windows computer.
 		
 #connect to LabRAD
 errors = False
