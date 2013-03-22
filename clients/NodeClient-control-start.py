@@ -1,11 +1,13 @@
 import labrad
 import numpy as np
 import time
+import traceback # for debugging
 
 nodeDict = {'node_resonatormain':
-					['GPIB Device Manager','Data Vault','Pulser','CCTDAC Pulser v2','RohdeSchwarz Server','Tektronix Server','NormalPMTFlow', 'resonatormain Serial Server'],
+					['GPIB Device Manager','Data Vault','Pulser','RohdeSchwarz Server','Tektronix Server','NormalPMTFlow', 'Serial Server'],
 		}
-
+# Ryan: removed "CCTDAC Pulser v2" from startup, I believe this is unused
+		
 #connect to LabRAD
 errors = False
 try:
@@ -35,6 +37,7 @@ else:
 						cxn.servers[node].start(server)
 					except Exception as e:
 						print 'ERROR with ' + server
+						print traceback.format_exc()
 						errors = True
 	
 if errors:
