@@ -4,7 +4,7 @@
 """
 ### BEGIN NODE INFO
 [info]
-name = Marconi Server
+name = Marconi Server (GPIB)
 version = 1.0
 description = 
 

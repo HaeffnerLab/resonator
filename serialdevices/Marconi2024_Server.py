@@ -1,22 +1,23 @@
 # MarconiServer, serial version
 # Requires serial_server_v1_2.py (serial device manager) to be running in labrad
 
-#"""
+"""
 #### BEGIN NODE INFO
-#[info]
-#name = Marconi Server
-#version = 1.0
-#instancename = Marconi Server
-#
-#[startup]
-#cmdline = %PYTHON% %FILE%
-#timeout = 20
-#
-#[shutdown]
-#message = 987654321
-#timeout = 5
-#### END NODE INFO
-#"""
+[info]
+name = Marconi Server
+version = 1.0
+description = 
+instancename = Marconi Server
+
+[startup]
+cmdline = %PYTHON% %FILE%
+timeout = 20
+
+[shutdown]
+message = 987654321
+timeout = 5
+### END NODE INFO
+"""
 
 from serialdeviceserver import SerialDeviceServer
 from serialdeviceserver import SerialDeviceError, SerialConnectionError
