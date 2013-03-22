@@ -2,7 +2,7 @@ import math
 import matplotlib.pyplot as plt
 
 
-class voltage_conversion:
+class voltage_conversion(object):
     #This class contains helper functions to convert input voltages into associated temperature in Kelvin
     
     def plot(self,x,y):
@@ -57,4 +57,8 @@ class voltage_conversion:
         for num in coefficient:
             TempK+= (num)*((math.cos((count*(math.acos(X))))))
             count+=1
+<<<<<<< HEAD
         return TempK
+=======
+        return TempK
+>>>>>>> master

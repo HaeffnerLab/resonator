@@ -84,7 +84,7 @@ class SCAN(QtGui.QWidget):
         self.cxncam = yield connectAsync('192.168.169.30')
         self.r = yield self.cxn.registry
         self.dv = yield self.cxn.data_vault
-        self.ds = yield self.cxn.cctdac_pulser_v2
+        self.ds = yield self.cxn.pulser
         self.pmt = self.cxn.normalpmtflow
         self.rs = self.cxncam.rohdeschwarz_server
         self.SMAGPIB = Device_config.SC_SMA

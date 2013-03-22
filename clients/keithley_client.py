@@ -1,23 +1,25 @@
 import labrad
 import numpy
 import time
-import voltage_conversion
+from voltage_conversion import voltage_conversion as VC
 import csv
-VC=voltage_conversion()
+#VC=voltage_conversion
 
 cxn = labrad.connect()
-kdmm = cxn.Keithley_2100_DMM()
+kdmm = cxn.keithley_2100_dmm()
+kdmm.select_device()
 
-filename='c:/data_resonator/Voltage_Temperature/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
-#numpy.savetxt(filename,time.strftime("%H%M"),voltage,tempK)
-fcsv=csv.writer(file(filename,"w"),lineterminator="\n")
-t=time.strftime("%H%M")
+filedirectly='c:/data_resonator_voltage/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
+filename=open(filedirectly,"wb")
+fcsv=csv.writer(filename,lineterminator="\n")
+
+vc = VC()
+
 while(1):
-    optstr=""
-    v=kdmm.getdcVolts()
-    tempK=VC.converter(v)
-    fcsv.writerow([t,v,temp])
+    t=time.strftime("%H%M")
+    voltage = kdmm.get_dc_volts()
+    tempK=vc.conversion(voltage)
+    fcsv.writerow([t,voltage,tempK])
+    time.sleep(60)
     
-
-    #time.sleep(60)
-    
+filename.close()
