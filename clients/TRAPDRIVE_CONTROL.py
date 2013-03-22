@@ -53,7 +53,7 @@ class TD(QtGui.QWidget):
         from labrad.types import Error
         from labrad import types as T
         self.T = T
-        self.cxn = yield connectAsync('192.168.169.30')
+        self.cxn = yield connectAsync()
         self.server = yield self.cxn.marconi_server
         self.update(0)
         self.powerCtrl.valueChanged.connect(self.onPowerChange)
