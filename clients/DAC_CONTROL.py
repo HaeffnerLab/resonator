@@ -122,7 +122,7 @@ class MULTIPOLE_CONTROL(QtGui.QWidget):
         from labrad.wrappers import connectAsync
         from labrad.types import Error
         self.cxn = yield connectAsync()
-        self.dacserver = yield self.cxn.cctdac_pulser_v2
+        self.dacserver = yield self.cxn.pulser
         yield self.setupListeners()
         yield self.makeGUI()
         
