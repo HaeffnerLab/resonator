@@ -51,6 +51,8 @@ class T(QtGui.QWidget):
         self.cxn = yield connectAsync('192.168.169.30')
         self.server = yield self.cxn.rohdeschwarz_server
         try:
+            s = yield self.server.list_devices()
+            print s
             yield self.server.select_device('GPIB Bus - USB0::0x0AAD::0x0054::104543')
         except Error:
             self.setEnabled(False)
