@@ -25,12 +25,9 @@ from serialdeviceserver import setting, inlineCallbacks
 from twisted.internet.defer import returnValue
 
 # Default Startup Values
-# Change these values to give the Marconi particular initial settings
-# when the server is started.
 ON_OFF = False
 AMP = -30
 FREQ = 1
-
 CARRIER_MODE = 'FIXED'
 SWEEP_RANGE_START = 1
 SWEEP_RANGE_STOP = 2
@@ -40,15 +37,16 @@ SWEEP_MODE = 'SNGL'
 SWEEP_SHAPE = 'LIN'
 SWEEP_TRIG_MODE = 'OFF'
 
+# Startup with Default values
+# Set to true to load Default values (above) at startup, rather than the
+# MostRecentSettings saved from the previous session.
+START_WITH_DEFAULTS = False
+
 # Marconi Extreme Values, don't change
 FREQ_MIN = 0.009    # 9 KHz
 FREQ_MAX = 2400     # 2400 MHz
 POWER_MIN = -137    # -137 dBm
 POWER_MAX = 10      # 10 dBm
-
-# CONSTANTS used by SweepRangeException, don't change
-START = 0
-STOP = 1
 
 class MarconiServer(SerialDeviceServer):
     """Server for basic CW control of Marconi RF Generator"""
@@ -112,6 +110,13 @@ class MarconiServer(SerialDeviceServer):
         self.marDict = d
     
     def setInitialValues(self):
+        self.reg.cd(regPath + ['Settings'])
+        if 'MostRecentSettings' in self.reg.dir()[1] and not START_WITH_DEFAULTS:
+            self._LoadSettings('MostRecentSettings')
+        else:
+            self.setDefaultValues()
+
+    def setDefaultValues(self):
         self._CarrierOnOff(ON_OFF)
         self._Amplitude(AMP)
         self._Frequency(FREQ)
@@ -144,7 +149,7 @@ class MarconiServer(SerialDeviceServer):
 
     def stopServer(self):
         '''Save current server settings in 'MostRecentSettings' in registry. '''
-        self._SaveServerSettings('MostRecentSettings')
+        self._SaveSettings('MostRecentSettings')
         
 
     # +++++++++++++++++++++++++
@@ -156,9 +161,9 @@ class MarconiServer(SerialDeviceServer):
         '''Save the current server settings in the registry under 'saveName'
         or 'MostRecentSettings' if saveName is None.'''
         if saveName is None:
-            self._SaveServerSettings('MostRecentSettings')
+            self._SaveSettings('MostRecentSettings')
         else:
-            self._SaveServerSettings(saveName)
+            self._SaveSettings(saveName)
 
     @setting(1, "Load Settings", loadName='s', returns='b')
     def LoadSettings(self, c, loadName=None):
@@ -267,13 +272,13 @@ class MarconiServer(SerialDeviceServer):
 
     # ===== META =====
 
-    def _SaveServerSettings(self, saveName):
+    def _SaveSettings(self, saveName):
         '''Saves current server settings in the LabRAD registry in:
         [regPath, 'Settings', saveName]'''
         self.reg.cd(regPath + ['Settings'])
         self.reg.set(saveName, self.marDict)
 
-    def _LoadServerSettings(self, loadName):
+    def _LoadSettings(self, loadName):
         '''Loads previous server settings from loadName in the registry.'''
         self.reg.cd(regPath + ['Settings'])
         self.marDict = self.reg.get('loadName') # dictionary of prev settings
@@ -353,26 +358,11 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['carrier_mode'] = mode
         returnValue(self.marDict['carrier_mode'])
     
-    #class SweepRangeException(Exception):
-        #'''Raise when start frequency is greater than or equal to stop
-        #frequency. Contains information about whether the user attempted
-        #to set the start above stop, or stop below start. This is encoded in
-        #the wasUpdating field, which should use the values START and STOP.'''
-
-        #def __init__(self, wasUpdating, msg=None):
-            #super(SweepRangeException, self).__init__(msg)
-            #wasUpdating = wasUpdating
-
     @inlineCallbacks
     def _SweepRangeStart(self, start=None):
-        '''Get or set the starting point for carrier frequency sweeps (MHZ).
-        Car raise SweepRangeException(START)'''
+        '''Get or set the starting point for carrier frequency sweeps (MHZ).'''
         if start is not None:
-            #self.checkCarrierMode()
             checkedStart = self.checkFreq(start)
-            #if checkedStart > self.marDict['sweep_range_stop']:
-                #raise SweepRangeException(START, "Sweep start frequency cannot"\
-                                            #+ "be greater than stop frequency")
             command = self.SweepStartSetStr(checkedStart)
             yield self.ser.write(command)
             self.marDict['sweep_range_start'] = checkedStart
@@ -380,14 +370,9 @@ class MarconiServer(SerialDeviceServer):
 
     @inlineCallbacks
     def _SweepRangeStop(self, stop=None):
-        '''Get or set the stoping point for carrier frequency sweeps (MHZ).
-        Car raise SweepRangeException(STOP)'''
+        '''Get or set the stoping point for carrier frequency sweeps (MHZ).'''
         if stop is not None:
-            #self.checkCarrierMode()
             checkedStop = self.checkFreq(stop)
-            #if checkedStop < self.marDict['sweep_range_start']:
-                #raise SweepRangeException(STOP, "Sweep stop frequency cannot"\
-                                            #+ "be smaller than start frequency")
             command = self.SweepStartSetStr(checkedStop)
             yield self.ser.write(command)
             self.marDict['sweep_range_stop'] = checkedStop
@@ -397,7 +382,6 @@ class MarconiServer(SerialDeviceServer):
     def _SweepStep(self, step=None):
         '''Get or set the sweep step (MHz)'''
         if step is not None:
-            #self.checkCarrierMode()
             command = self.SweepStepSetStr(step)
             yield self.ser.write(command)
             self.marDict['sweep_step'] = step
@@ -407,7 +391,6 @@ class MarconiServer(SerialDeviceServer):
     def _SweepTime(self, time=None):
         '''Get or set the time to complete one sweep step (ms)'''
         if time is not None:
-            #self.checkCarrierMode()
             command = self.SweepTimeSetStr(time)
             yield self.ser.write(command)
             self.marDict['sweep_time'] = time
@@ -417,7 +400,6 @@ class MarconiServer(SerialDeviceServer):
     def _SweepMode(self, mode=None):
         '''Get or set the sweep mode to single (SNGL) or continuous (CONT)'''
         if mode is not None:
-            #self.checkCarrierMode()
             command = self.SweepModeSetStr(mode)
             yield self.ser.write(command)
             self.marDict['sweep_mode'] = mode
@@ -427,7 +409,6 @@ class MarconiServer(SerialDeviceServer):
     def _SweepShape(self, shape=None):
         '''Get or set the sweep shape to linear (LIN) of log (LOG)'''
         if shape is not None:
-            #self.checkCarrierMode()
             command = self.SweepShapeSetStr(shape)
             yield self.ser.write(command)
             self.marDict['sweep_shape'] = shape
@@ -438,7 +419,6 @@ class MarconiServer(SerialDeviceServer):
         '''Get or set the external trigger mode.
         Options are: OFF, START, STARTSTOP, STEP'''
         if trig_mode is not None:
-            #self.checkCarrierMode()
             command = self.SweepTrigModeSetStr(trig_mode)
             yield self.ser.write(command)
             self.marDict['trig_mode'] = trig_mode
