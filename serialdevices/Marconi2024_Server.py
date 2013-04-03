@@ -60,6 +60,7 @@ class MarconiServer(SerialDeviceServer):
     serNode = 'resonatormain' # labradnode
     timeout = 1.0
     gpibaddr = 11
+    regPath = ['','Servers','Marconi Server']
 
     @inlineCallbacks
     def initServer(self):
@@ -82,8 +83,9 @@ class MarconiServer(SerialDeviceServer):
             else: raise
 
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
-        yield self._SetControllerWait(0)   # turn off auto listen after talk 
-        self.SetInitialValues()
+        yield self._SetControllerWait(0)    # turn off auto listen after talk 
+        self.reg = yield self.client.registry    # access to registry
+        self.setInitialValues()
 
     def createDict(self):
         d = {}
@@ -106,10 +108,10 @@ class MarconiServer(SerialDeviceServer):
         d['sweep_mode'] = None                  # True (SNGL) or False (CONT)
         d['sweep_shape'] = None                 # True (LIN) or False (LOG)
         d['trig_mode'] = None                   # See SweepTrigModeSetStr
-        #d['currently_sweeping'] = None          # True if currently sweeping
+        #d['currently_sweeping'] = None         # True if currently sweeping
         self.marDict = d
     
-    def SetInitialValues(self):
+    def setInitialValues(self):
         self._CarrierOnOff(ON_OFF)
         self._Amplitude(AMP)
         self._Frequency(FREQ)
@@ -121,6 +123,34 @@ class MarconiServer(SerialDeviceServer):
         self._SweepMode(SWEEP_MODE)
         self._SweepShape(SWEEP_SHAPE)
         self._SweepTrigMode(SWEEP_TRIG_MODE)
+
+    def stopServer(self):
+        '''Save current server settings in 'MostRecentSettings' in registry. '''
+        self._SaveServerSettings('MostRecentSettings')
+        
+
+    # +++++++++++++++++++++++++
+    # ===== META SETTINGS =====
+    # +++++++++++++++++++++++++
+
+    @setting(0, "Save Settings", saveName='s', returns='')
+    def SaveSettings(self, c, saveName=None):
+        '''Save the current server settings in the registry under 'saveName'
+        or 'MostRecentSettings' if saveName is None.'''
+        if saveName is None:
+            self._SaveServerSettings('MostRecentSettings')
+        else:
+            self._SaveServerSettings(saveName)
+
+    @setting(1, "Load Settings", loadName='s', returns='b')
+    def LoadSettings(self, c, loadName=None):
+        '''Load previous server settings. If loadName is unspecified, loads from
+        'MostRecentSettings' otherwise loads from loadName.'''
+        if loadName is None:
+            self._LoadSettings('MostRecentSettings')
+        else:
+            self._LoadSettings(loadName)
+
 
     # +++++++++++++++++++++++++++
     # ===== BASIC SETTINGS ======
@@ -145,7 +175,7 @@ class MarconiServer(SerialDeviceServer):
     def Frequency(self, c, freq=None):
         '''Get or set the CW frequency (MHz)'''
         return self._Frequency(freq)
-        
+
 
     # ++++++++++++++++++++++++++++
     # ===== SWEEP SETTINGS  ======
@@ -216,6 +246,19 @@ class MarconiServer(SerialDeviceServer):
     # ++++++++++++++++++++++++++
     # ===== HIDDEN METHODS =====
     # ++++++++++++++++++++++++++
+
+    # ===== META =====
+
+    def _SaveServerSettings(self, saveName):
+        '''Saves current server settings in the LabRAD registry in:
+        [regPath, 'Settings', saveName]'''
+        self.reg.cd(regPath + ['Settings'])
+        self.reg.set(saveName, self.marDict)
+
+    def _LoadServerSettings(self, loadName):
+        '''Loads previous server settings from loadName in the registry.'''
+        self.reg.cd(regPath + ['Settings'])
+        self.marDict = self.reg.get('loadName') # dictionary of prev settings
 
     # ===== BASIC =====
 
@@ -426,9 +469,6 @@ class MarconiServer(SerialDeviceServer):
         command = self.SweepResetStr()
         yield self.ser.write(command)
 
-    # ===== META =====
-
-    
 
     # ===== PROLOGIX =====
 
