@@ -84,7 +84,7 @@ class MarconiServer(SerialDeviceServer):
 
         yield self.ser.write(self.SetAddrStr(self.gpibaddr)) # set gpib address
         yield self._SetControllerWait(0)    # turn off auto listen after talk 
-        self.reg = yield self.client.registry    # access to registry
+        self.setupRegistry()
         self.setInitialValues()
 
     def createDict(self):
@@ -123,6 +123,24 @@ class MarconiServer(SerialDeviceServer):
         self._SweepMode(SWEEP_MODE)
         self._SweepShape(SWEEP_SHAPE)
         self._SweepTrigMode(SWEEP_TRIG_MODE)
+
+    @inlineCallbacks
+    def setupRegistry(self):
+        self.reg = yield self.client.registry   # get access to registry server
+        # Create directory structure if it does not exist
+        self.reg.cd('')
+        if 'Servers' not in self.reg.dir()[1]:
+            print "Adding directory '/Servers' to Registry."
+            self.reg.mkdir('Servers')
+        self.reg.cd('Servers')
+        if 'Marconi Server' not in self.reg.dir()[1]:
+            print "Adding directory '/Servers/Marconi\ Server' to Registry."
+            self.reg.mkdir('Marconi Server')
+        self.reg.cd('Marconi Server')
+        if 'Settings' not in self.reg.dir()[1]:
+            print "Adding directory '/Servers/Marconi\ Server/Settings' to Registy."
+            self.reg.mkdir('Settings')
+
 
     def stopServer(self):
         '''Save current server settings in 'MostRecentSettings' in registry. '''
