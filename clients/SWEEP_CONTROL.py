@@ -75,10 +75,12 @@ class SWEEP_WIDGET(QtGui.QWidget):
         self.sweepPauseButton = self.makeSweepPauseButton()
         self.sweepContinueButton = self.makeSweepContinueButton()
         self.sweepResetButton = self.makeSweepResetButton()
+        self.sweepUpdateButton = self.makeUpdateButton()
         bottomLayout.addWidget(self.sweepBeginButton, 0, 0)
         bottomLayout.addWidget(self.sweepPauseButton, 1, 0)
         bottomLayout.addWidget(self.sweepContinueButton, 1, 1)
         bottomLayout.addWidget(self.sweepResetButton, 0, 1)
+        bottomLayout.addWidget(self.sweepUpdateButton, 2, 0)
 
         # order layouts in the groupboxLayout
         groupboxLayout.addLayout(topLayout, 0, 0)
@@ -255,6 +257,12 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         sweepResetButton.clicked.connect(onSweepResetButton)
         return sweepResetButton
+
+    def makeUpdateButton(self):
+        sweepUpdateButton = QtQui.QPushButton()
+        sweepUpdateButton.setText("Get")
+        sweepUpdateButton.clicked.connect(self.update)
+        return sweepUpdateButton
 
 
 class SWEEP_CONTROL(QtGui.QMainWindow):
