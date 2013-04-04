@@ -157,22 +157,16 @@ class MarconiServer(SerialDeviceServer):
     # +++++++++++++++++++++++++
 
     @setting(0, "Save Settings", saveName='s', returns='')
-    def SaveSettings(self, c, saveName=None):
+    def SaveSettings(self, c, saveName='MostRecentSettings'):
         '''Save the current server settings in the registry under 'saveName'
-        or 'MostRecentSettings' if saveName is None.'''
-        if saveName is None:
-            self._SaveSettings('MostRecentSettings')
-        else:
-            self._SaveSettings(saveName)
+        or 'MostRecentSettings' if saveName is unspecified.'''
+        self._SaveSettings(saveName)
 
     @setting(1, "Load Settings", loadName='s', returns='b')
-    def LoadSettings(self, c, loadName=None):
+    def LoadSettings(self, c, loadName='MostRecentSettings'):
         '''Load previous server settings. If loadName is unspecified, loads from
         'MostRecentSettings' otherwise loads from loadName.'''
-        if loadName is None:
-            self._LoadSettings('MostRecentSettings')
-        else:
-            self._LoadSettings(loadName)
+        self._LoadSettings(loadName)
 
 
     # +++++++++++++++++++++++++++
