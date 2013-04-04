@@ -50,9 +50,6 @@ class TD(QtGui.QWidget):
     @inlineCallbacks
     def connect(self):
         from labrad.wrappers import connectAsync
-        from labrad.types import Error
-        from labrad import types as T
-        self.T = T
         self.cxn = yield connectAsync()
         self.server = yield self.cxn.marconi_server
         self.update(0)
