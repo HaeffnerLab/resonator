@@ -109,9 +109,19 @@ class MarconiServer(SerialDeviceServer):
         #d['currently_sweeping'] = None         # True if currently sweeping
         self.marDict = d
     
+    @inlineCallbacks
+    def setupRegistry(self):
+        self.reg = yield self.client.registry   # get access to registry server
+        # Create directory structure if it does not exist
+        self.reg.cd('')
+        self.reg.cd(['Servers','Marconi Server','Settings'], True)
+
+    @inlineCallbacks
     def setInitialValues(self):
-        self.reg.cd(regPath + ['Settings'])
-        if 'MostRecentSettings' in self.reg.dir()[1] and not START_WITH_DEFAULTS:
+        self.reg.cd(self.regPath + ['Settings'])
+        settings = yield self.reg.dir()
+        settings = settings[1]
+        if 'MostRecentSettings' in settings and not START_WITH_DEFAULTS:
             self._LoadSettings('MostRecentSettings')
         else:
             self.setDefaultValues()
@@ -129,24 +139,6 @@ class MarconiServer(SerialDeviceServer):
         self._SweepShape(SWEEP_SHAPE)
         self._SweepTrigMode(SWEEP_TRIG_MODE)
 
-    @inlineCallbacks
-    def setupRegistry(self):
-        self.reg = yield self.client.registry   # get access to registry server
-        # Create directory structure if it does not exist
-        self.reg.cd('')
-        if 'Servers' not in self.reg.dir()[1]:
-            print "Adding directory '/Servers' to Registry."
-            self.reg.mkdir('Servers')
-        self.reg.cd('Servers')
-        if 'Marconi Server' not in self.reg.dir()[1]:
-            print "Adding directory '/Servers/Marconi\ Server' to Registry."
-            self.reg.mkdir('Marconi Server')
-        self.reg.cd('Marconi Server')
-        if 'Settings' not in self.reg.dir()[1]:
-            print "Adding directory '/Servers/Marconi\ Server/Settings' to Registy."
-            self.reg.mkdir('Settings')
-
-
     def stopServer(self):
         '''Save current server settings in 'MostRecentSettings' in registry. '''
         self._SaveSettings('MostRecentSettings')
@@ -160,13 +152,13 @@ class MarconiServer(SerialDeviceServer):
     def SaveSettings(self, c, saveName='MostRecentSettings'):
         '''Save the current server settings in the registry under 'saveName'
         or 'MostRecentSettings' if saveName is unspecified.'''
-        self._SaveSettings(saveName)
+        yield self._SaveSettings(saveName)
 
     @setting(1, "Load Settings", loadName='s', returns='b')
     def LoadSettings(self, c, loadName='MostRecentSettings'):
         '''Load previous server settings. If loadName is unspecified, loads from
         'MostRecentSettings' otherwise loads from loadName.'''
-        self._LoadSettings(loadName)
+        yield self._LoadSettings(loadName)
 
 
     # +++++++++++++++++++++++++++
@@ -266,16 +258,27 @@ class MarconiServer(SerialDeviceServer):
 
     # ===== META =====
 
+    @inlineCallbacks
     def _SaveSettings(self, saveName):
         '''Saves current server settings in the LabRAD registry in:
         [regPath, 'Settings', saveName]'''
-        self.reg.cd(regPath + ['Settings'])
-        self.reg.set(saveName, self.marDict)
+        print "Saving settings to: " + str(self.regPath + ['Settings', saveName])
+        # enter save directory, creating if doesn't exist
+        yield self.reg.cd(self.regPath + ['Settings',saveName], True)
+        # save each marDict key as a registry key with associated value
+        for setting in self.marDict:
+            self.reg.set(setting,self.marDict[setting])
+        self.reg.cd('')
 
+    @inlineCallbacks
     def _LoadSettings(self, loadName):
         '''Loads previous server settings from loadName in the registry.'''
-        self.reg.cd(regPath + ['Settings'])
-        self.marDict = self.reg.get('loadName') # dictionary of prev settings
+        print "Loading settings from: " + str(self.regPath + ['Settings', loadName])
+        yield self.reg.cd(self.regPath + ['Settings',loadName])
+        for setting in self.marDict:
+            self.marDict[setting] = yield self.reg.get(setting)
+        print self.marDict
+        self.reg.cd('')
 
     # ===== BASIC =====
 
