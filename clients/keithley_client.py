@@ -9,17 +9,37 @@ cxn = labrad.connect()
 kdmm = cxn.keithley_2100_dmm()
 kdmm.select_device()
 
-filedirectly='c:/data_resonator_voltage/keithley_DMM_'+time.strftime("%d%m%Y_%H%M")+'.csv'
-filename=open(filedirectly,"wb")
-fcsv=csv.writer(filename,lineterminator="\n")
+run_time=time.strftime("%d%m%Y_%H%M")
+filedirectly_526='c:/data_resonator_voltage/BNC526_keithley_DMM_'+run_time+'.csv'
+filedirectly_529='c:/data_resonator_voltage/BNC529_keithley_DMM_'+run_time+'.csv'
+
+file_526=open(filedirectly_526,"W")
+fcsv_526=csv.writer(file_526,lineterminator="\n")
+fcsv_526.writerow(["time (Hour:Minute)", "voltage(V)",  "temperature(K)"])
+file_526.close()
+
+file_529=open(filedirectly_529,"W")
+fcsv_529=csv.writer(file_529,lineterminator="\n")
+fcsv_529.writerow(["time(Hour:Minute)", "voltage(V)",  "temperature(K)"])
+file_529.close()
 
 vc = VC()
 
 while(1):
-    t=time.strftime("%H%M")
+    file_526=open(filedirectly_526,"a")
+    fcsv_526=csv.writer(file_526,lineterminator="\n")
     voltage = kdmm.get_dc_volts()
     tempK=vc.conversion(voltage)
-    fcsv.writerow([t,voltage,tempK])
-    time.sleep(60)
-    
-filename.close()
+    fcsv_526.writerow(["time", "voltage",  "temperature"])
+    fcsv_526.writerow([time.strftime("%H"+":"+"%M"),voltage,tempK])
+    file_526.close()
+    time.sleep(30)
+
+    filen_529=open(filedirectly529,"a")
+    fcsv_529=csv.writer(file_529,lineterminator="\n")
+    voltage = kdmm.get_dc_volts()
+    tempK=vc.conversion(voltage)
+    fcsv_529.writerow(["time", "voltage",  "temperature"])
+    fcsv_529.writerow([time.strftime("%H"+":"+"%M"),voltage,tempK])
+    file_529.close()
+    time.sleep(30)
