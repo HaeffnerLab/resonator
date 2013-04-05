@@ -3,7 +3,6 @@ import numpy
 import time
 from voltage_conversion import voltage_conversion as VC
 import csv
-#VC=voltage_conversion
 
 cxn = labrad.connect()
 kdmm = cxn.keithley_2100_dmm()
@@ -30,6 +29,7 @@ while(1):
     fcsv_526=csv.writer(file_526,lineterminator="\n")
     voltage = kdmm.get_dc_volts()
     tempK=vc.conversion(voltage)
+    fcsv_526.writerow(["time", "voltage",  "temperature"])
     fcsv_526.writerow([time.strftime("%H"+":"+"%M"),voltage,tempK])
     file_526.close()
     time.sleep(30)
@@ -38,6 +38,9 @@ while(1):
     fcsv_529=csv.writer(file_529,lineterminator="\n")
     voltage = kdmm.get_dc_volts()
     tempK=vc.conversion(voltage)
+    fcsv_529.writerow(["time", "voltage",  "temperature"])
     fcsv_529.writerow([time.strftime("%H"+":"+"%M"),voltage,tempK])
     file_529.close()
     time.sleep(30)
+
+
