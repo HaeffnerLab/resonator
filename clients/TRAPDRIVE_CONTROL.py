@@ -51,7 +51,11 @@ class TD(QtGui.QWidget):
     def connect(self):
         from labrad.wrappers import connectAsync
         self.cxn = yield connectAsync()
-        self.server = yield self.cxn.marconi_server
+        try:
+            self.server = yield self.cxn.marconi_server
+        except AttributeError:
+            print "Need to start Marconi Server"
+            self.setEnabled(False)
         self.update(0)
         self.powerCtrl.valueChanged.connect(self.onPowerChange)
         self.frequencyCtrl.valueChanged.connect(self.onFreqChange)
