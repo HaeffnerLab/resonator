@@ -29,7 +29,11 @@ class SWEEP_WIDGET(QtGui.QWidget):
         from labrad.wrappers import connectAsync
 
         self.cxn = yield connectAsync()                     # '192.168.169.30'
-        self.server = yield self.cxn.marconi_server
+        try:
+            self.server = yield self.cxn.marconi_server
+        except AttributeError:
+            print "Need to start Marconi Server"
+            self.setEnabled(False)
         self.update()
         
         ## if have more than one marconi connecting to marconi server
@@ -80,7 +84,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         bottomLayout.addWidget(self.sweepPauseButton, 1, 0)
         bottomLayout.addWidget(self.sweepContinueButton, 1, 1)
         bottomLayout.addWidget(self.sweepResetButton, 0, 1)
-        bottomLayout.addWidget(self.sweepUpdateButton, 2, 0)
+        bottomLayout.addWidget(self.sweepUpdateButton, 2, 0, 1, 2)
 
         # order layouts in the groupboxLayout
         groupboxLayout.addLayout(topLayout, 0, 0)
@@ -95,7 +99,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
 
     @inlineCallbacks
-    def update(self):
+    def update(self, unused=None):
         '''Updates values of controls based on server's records'''
         CarrierModeState = yield self.server.carrier_mode()
         if CarrierModeState == "FIXED":
@@ -259,7 +263,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepResetButton
 
     def makeUpdateButton(self):
-        sweepUpdateButton = QtQui.QPushButton()
+        sweepUpdateButton = QtGui.QPushButton()
         sweepUpdateButton.setText("Get")
         sweepUpdateButton.clicked.connect(self.update)
         return sweepUpdateButton
