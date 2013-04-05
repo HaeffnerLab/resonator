@@ -12,12 +12,12 @@ run_time=time.strftime("%d%m%Y_%H%M")
 filedirectly_526='c:/data_resonator_voltage/BNC526_keithley_DMM_'+run_time+'.csv'
 filedirectly_529='c:/data_resonator_voltage/BNC529_keithley_DMM_'+run_time+'.csv'
 
-file_526=open(filedirectly_526,"w")
+file_526=open(filedirectly_526,"wb")
 fcsv_526=csv.writer(file_526,lineterminator="\n")
 fcsv_526.writerow(["time (Hour:Minute)", "voltage(V)", "temperature(K)"])
 file_526.close()
 
-file_529=open(filedirectly_529,"w")
+file_529=open(filedirectly_529,"wb")
 fcsv_529=csv.writer(file_529,lineterminator="\n")
 fcsv_529.writerow(["time(Hour:Minute)", "voltage(V)", "temperature(K)"])
 file_529.close()
@@ -25,7 +25,7 @@ file_529.close()
 vc = VC()
 
 while(1):
-    file_526=open(filedirectly_526,"a")
+    file_526=open(filedirectly_526,"ab")
     fcsv_526=csv.writer(file_526,lineterminator="\n")
     voltage = kdmm.get_dc_volts()
     tempK=vc.conversion(voltage)
@@ -33,7 +33,7 @@ while(1):
     file_526.close()
     time.sleep(30)
 
-    file_529=open(filedirectly_529,"a")
+    file_529=open(filedirectly_529,"ab")
     fcsv_529=csv.writer(file_529,lineterminator="\n")
     voltage = kdmm.get_dc_volts()
     tempK=vc.conversion(voltage)
