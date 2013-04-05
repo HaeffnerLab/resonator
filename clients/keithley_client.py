@@ -12,12 +12,12 @@ run_time=time.strftime("%d%m%Y_%H%M")
 filedirectly_526='c:/data_resonator_voltage/BNC526_keithley_DMM_'+run_time+'.csv'
 filedirectly_529='c:/data_resonator_voltage/BNC529_keithley_DMM_'+run_time+'.csv'
 
-file_526=open(filedirectly_526,"W")
+file_526=open(filedirectly_526,"w")
 fcsv_526=csv.writer(file_526,lineterminator="\n")
 fcsv_526.writerow(["time (Hour:Minute)", "voltage(V)", "temperature(K)"])
 file_526.close()
 
-file_529=open(filedirectly_529,"W")
+file_529=open(filedirectly_529,"w")
 fcsv_529=csv.writer(file_529,lineterminator="\n")
 fcsv_529.writerow(["time(Hour:Minute)", "voltage(V)", "temperature(K)"])
 file_529.close()
