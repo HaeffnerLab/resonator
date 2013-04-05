@@ -8,7 +8,6 @@ class SHUTTER (QtGui.QWidget):
     """
     def __init__(self, reactor, parent=None):
         super(SHUTTER, self).__init__(parent)
-        print 'here'
         self.reactor = reactor
         self.channels = ['2W']#'bluePI', '397sw', '866sw',        
         self.makeGUI()

@@ -69,12 +69,13 @@ class ResonatorGUI(QtGui.QMainWindow):
         from TICKLE_CONTROL import Tickle_Control
         from SHUTTER_CONTROL import SHUTTER
         from common.clients.multiplexer.MULTIPLEXER_CONTROL import multiplexerWidget
+        from SWEEP_CONTROL import SWEEP_CONTROL
         widget = QtGui.QWidget()
         gridLayout = QtGui.QGridLayout()        
         gridLayout.addWidget(DAC_Control(reactor), 0, 0)            
         rightPanel = QtGui.QGridLayout()
         rightPanel.addWidget(pmtWidget(reactor), 0, 0)
-        #rightPanel.addWidget(SWEEP_CONTROL(reactor), 0, 1) # uncomment to add SWEEP
+        rightPanel.addWidget(SWEEP_CONTROL(reactor), 1, 0) # uncomment to add SWEEP
         bottomPanel = QtGui.QGridLayout()
         bottomPanel.addWidget(Tickle_Control(reactor), 1, 1)      
         bottomPanel.addWidget(TD_CONTROL(reactor), 1, 0)
