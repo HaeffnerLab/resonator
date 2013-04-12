@@ -9,8 +9,10 @@ kdmm = cxn.keithley_2100_dmm()
 kdmm.select_device()
 
 run_time=time.strftime("%d%m%Y_%H%M")
-filedirectly_526='c:/data_resonator_voltage/BNC526_keithley_DMM_'+run_time+'.csv'
-filedirectly_529='c:/data_resonator_voltage/BNC529_keithley_DMM_'+run_time+'.csv'
+#BNC 526 is at Cold Finger
+filedirectly_526='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/526(Cold Finger).csv'
+#BNC 529 is inside the heat shield
+filedirectly_529='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/529(Inside Heat Shield).csv'
 
 file_526=open(filedirectly_526,"wb")
 fcsv_526=csv.writer(file_526,lineterminator="\n")
