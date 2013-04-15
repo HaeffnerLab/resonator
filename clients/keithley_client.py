@@ -8,27 +8,26 @@ cxn = labrad.connect()
 keithley = cxn.keithley_2100_dmm()
 keithley.select_device()
 
-
 run_time = time.strftime("%d%m%Y_%H%M")
 initial_time = time.time()
 #BNC 526 is at Cold Finger
-filedirectly_526 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/526(Cold Finger).csv'
+filedirectory_526 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/526(Cold Finger).csv'
 #BNC 529 is inside the heat shield
-filedirectly_529 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/529(Inside Heat Shield).csv'
+filedirectory_529 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/529(Inside Heat Shield).csv'
 
-file_526 = open(filedirectly_526,"wb")
+file_526 = open(filedirectory_526,"wb")
 fcsv_526 = csv.writer(file_526,lineterminator="\n")
 fcsv_526.writerow(["Elapsed Time (minutes)", "Current Time(H:M)", "Voltage(V)", "Temperature(K)"])
 file_526.close()
 
-file_529 = open(filedirectly_529,"wb")
+file_529 = open(filedirectory_529,"wb")
 fcsv_529 = csv.writer(file_529,lineterminator="\n")
 fcsv_529.writerow(["Elapsed Time (minutes)", "Current Time(H:M)", "Voltage(V)", "Temperature(K)"])
 file_529.close()
 
 vc = VC()
 while(1):
-    file_526=open(filedirectly_526,"ab")
+    file_526=open(filedirectory_526,"ab")
     fcsv_526=csv.writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     tempK=vc.conversion(voltage)
@@ -37,7 +36,7 @@ while(1):
     file_526.close()
     time.sleep(30)
 
-    file_529 = open(filedirectly_529,"ab")
+    file_529 = open(filedirectory_529,"ab")
     fcsv_529 = csv.writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     tempK = vc.conversion(voltage)
