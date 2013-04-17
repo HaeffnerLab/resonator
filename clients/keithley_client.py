@@ -11,9 +11,9 @@ keithley.select_device()
 run_time = time.strftime("%d%m%Y_%H%M")
 initial_time = time.time()
 #BNC 526 is at Cold Finger
-filedirectory_526 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/526(Cold Finger).csv'
+filedirectory_526 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'526(Cold Finger).csv'
 #BNC 529 is inside the heat shield
-filedirectory_529 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'/529(Inside Heat Shield).csv'
+filedirectory_529 ='c:/data_resonator_voltage/keithley_DMM_'+run_time+'529(Inside Heat Shield).csv'
 
 file_526 = open(filedirectory_526,"wb")
 fcsv_526 = csv.writer(file_526,lineterminator="\n")
