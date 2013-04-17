@@ -39,7 +39,7 @@ class voltage_conversion(object):
         elif (1.008 <= voltage <= 1.119):
             ZL = 0.9863642945
             ZU = 1.12802078
-            f3=calculation(coefficient3,ZU,ZL,voltage)
+            f3=self.calculation(coefficient3,ZU,ZL,voltage)
             return f3
         
         elif (0.5005 <= voltage <= 1.008):
