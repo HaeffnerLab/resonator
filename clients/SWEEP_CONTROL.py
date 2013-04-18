@@ -17,7 +17,6 @@ TIME_MAX = 100000       # 100 sec
 class SWEEP_WIDGET(QtGui.QWidget):
     '''Blueprint for a widget that interfaces with the sweep functionality
     of a signal generator.'''
-
     def __init__(self, reactor, parent=None):
         super(SWEEP_WIDGET, self).__init__(parent)
         self.reactor = reactor
@@ -26,6 +25,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
+        '''Connect to LabRAD and load server settings.'''
         from labrad.wrappers import connectAsync
 
         self.cxn = yield connectAsync()                     # '192.168.169.30'
@@ -42,6 +42,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
 
     def makeGui(self):
+        '''Create and array widgets in a main layout.'''
         mainLayout = QtGui.QGridLayout()
         groupbox = QtGui.QGroupBox('Sweep Control (Marconi)')
         groupboxLayout = QtGui.QGridLayout()
@@ -127,6 +128,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
 
     def makeCarrierModeButton(self):
+        '''Button for switching between 'FIXED' and 'SWEPT' carrier mode.'''
         carrierModeButton = QtGui.QPushButton()
         carrierModeButton.setText('Carrier Mode, Unknown')
         
@@ -144,6 +146,9 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return carrierModeButton
 
     def makeSweepTrigModeToggle(self):
+        '''Button to toggle through triggering mode options:
+        OFF, START, STARTSTOP, STEP. See Marconi Manual for details
+        on what each of these settings means.'''
         sweepTrigModeToggle = QtGui.QPushButton()
         sweepTrigModeToggle.setText("Trig Mode, Unknown")
 
@@ -167,6 +172,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepTrigModeToggle
 
     def makeSweepRangeStartCtrl(self):
+        '''Control the starting frequency of sweeps.'''
         sweepRangeStartCtrl = QtGui.QDoubleSpinBox()
         sweepRangeStartCtrl.setRange(FREQ_MIN, FREQ_MAX)
         sweepRangeStartCtrl.setDecimals(5)
@@ -180,6 +186,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepRangeStartCtrl
 
     def makeSweepRangeStopCtrl(self):
+        '''Control the stoping frequency of sweeps.'''
         sweepRangeStopCtrl = QtGui.QDoubleSpinBox()
         sweepRangeStopCtrl.setRange(FREQ_MIN, FREQ_MAX)
         sweepRangeStopCtrl.setDecimals(5)
@@ -193,6 +200,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepRangeStopCtrl
 
     def makeSweepStepCtrl(self):
+        '''Control the frequency step of the sweep.'''
         sweepStepCtrl = QtGui.QDoubleSpinBox()
         sweepStepCtrl.setRange(STEP_MIN, STEP_MAX)
         sweepStepCtrl.setDecimals(1)
@@ -206,6 +214,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepStepCtrl
 
     def makeSweepTimeCtrl(self):
+        '''Control the time between steps for sweeping.'''
         sweepTimeCtrl = QtGui.QDoubleSpinBox()
         sweepTimeCtrl.setRange(TIME_MIN, TIME_MAX)
         sweepTimeCtrl.setDecimals(1)
@@ -219,6 +228,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepTimeCtrl
 
     def makeSweepBeginButton(self):
+        '''Button to start a sweep (manual trigger).'''
         sweepBeginButton = QtGui.QPushButton()
         sweepBeginButton.setText("Start")
 
@@ -230,6 +240,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepBeginButton
 
     def makeSweepPauseButton(self):
+        '''Button to pause a sweep.'''
         sweepPauseButton = QtGui.QPushButton()
         sweepPauseButton.setText("Pause")
 
@@ -241,6 +252,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepPauseButton
 
     def makeSweepContinueButton(self):
+        '''Button to continue a paused sweep.'''
         sweepContinueButton = QtGui.QPushButton()
         sweepContinueButton.setText("Continue")
 
@@ -252,6 +264,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepContinueButton
 
     def makeSweepResetButton(self):
+        '''Button to reset the sweep frequency to the start value.'''
         sweepResetButton = QtGui.QPushButton()
         sweepResetButton.setText("Reset")
 
@@ -263,6 +276,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         return sweepResetButton
 
     def makeUpdateButton(self):
+        '''Button to reload server settings (in case of mismatch).'''
         sweepUpdateButton = QtGui.QPushButton()
         sweepUpdateButton.setText("Get")
         sweepUpdateButton.clicked.connect(self.update)
