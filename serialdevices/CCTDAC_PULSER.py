@@ -1,7 +1,7 @@
 '''
 ### BEGIN NODE INFO
 [info]
-name = CCTDAC_PULSER
+name = CCTDAC_PULSE
 version = 1.0
 description = 
 instancename = CCTDAC_PULSER
