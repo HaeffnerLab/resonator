@@ -141,7 +141,7 @@ class XYpos (QtGui.QWidget):
         from labrad.wrappers import connectAsync
         from labrad.types import Error
         self.cxn = yield connectAsync()
-        self.stageserver = yield self.cxn.cctmain_stage_server
+        self.stageserver = yield self.cxn.cctcamera_stage_server
                    
     def controlHasUpdated(self, label):
         def iu():
