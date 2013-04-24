@@ -4,15 +4,17 @@ import time
 from voltage_conversion import voltage_conversion as VC
 import csv
 from common_tools.okfpgaservers.pulse.pulse_sequences import pulse_sequence
+from labrad.units import WithUnit
 
 cxn = labrad.connect()
 keithley = cxn.keithley_2100_dmm()
 keithley.select_device()
-pulser=cxn.pulser()
+pulser = cxn.pulser
 dacserver = cxn.dac_server
 channel = '01'
 logicInput = 5.0
-
+duration = WithUnit(1, "s")
+pulser.addTTL(channel, logicInput, duration)
 
 run_time = time.strftime("%d%m%Y_%H%M")
 initial_time = time.time()
