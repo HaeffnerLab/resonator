@@ -9,9 +9,9 @@
 
 # Start the node server
 source ~/.virtualenvs/labrad/bin/activate
-twistd -n labradnode &
+nohup twistd -n labradnode &
 sleep 2
 
 # Start commonly used servers and/or clients
-python ~/labrad/resonator/clients/NodeClient-control-start.py
+nohup python ~/labrad/resonator/clients/NodeClient-control-start.py
 sleep 2
