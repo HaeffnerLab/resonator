@@ -2,7 +2,7 @@
 # Requires serial_server_v1_2.py (serial device manager) to be running in labrad
 
 """
-#### BEGIN NODE INFO
+### BEGIN NODE INFO
 [info]
 name = Marconi Server
 version = 1.0
