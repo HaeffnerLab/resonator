@@ -13,5 +13,5 @@ twistd -n labradnode &
 sleep 2
 
 # Start commonly used servers and/or clients
-python NodeClient-control-start.py
+python ~/labrad/resonator/clients/NodeClient-control-start.py
 sleep 2
