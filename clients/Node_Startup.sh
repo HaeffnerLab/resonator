@@ -4,14 +4,10 @@
 # Modified:
 # Author: Ryan Blais
 
-# Script to start node server and use it to start commonly used servers.
+# Script to start node server.
 # The LabRAD manager should already be started.
 
 # Start the node server
 source ~/.virtualenvs/labrad/bin/activate
 nohup twistd -n labradnode &
-sleep 2
-
-# Start commonly used servers and/or clients
-nohup python ~/labrad/resonator/clients/NodeClient-control-start.py
-sleep 2
+sleep 1

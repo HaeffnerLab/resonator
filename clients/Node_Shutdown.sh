@@ -10,8 +10,7 @@
 # Close connections to servers
 source ~/.virtualenvs/labrad/bin/activate
 python ~/labrad/resonator/clients/NodeClient-control-stop.py
-sleep 2
 
 # Kill the node server
 killall -9 twistd
-sleep 2
+sleep 1
