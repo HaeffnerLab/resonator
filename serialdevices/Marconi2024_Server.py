@@ -131,15 +131,33 @@ class MarconiServer(SerialDeviceServer):
         Load and/or set the initial values for the marconi.
         
         These settings are written to the marconi, not loaded from its
-        current values.
+        current values. If there is a set of saved settings called 'Default',
+        and the key 'Use Default' is set to True under MarconiServer in the
+        registry, then the default will be used. Otherwise the settings in
+        'MostRecentSettings' will be used. As a last resort the defaults
+        given at the top of this file are loaded.
         
         """
+        # Find available settings
         self.reg.cd(self.regPath + ['Settings'])
         settings = yield self.reg.dir()
         settings = settings[1]
-        if 'MostRecentSettings' in settings and not START_WITH_DEFAULTS:
+        # Determine whether to use default settings
+        self.reg.cd(self.regPath)
+        try:
+            use_default = yield self.reg.get('Use Default')
+        except KeyError:
+            use_default = False
+        # Load appropriate settings
+        if 'Default' in settings and use_default:
+            print("Loading settings in Default.")
+            self._LoadSettings('Default')
+        elif 'MostRecentSettings' in settings:
+            print("Loading settings in MostRecentSettings.")
             self._LoadSettings('MostRecentSettings')
         else:
+            print("User's default settings and MostRecentSettings not detected.")
+            print("Using builtin default settings instead.")
             self.setDefaultValues()
 
     def setDefaultValues(self):
