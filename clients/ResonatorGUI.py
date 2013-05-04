@@ -1,47 +1,115 @@
 from PyQt4 import QtGui, QtCore
 from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 
-class ResonatorGUI(QtGui.QMainWindow):
+class cctGUI(QtGui.QMainWindow):
     def __init__(self, reactor, parent=None):
-        super(ResonatorGUI, self).__init__(parent)
+        super(cctGUI, self).__init__(parent)
         self.reactor = reactor
-        lightControlTab = self.makeLightWidget(reactor)
-        voltageControlTab = self.makeVoltageWidget(reactor)      
+        self.connect_labrad()
+
+    @inlineCallbacks
+    def connect_labrad(self):
+        from connection import connection
+        cxn = connection()
+        yield cxn.connect()
+        self.create_layout(cxn)
+
+    def create_layout(self, cxn):
+        from PMT_CONTROL import pmtWidget
+        from common.clients.LINETRIGGER_CONTROL import linetriggerWidget as lineTrig
         self.tabWidget = QtGui.QTabWidget()
+        lightControlTab = self.makeLightWidget(reactor)
+        voltageControlTab = self.makeVoltageWidget(reactor)
+        #control729Widget = self.makecontrol729Widget(reactor, cxn)
+        tableopticsTab = self.makeTableOpticsWidget(reactor)
+
         self.tabWidget.addTab(voltageControlTab,'&Trap Voltages')
         self.tabWidget.addTab(lightControlTab,'&Laser Room')
+        #self.tabWidget.addTab(control729Widget, '&729 Control')
+        self.tabWidget.addTab(tableopticsTab, '&Table Optics')
+
+ #       scriptControl = self.makeScriptControl(reactor)
+
         self.createGrapherTab()
-        
-#        scriptControl = self.makeScriptControl(reactor)
+
         gridLayout = QtGui.QGridLayout()
-#        gridLayout.addWidget(scriptControl, 0, 0, 1, 1)
+ #       gridLayout.addWidget(scriptControl, 0, 0, 1, 1)
         gridLayout.addWidget(self.tabWidget, 0, 1, 1, 3)
+        rightPanel = QtGui.QGridLayout()
+        rightPanel.addWidget(pmtWidget(reactor), 0, 0)
+        rightPanel.addWidget(lineTrig(reactor), 1, 0)
+        gridLayout.addLayout(rightPanel, 0, 4)
         centralWidget = QtGui.QWidget()
         centralWidget.setLayout(gridLayout)
         self.setCentralWidget(centralWidget)
-        self.setWindowTitle('Resonator GUI')
+        self.setWindowTitle('CCTGUI')
 
-        
+
     def makeScriptControl(self, reactor):
-        from SCRIPT_CONTROL.scriptcontrol import ScriptControl
+#        from common.clients.guiscriptcontrol.scriptcontrol import ScriptControl
         self.sc = ScriptControl(reactor, self)
         self.sc, self.experimentParametersWidget = self.sc.getWidgets()
         self.createExperimentParametersTab()
         return self.sc
-        
+
     def createExperimentParametersTab(self):
         self.tabWidget.addTab(self.experimentParametersWidget, '&Experiment Parameters')
 
-        
+    def makeLightWidget(self, reactor):
+        from common.clients.CAVITY_CONTROL import cavityWidget
+        from common.clients.multiplexer.MULTIPLEXER_CONTROL import multiplexerWidget
+        widget = QtGui.QWidget()
+        gridLayout = QtGui.QGridLayout()
+        gridLayout.addWidget(multiplexerWidget(reactor),0,1)
+        gridLayout.addWidget(cavityWidget(reactor),0,0)
+        widget.setLayout(gridLayout)
+        return widget
+
+    def makeTableOpticsWidget(self, reactor):
+        widget = QtGui.QWidget()
+        from common.clients.DDS_CONTROL import DDS_CONTROL
+        gridLayout = QtGui.QGridLayout()
+        gridLayout.addWidget(DDS_CONTROL(reactor), 0, 0)
+        #gridLayout.setRowStretch(1,1)
+        #gridLayout.setColumnStretch(1,1)
+        widget.setLayout(gridLayout)
+        return widget
+
+    def makeVoltageWidget(self, reactor):
+        from common.clients.DAC_CONTROL_dev import DAC_Control
+        from PMT_CONTROL import pmtWidget
+        #from PMT_CONTROL2 import pmtWidget as pmtWidget2
+        from TRAPDRIVE_CONTROL import TD_CONTROL
+        from TICKLE_CONTROL import Tickle_Control
+#        from SHUTTER_CONTROL import SHUTTER
+        from common.clients.multiplexer.MULTIPLEXER_CONTROL import multiplexerWidget
+        from SWEEP_CONTROL import SWEEP_CONTROL
+        widget = QtGui.QWidget()
+        gridLayout = QtGui.QGridLayout()
+        gridLayout.addWidget(DAC_Control(reactor), 0, 0)
+        rightPanel = QtGui.QGridLayout()
+        rightPanel.addWidget(pmtWidget(reactor), 0, 0)       
+        rightPanel.addWidget(SWEEP_CONTROL(reactor), 1, 0)
+        bottomPanel = QtGui.QGridLayout()
+        bottomPanel.addWidget(Tickle_Control(reactor), 1, 1)
+        bottomPanel.addWidget(TD_CONTROL(reactor), 1, 0)
+ #       bottomPanel.addWidget(SHUTTER(reactor), 1, 2)
+        #gridLayout.addLayout(rightPanel, 0, 1, 2, 1)          
+        gridLayout.addLayout(bottomPanel, 1, 0)
+        gridLayout.setRowStretch(0, 1)
+        #rightPanel.setRowStretch(2, 1)            
+        widget.setLayout(gridLayout)
+        return widget
+
     @inlineCallbacks
     def createGrapherTab(self):
-        grapher = yield self.makeGrapherWidget(reactor)
-        self.tabWidget.addTab(grapher, '&Grapher')
-    
+        grapherTab = yield self.makeGrapherWidget(reactor)
+        self.tabWidget.addTab(grapherTab, '&Grapher')
+
     @inlineCallbacks
     def makeGrapherWidget(self, reactor):
         widget = QtGui.QWidget()
-        from pygrapherlive.connections import CONNECTIONS
+        from common.clients.pygrapherlive.connections import CONNECTIONS
         vboxlayout = QtGui.QVBoxLayout()
         Connections = CONNECTIONS(reactor)
         @inlineCallbacks
@@ -52,39 +120,9 @@ class ResonatorGUI(QtGui.QMainWindow):
         yield Connections.communicate.connectionReady.connect(widgetReady)
         returnValue(widget)
 
-    def makeLightWidget(self, reactor):        
-        from common.clients.CAVITY_CONTROL import cavityWidget
-        from common.clients.multiplexer.MULTIPLEXER_CONTROL import multiplexerWidget
-        widget = QtGui.QWidget()
-        gridLayout = QtGui.QGridLayout()
-        gridLayout.addWidget(multiplexerWidget(reactor),0,1)
-        gridLayout.addWidget(cavityWidget(reactor),0,0)
-        widget.setLayout(gridLayout)
-        return widget
-        
-    def makeVoltageWidget(self, reactor):        
-        from DAC_CONTROL import DAC_Control
-        from common.clients.PMT_CONTROL import pmtWidget
-        from TRAPDRIVE_CONTROL import TD_CONTROL
-        from TICKLE_CONTROL import Tickle_Control
-        from SHUTTER_CONTROL import SHUTTER
-        from common.clients.multiplexer.MULTIPLEXER_CONTROL import multiplexerWidget
-        from SWEEP_CONTROL import SWEEP_CONTROL
-        widget = QtGui.QWidget()
-        gridLayout = QtGui.QGridLayout()        
-        gridLayout.addWidget(DAC_Control(reactor), 0, 0)            
-        rightPanel = QtGui.QGridLayout()
-        rightPanel.addWidget(pmtWidget(reactor), 0, 0)
-        rightPanel.addWidget(SWEEP_CONTROL(reactor), 1, 0) # uncomment to add SWEEP
-        bottomPanel = QtGui.QGridLayout()
-        bottomPanel.addWidget(Tickle_Control(reactor), 1, 1)      
-        bottomPanel.addWidget(TD_CONTROL(reactor), 1, 0)
-        bottomPanel.addWidget(SHUTTER(reactor), 1, 2) 
-        gridLayout.addLayout(rightPanel, 0, 1, 2, 1)          
-        gridLayout.addLayout(bottomPanel, 1, 0)
-        gridLayout.setRowStretch(0, 1)
-        rightPanel.setRowStretch(2, 1)            
-        widget.setLayout(gridLayout)
+    def makecontrol729Widget(self, reactor, cxn):
+        from common.clients.control_729.control_729 import control_729
+        widget = control_729(reactor, cxn)
         return widget
 
     def closeEvent(self, x):
@@ -95,6 +133,7 @@ if __name__=="__main__":
     import qt4reactor
     qt4reactor.install()
     from twisted.internet import reactor
-    ResonatorGUI = ResonatorGUI(reactor)
-    ResonatorGUI.show()
+    cctGUI = cctGUI(reactor)
+    cctGUI.show()
     reactor.run()
+
