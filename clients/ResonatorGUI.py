@@ -22,11 +22,13 @@ class cctGUI(QtGui.QMainWindow):
         voltageControlTab = self.makeVoltageWidget(reactor)
         #control729Widget = self.makecontrol729Widget(reactor, cxn)
         tableopticsTab = self.makeTableOpticsWidget(reactor)
+        sweepTab = self.makeSweepWidget(reactor)
 
         self.tabWidget.addTab(voltageControlTab,'&Trap Voltages')
         self.tabWidget.addTab(lightControlTab,'&Laser Room')
         #self.tabWidget.addTab(control729Widget, '&729 Control')
         self.tabWidget.addTab(tableopticsTab, '&Table Optics')
+        self.tabWidget.addTab(sweepTab, '&Sweep (Marconi)')
 
  #       scriptControl = self.makeScriptControl(reactor)
 
@@ -100,6 +102,10 @@ class cctGUI(QtGui.QMainWindow):
         #rightPanel.setRowStretch(2, 1)            
         widget.setLayout(gridLayout)
         return widget
+
+    def makeSweepWidget(self, reactor):
+        from SWEEP_CONTROL import SWEEP_WIDGET
+        return SWEEP_WIDGET(reactor)
 
     @inlineCallbacks
     def createGrapherTab(self):
