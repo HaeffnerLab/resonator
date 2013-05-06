@@ -57,9 +57,8 @@ class voltage_conversion(object):
         for num in coefficient:
             TempK+= (num)*((math.cos((count*(math.acos(X))))))
             count+=1
+<<<<<<< HEAD
         return TempK
-#<<<<<<< HEAD
-#        return TempK
-#=======
-#        return TempK
-#>>>>>>> master
+=======
+        return TempK
+>>>>>>> master
