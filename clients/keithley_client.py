@@ -59,3 +59,5 @@ def main():
         file_529.close()
         pulser.switch_manual("Thermometer", False)
         time.sleep(30)
+        
+main()
