@@ -11,6 +11,8 @@ def main():
 
     cxnpulser = yield connectAsync('192.168.169.29')
     pulser = cxnpulser.pulser()
+    #Initially switch off the TTL pulse.
+    pulser.switch_manual("Thermometer", False)
 
     run_time = time.strftime("%d%m%Y_%H%M")
     initial_time = time.time()
@@ -37,7 +39,6 @@ def main():
     # Switch is normally closed, so when we apply the HIGH logic, it will measure the voltage. 
     
     while(1):
-        pulse.switch_manual("Thermometer", False)
         file_526=open(filedirectory_526,"ab")
         fcsv_526=csv.writer(file_526,lineterminator="\n")
         voltage = keithley.get_dc_volts()
@@ -45,7 +46,7 @@ def main():
         elapsed_time_526 = (time.time() - initial_time)/60
         fcsv_526.writerow([elapsed_time_526, time.strftime("%H"+":"+"%M"), voltage, tempK])
         file_526.close()
-        pulse.switch_manual("Thermometer", True)
+        pulser.switch_manual("Thermometer", True)
         time.sleep(30)
     
         file_529 = open(filedirectory_529,"ab")
@@ -56,4 +57,5 @@ def main():
         elapsed_time_529 = (time.time() - initial_time)/60
         fcsv_529.writerow([elapsed_time_529, time.strftime("%H"+":"+"%M"), voltage, tempK])
         file_529.close()
+        pulser.switch_manual("Thermometer", False)
         time.sleep(30)
