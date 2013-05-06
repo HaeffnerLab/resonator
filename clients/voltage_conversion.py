@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 class voltage_conversion(object):
     #This class contains helper functions to convert input voltages into associated temperature in Kelvin
     
-    def plot(self,x,y):
-        plt.plot(x,y,color="k",marker="*",markersize=6)
-        plt.xlabel('Temperature (K)') # x-axis
-        plt.ylabel('Voltage (V)') # y-axis
-        plt.show()
+#    def plot(self,x,y):
+#        plt.plot(x,y,color="k",marker="*",markersize=6)
+#        plt.xlabel('Temperature (K)') # x-axis
+#        plt.ylabel('Voltage (V)') # y-axis
+#        plt.show()
     
     def conversion(self,voltage):
         #This is a conversion function: Convert voltage into Temperature in Kelvin
