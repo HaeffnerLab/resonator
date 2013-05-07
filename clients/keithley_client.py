@@ -6,12 +6,13 @@ import csv
 #Run on the Linux
 cxn = labrad.connect()
 pulser = cxn.pulser()
+#Initially switch off the TTL pulse
+pulser.switch_manual('Thermometer', False)
 #Connect to Windows Computer to use Keithley DMM
 cxndmm = labrad.connect('192.168.169.30')
 keithley = cxndmm.keithley_2100_dmm()
 keithley.select_device()
 
-pulser.switch_manual('Thermometer', False)
 run_time = time.strftime("%d%m%Y_%H%M")
 initial_time = time.time()
 #BNC 526 is at Cold Finger
@@ -28,7 +29,7 @@ file_529 = open(filedirectory_529,"wb")
 fcsv_529 = csv.writer(file_529,lineterminator="\n")
 fcsv_529.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temperature(K)"])
 file_529.close()
-    
+
 vc = VC()
 while(1):
     file_526=open(filedirectory_526,"ab")
