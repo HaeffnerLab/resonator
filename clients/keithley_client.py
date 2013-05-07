@@ -3,9 +3,10 @@ import time
 from voltage_conversion import voltage_conversion as VC
 import csv
 
-
+#Run on the Linux
 cxn = labrad.connect()
 pulser = cxn.pulser()
+#Connect to Windows Computer to use Keithley DMM
 cxndmm = labrad.connect('192.168.169.30')
 keithley = cxndmm.keithley_2100_dmm()
 keithley.select_device()
