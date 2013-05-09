@@ -7,7 +7,7 @@ import csv
 cxn = labrad.connect()
 pulser = cxn.pulser()
 #Initially switch off the TTL pulse
-pulser.switch_manual('Thermometer', False)
+pulser.switch_manual('Thermometer', True)
 #Connect to Windows Computer to use Keithley DMM
 cxndmm = labrad.connect('192.168.169.30')
 keithley = cxndmm.keithley_2100_dmm()
@@ -39,7 +39,7 @@ while(1):
     elapsed_time_526 = (time.time() - initial_time)/60
     fcsv_526.writerow([elapsed_time_526, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_526.close()
-    pulser.switch_manual('Thermometer', True)
+    pulser.switch_manual('Thermometer', False)
     time.sleep(30)
     
     file_529 = open(filedirectory_529,"ab")
@@ -49,5 +49,5 @@ while(1):
     elapsed_time_529 = (time.time() - initial_time)/60
     fcsv_529.writerow([elapsed_time_529, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_529.close()
-    pulser.switch_manual('Thermometer', False)
+    pulser.switch_manual('Thermometer', Truesssss)
     time.sleep(30)
