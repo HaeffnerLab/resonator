@@ -3,9 +3,12 @@ import time
 from voltage_conversion import voltage_conversion as VC
 import csv
 
-
+#Run on the Linux
 cxn = labrad.connect()
-pulser = cxn.Pulser()
+pulser = cxn.pulser()
+#Initially switch off the TTL pulse
+pulser.switch_manual('Thermometer', True)
+#Connect to Windows Computer to use Keithley DMM
 cxndmm = labrad.connect('192.168.169.30')
 keithley = cxndmm.keithley_2100_dmm()
 keithley.select_device()
@@ -33,7 +36,7 @@ while(1):
     file_526=open(filedirectory_526,"ab")
     fcsv_526=csv.writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    tempK=vc.conversion(voltage)
+    tempK=vc.conversion(voltage+0.00369)
     elapsed_time_526 = (time.time() - initial_time)/60
     fcsv_526.writerow([elapsed_time_526, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_526.close()
@@ -43,7 +46,7 @@ while(1):
     file_529 = open(filedirectory_529,"ab")
     fcsv_529 = csv.writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    tempK = vc.conversion(voltage)
+    tempK = vc.conversion(voltage+0.00272)
     elapsed_time_529 = (time.time() - initial_time)/60
     fcsv_529.writerow([elapsed_time_529, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_529.close()
