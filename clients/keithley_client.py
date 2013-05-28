@@ -53,7 +53,7 @@ while(1):
     file_526=open(filedirectory_526,"ab")
     fcsv_526=csv.writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    tempK=vc.conversion(voltage+0.00369)
+    tempK = vc.conversion(voltage)
     elapsed_time_526 = (time.time() - initial_time)/60
     fcsv_526.writerow([elapsed_time_526, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_526.close()
@@ -64,7 +64,7 @@ while(1):
     file_529 = open(filedirectory_529,"ab")
     fcsv_529 = csv.writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    tempK = vc.conversion(voltage+0.00272)
+    tempK = vc.conversion(voltage)
     elapsed_time_529 = (time.time() - initial_time)/60
     fcsv_529.writerow([elapsed_time_529, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_529.close()
@@ -75,7 +75,7 @@ while(1):
     file_527=open(filedirectory_527,"ab")
     fcsv_527=csv.writer(file_527,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    tempK=vc.conversion(voltage+0.00369)
+    tempK = vc.conversion(voltage)
     elapsed_time_527 = (time.time() - initial_time)/60
     fcsv_527.writerow([elapsed_time_527, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_527.close()
@@ -86,7 +86,7 @@ while(1):
     file_528=open(filedirectory_528,"ab")
     fcsv_528=csv.writer(file_528,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    tempK=vc.conversion(voltage+0.00369)
+    tempK = vc.conversion(voltage)
     elapsed_time_528 = (time.time() - initial_time)/60
     fcsv_528.writerow([elapsed_time_528, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_528.close()
