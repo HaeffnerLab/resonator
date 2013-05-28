@@ -13,10 +13,10 @@ keithley.select_device()
 
 
 #Initially switch off the TTL pulse except the first one
-pulser.switch_manual('Thermometer1', False)
-pulser.switch_manual('Thermometer2', True)
-pulser.switch_manual('Thermometer3', True)
-pulser.switch_manual('Thermometer4', True)
+pulser.switch_manual('Thermometer1', True)
+pulser.switch_manual('Thermometer2', False)
+pulser.switch_manual('Thermometer3', False)
+pulser.switch_manual('Thermometer4', False)
 
 run_time = time.strftime("%d%m%Y_%H%M")
 initial_time = time.time()
@@ -57,6 +57,8 @@ while(1):
     elapsed_time_526 = (time.time() - initial_time)/60
     fcsv_526.writerow([elapsed_time_526, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_526.close()
+    pulser.switch_manual('Thermometer1', False)
+    pulser.switch_manual('Thermometer2', True)
     time.sleep(15)
     
     file_529 = open(filedirectory_529,"ab")
@@ -66,6 +68,8 @@ while(1):
     elapsed_time_529 = (time.time() - initial_time)/60
     fcsv_529.writerow([elapsed_time_529, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_529.close()
+    pulser.switch_manual('Thermometer2', False)
+    pulser.switch_manual('Thermometer3', True)
     time.sleep(15)
     
     file_527=open(filedirectory_527,"ab")
@@ -75,6 +79,8 @@ while(1):
     elapsed_time_527 = (time.time() - initial_time)/60
     fcsv_527.writerow([elapsed_time_527, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_527.close()
+    pulser.switch_manual('Thermometer3', False)
+    pulser.switch_manual('Thermometer4', True)
     time.sleep(15)
     
     file_528=open(filedirectory_528,"ab")
@@ -84,6 +90,9 @@ while(1):
     elapsed_time_528 = (time.time() - initial_time)/60
     fcsv_528.writerow([elapsed_time_528, time.strftime("%H"+":"+"%M"), voltage, tempK])
     file_528.close()
+    pulser.switch_manual('Thermometer1', True)
+    pulser.switch_manual('Thermometer2', False) 
+    pulser.switch_manual('Thermometer3', False)
+    pulser.switch_manual('Thermometer4', False)
     time.sleep(15)
-    
     
