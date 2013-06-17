@@ -10,7 +10,7 @@ cxn = labrad.connect()
 pulser = cxn.pulser()
 #Connect to Windows Computer to use Keithley DMM
 cxndmm = labrad.connect('192.168.169.30')
-keithley = cxndmm.keithley_2100_dmm()
+keithley = cxndmm.keithley_2110_dmm()
 keithley.select_device()
 
 #Initially switch off the TTL pulse except the first one
@@ -27,11 +27,11 @@ filedirectory_526 = '/home/resonator/Desktop/Resonator_Voltage/526(Cold Finger)_
 #BNC 529 is inside the heat shield
 filedirectory_529 = '/home/resonator/Desktop/Resonator_Voltage/529(Inside Heat Shield)_'+run_time+'_keithley_DMM.csv'
 #
-filedirectory_527 = '/home/resonator/Desktop/Resonator_Voltage/527_'+run_time+'_keithley_DMM.csv'
+filedirectory_527 = '/home/resonator/Desktop/Resonator_Voltage/Cernox_'+run_time+'_keithley_DMM.csv'
 #
-filedirectory_528 = '/home/resonator/Desktop/Resonator_Voltage/528_'+run_time+'_keithley_DMM.csv'
+filedirectory_528 = '/home/resonator/Desktop/Resonator_Voltage/C1_'+run_time+'_keithley_DMM.csv'
 #
-filedirectory_530 = '/home/resonator/Desktop/Resonator_Voltage/530_'+run_time+'_keithley_DMM.csv'
+filedirectory_530 = '/home/resonator/Desktop/Resonator_Voltage/C2_'+run_time+'_keithley_DMM.csv'
 
 file_526 = open(filedirectory_526,"wb")
 fcsv_526 = csv.writer(file_526,lineterminator="\n")
@@ -66,26 +66,26 @@ while(1):
     voltage = keithley.get_dc_volts()
     resistance = voltage / (10e-6)
     temp=vc.conversion(voltage)
-    tempR=rc.conversion(voltage,R)
+    tempR=rc.conversion(voltage,resistance)
     elapsed_time_526 = (time() - initial_time)/60
     fcsv_526.writerow([elapsed_time_526, strftime("%H"+":"+"%M"), voltage, temp, resistance, tempR[0], tempR[1]])
     file_526.close()
     pulser.switch_manual('Thermometer1', False)
     pulser.switch_manual('Thermometer2', True)
-    sleep(1)
+    sleep(5)
     
     file_529 = open(filedirectory_529,"ab")
     fcsv_529 = csv.writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (10e-6)
     temp=vc.conversion(voltage)
-    tempR=rc.conversion(voltage,R)
+    tempR=rc.conversion(voltage,resistance)
     elapsed_time_529 = (time() - initial_time)/60
     fcsv_529.writerow([elapsed_time_529, strftime("%H"+":"+"%M"), voltage, temp, tempR[0], tempR[1]])
     file_529.close()
     pulser.switch_manual('Thermometer2', False)
     pulser.switch_manual('Thermometer3', True)
-    sleep(1)
+    sleep(5)
 
 #############################################################################
     file_527=open(filedirectory_527,"ab")
@@ -93,39 +93,39 @@ while(1):
     voltage = keithley.get_dc_volts()
     resistance = voltage / (10e-6)
     temp=vc.conversion(voltage)
-    tempR=rc.conversion(voltage,R)
+    tempR=rc.conversion(voltage,resistance)
     elapsed_time_527 = (time() - initial_time)/60
     fcsv_527.writerow([elapsed_time_527, strftime("%H"+":"+"%M"), voltage, temp, tempR[0], tempR[1]])
     file_527.close()
     pulser.switch_manual('Thermometer3', False)
     pulser.switch_manual('Thermometer4', True)
-    sleep(1)
+    sleep(5)
     
     file_528=open(filedirectory_528,"ab")
     fcsv_528=csv.writer(file_528,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (10e-6)
     temp=vc.conversion(voltage)
-    tempR=rc.conversion(voltage,R)
+    tempR=rc.conversion(voltage,resistance)
     elapsed_time_528 = (time() - initial_time)/60
     fcsv_528.writerow([elapsed_time_528, strftime("%H"+":"+"%M"), voltage, temp, tempR[0], tempR[1]])
     file_528.close()
     pulser.switch_manual('Thermometer4', False)
-    pulser.switch_manual('Thermometer1', True)    
-    sleep(1)
+    pulser.switch_manual('Thermometer5', True)    
+    sleep(5)
 
     file_530=open(filedirectory_530,"ab")
     fcsv_530=csv.writer(file_530,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (10e-6)
     temp=vc.conversion(voltage)
-    tempR=rc.conversion(voltage,R)
+    tempR=rc.conversion(voltage,resistance)
     elapsed_time_530 = (time() - initial_time)/60
     fcsv_530.writerow([elapsed_time_530, strftime("%H"+":"+"%M"), voltage, temp, tempR[0], tempR[1]])
     file_530.close()
-    pulser.switch_manual('Thermometer4', False)
+    pulser.switch_manual('Thermometer5', False)
     pulser.switch_manual('Thermometer1', True)    
-    sleep(1)
+    sleep(5)
 
-    sleep(55)
+    sleep(5)
 

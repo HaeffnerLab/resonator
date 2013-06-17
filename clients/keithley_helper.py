@@ -51,11 +51,12 @@ class voltage_conversion(object):
         return TempK
     
 class resistance_conversion(object):
-    temp = [0,0]
-    Ac = [5.21195, 4.9193]
-    Bc = [2.14594,2.50747]
-    Cc = [6.74724,5.85443]
+    
     def conversion(self, voltage,R):
+        temp = [0,0]
+        Ac = [5.21195, 4.9193]
+        Bc = [2.14594,2.50747]
+        Cc = [6.74724,5.85443]
         temp[0] = self.calculation(Ac[0], Bc[0], Cc[0], R)
         temp[1] = self.calculation(Ac[1], Bc[1], Cc[1], R)
         return temp
