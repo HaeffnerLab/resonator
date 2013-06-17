@@ -1,14 +1,8 @@
 import labrad
 import time
 
-cxn = labrad.connectAsync('192.168.169.29')
-pulse = cxn.pulser()
-
-count = 0 
-while (count <= 10):
-  pulse.switch_manual("11",True)
-  sleep(5)
-  pulse.switch_manual("11",False)
-  sleep(5)
-  count += 1
-  
+cxn = labrad.connect()
+pulser = cxn.pulser()
+pulser.get_channels()
+#Initially switch off the TTL pulse except the first one
+pulser.switch_manual('Thermometer1', True)
