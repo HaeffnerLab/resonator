@@ -33,41 +33,45 @@ filedirectory_528 = '/home/resonator/Desktop/Resonator_Voltage/C1_'+run_time+'_k
 #
 filedirectory_530 = '/home/resonator/Desktop/Resonator_Voltage/C2_'+run_time+'_keithley_DMM.csv'
 
-file_526 = open(filedirectory_526,"wb")
-fcsv_526 = csv.writer(file_526,lineterminator="\n")
-fcsv_526.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temperature(K)"])
-file_526.close()
+##file_526 = open(filedirectory_526,"wb")
+##fcsv_526 = csv.writer(file_526,lineterminator="\n")
+##fcsv_526.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temperature(K)"])
+##file_526.close()
+##
+##file_527 = open(filedirectory_527,"wb")
+##fcsv_527 = csv.writer(file_527,lineterminator="\n")
+##fcsv_527.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temperature(K)" ])
+##file_527.close()
+##
+##file_528 = open(filedirectory_528,"wb")
+##fcsv_528 = csv.writer(file_528,lineterminator="\n")
+##fcsv_528.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)" ])
+##file_528.close()
+##
+##file_529 = open(filedirectory_529,"wb")
+##fcsv_529 = csv.writer(file_529,lineterminator="\n")
+##fcsv_529.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temp_R1(K)", "Temp_R2(K)" ])
+##file_529.close()
+##
+##file_530 = open(filedirectory_530,"wb")
+##fcsv_530 = csv.writer(file_530,lineterminator="\n")
+##fcsv_530.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temp_R1(K)", "Temp_R2(K)" ])
+##file_530.close()
 
-file_527 = open(filedirectory_527,"wb")
-fcsv_527 = csv.writer(file_527,lineterminator="\n")
-fcsv_527.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temperature(K)" ])
-file_527.close()
+# Each colum headers is the following:
+#["Elapsed Time (minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temperature(K)", "Temp_Resistor1 (K)","Temp_Resistor2 (K)" ]
 
-file_528 = open(filedirectory_528,"wb")
-fcsv_528 = csv.writer(file_528,lineterminator="\n")
-fcsv_528.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)" ])
-file_528.close()
-
-file_529 = open(filedirectory_529,"wb")
-fcsv_529 = csv.writer(file_529,lineterminator="\n")
-fcsv_529.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temp_R1(K)", "Temp_R2(K)" ])
-file_529.close()
-
-file_530 = open(filedirectory_530,"wb")
-fcsv_530 = csv.writer(file_530,lineterminator="\n")
-fcsv_530.writerow(["ElapsedTime(minutes)", "CurrentTime(H:M)", "Voltage(V)", "Temp_R1(K)", "Temp_R2(K)" ])
-file_530.close()
-    
 vc = VC()
 rc = RC()
 while(1):
-    file_526=open(filedirectory_526,"ab")
-    fcsv_526=csv.writer(file_526,lineterminator="\n")
+    file_526 = open(filedirectory_526,"ab")
+    fcsv_526 = csv.writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (10e-6)
-    temp=vc.conversion(voltage)
+    resistance = voltage / (1e-6)
+    temp = vc.conversion(voltage)
+    tempR = vc.conversion(resistance)
     elapsed_time_526 = (time() - initial_time)/60
-    fcsv_526.writerow([round(elapsed_time_526,4), strftime("%H"+":"+"%M"), voltage, temp])
+    fcsv_526.writerow([round(elapsed_time_526,4), strftime("%H"+"%M"), voltage, temp,  tempR[0], tempR[1]])
     file_526.close()
     print temp
     pulser.switch_manual('Thermometer1', False)
@@ -77,10 +81,11 @@ while(1):
     file_529 = open(filedirectory_529,"ab")
     fcsv_529 = csv.writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (10e-6)
+    resistance = voltage / (1e-6)
     temp=vc.conversion(voltage)
+    tempR = vc.conversion(resistance)
     elapsed_time_529 = (time() - initial_time)/60
-    fcsv_529.writerow([round(elapsed_time_529,4), strftime("%H"+":"+"%M"), voltage, temp])
+    fcsv_529.writerow([round(elapsed_time_529,4), strftime("%H"+"%M"), voltage, temp,  tempR[0], tempR[1]])
     file_529.close()
     print temp
     pulser.switch_manual('Thermometer2', False)
@@ -88,42 +93,41 @@ while(1):
     sleep(2)
 
 #############################################################################
-    file_527=open(filedirectory_527,"ab")
-    fcsv_527=csv.writer(file_527,lineterminator="\n")
+    file_Cernox = open(filedirectory_Cernox,"ab")
+    fcsv_Cernox = writer(file_Cernox,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (1e-6)
-    elapsed_time_527 = (time() - initial_time)/60
-    fcsv_527.writerow([round(elapsed_time_527,4), strftime("%H"+":"+"%M"), voltage])
-    file_527.close()
+    elapsed_time_Cernox = (time() - initial_time)/60
+    fcsv_Cernox.writerow([round(elapsed_time_Cernox, 4), strftime("%H"+"%M"), voltage, tempR[0], tempR[1]])
+    file_Cernox.close()
     pulser.switch_manual('Thermometer3', False)
     pulser.switch_manual('Thermometer4', True)
     sleep(2)
     
-    file_528=open(filedirectory_528,"ab")
-    fcsv_528=csv.writer(file_528,lineterminator="\n")
+    file_C1 = open(filedirectory_C1,"ab")
+    fcsv_C1 = writer(file_C1,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (1e-6)
     tempR=rc.conversion(resistance)
-    elapsed_time_528 = (time() - initial_time)/60
-    fcsv_528.writerow([round(elapsed_time_528,4), strftime("%H"+":"+"%M"), voltage, tempR[0], tempR[1]])
-    file_528.close()
+    elapsed_time_C1 = (time() - initial_time)/60
+    fcsv_C1.writerow([round(elapsed_time_C1,4), strftime("%H"+"%M"), voltage, tempR[0], tempR[1]])
+    file_C1.close()
     print tempR
     pulser.switch_manual('Thermometer4', False)
     pulser.switch_manual('Thermometer5', True)    
     sleep(2)
 
-    file_530=open(filedirectory_530,"ab")
-    fcsv_530=csv.writer(file_530,lineterminator="\n")
+    file_C2 = open(filedirectory_C2,"ab")
+    fcsv_C2 = writer(file_C2,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (1e-6)
     tempR=rc.conversion(resistance)
-    elapsed_time_530 = (time() - initial_time)/60
-    fcsv_530.writerow([round(elapsed_time_530,4), strftime("%H"+":"+"%M"), voltage, tempR[0], tempR[1]])
-    file_530.close()
+    elapsed_time_C2 = (time() - initial_time)/60
+    fcsv_C2.writerow([round(elapsed_time_C2,4), strftime("%H"+"%M"), voltage, tempR[0], tempR[1]])
+    file_C2.close()
     print tempR
     pulser.switch_manual('Thermometer5', False)
     pulser.switch_manual('Thermometer1', True)    
     sleep(2)
-
-    sleep(55)
-
+    
+    sleep(50)
