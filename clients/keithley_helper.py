@@ -52,7 +52,7 @@ class voltage_conversion(object):
     
 class resistance_conversion(object):
     
-    def conversion(self, voltage,R):
+    def conversion(self, R):
         temp = [0,0]
         Ac = [5.21195, 4.9193]
         Bc = [2.14594,2.50747]
