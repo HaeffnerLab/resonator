@@ -1,9 +1,9 @@
 import labrad
 from time import *
+from csv import *
+from math import *
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
-import csv
-from math import *
 
 #Run on the Linux
 cxn = labrad.connect()
