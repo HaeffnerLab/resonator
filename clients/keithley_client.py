@@ -65,7 +65,7 @@ vc = VC()
 rc = RC()
 while(1):
     file_526 = open(filedirectory_526,"ab")
-    fcsv_526 = csv.writer(file_526,lineterminator="\n")
+    fcsv_526 = writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (1e-6)
     temp = vc.conversion(voltage)
@@ -79,7 +79,7 @@ while(1):
     sleep(2)
     
     file_529 = open(filedirectory_529,"ab")
-    fcsv_529 = csv.writer(file_529,lineterminator="\n")
+    fcsv_529 = writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
     resistance = voltage / (1e-6)
     temp=vc.conversion(voltage)
