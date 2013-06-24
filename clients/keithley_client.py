@@ -27,11 +27,11 @@ filedirectory_526 = '/home/resonator/Desktop/Resonator_Voltage/526(Cold Finger)_
 #BNC 529 is inside the heat shield
 filedirectory_529 = '/home/resonator/Desktop/Resonator_Voltage/529(Inside Heat Shield)_'+run_time+'_keithley_DMM.csv'
 #
-filedirectory_527 = '/home/resonator/Desktop/Resonator_Voltage/Cernox_'+run_time+'_keithley_DMM.csv'
+filedirectory_Cernox = '/home/resonator/Desktop/Resonator_Voltage/Cernox_'+run_time+'_keithley_DMM.csv'
 #
-filedirectory_528 = '/home/resonator/Desktop/Resonator_Voltage/C1_'+run_time+'_keithley_DMM.csv'
+filedirectory_C1 = '/home/resonator/Desktop/Resonator_Voltage/C1_'+run_time+'_keithley_DMM.csv'
 #
-filedirectory_530 = '/home/resonator/Desktop/Resonator_Voltage/C2_'+run_time+'_keithley_DMM.csv'
+filedirectory_C2 = '/home/resonator/Desktop/Resonator_Voltage/C2_'+run_time+'_keithley_DMM.csv'
 
 ##file_526 = open(filedirectory_526,"wb")
 ##fcsv_526 = csv.writer(file_526,lineterminator="\n")
