@@ -48,7 +48,7 @@ class cctGUI(QtGui.QMainWindow):
 
 
     def makeScriptControl(self, reactor):
-#        from common.clients.guiscriptcontrol.scriptcontrol import ScriptControl
+        from common.clients.guiscriptcontrol.scriptcontrol import ScriptControl
         self.sc = ScriptControl(reactor, self)
         self.sc, self.experimentParametersWidget = self.sc.getWidgets()
         self.createExperimentParametersTab()
