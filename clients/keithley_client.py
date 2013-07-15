@@ -65,10 +65,9 @@ while(1):
     file_526 = open(filedirectory_526,"ab")
     fcsv_526 = writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (1e-6)
     temp = vc.conversion(voltage)
     elapsed_time_526 = (time() - initial_time)/60
-    fcsv_526.writerow([round(elapsed_time_526,4), strftime("%H"+"%M"), voltage, temp])
+    fcsv_526.writerow([round(elapsed_time_526,4), strftime("%H"+"%M"), voltage, round(temp, 3)])
     file_526.close()
     print temp
     pulser.switch_manual('Thermometer1', False)
@@ -78,10 +77,9 @@ while(1):
     file_529 = open(filedirectory_529,"ab")
     fcsv_529 = writer(file_529,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (1e-6)
     temp=vc.conversion(voltage)
     elapsed_time_529 = (time() - initial_time)/60
-    fcsv_529.writerow([round(elapsed_time_529,4), strftime("%H"+"%M"), voltage, temp])
+    fcsv_529.writerow([round(elapsed_time_529,4), strftime("%H"+"%M"), voltage, round(temp, 3)])
     file_529.close()
     print temp
     pulser.switch_manual('Thermometer2', False)
@@ -91,40 +89,37 @@ while(1):
     file_Cernox = open(filedirectory_Cernox,"ab")
     fcsv_Cernox = writer(file_Cernox,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (1e-6)
     elapsed_time_Cernox = (time() - initial_time)/60
-    TempCernox = np.interp(voltage,VoltCernox,TempCernox)
-    fcsv_Cernox.writerow([round(elapsed_time_Cernox, 4), strftime("%H"+"%M"), voltage, TempCernox])
+    TempCer = np.interp(voltage,VoltCernox,TempCernox)
+    fcsv_Cernox.writerow([round(elapsed_time_Cernox, 4), strftime("%H"+"%M"), voltage, round(TempCer, 3)])
     file_Cernox.close()
-    print TempCernox
+    print TempCer
     pulser.switch_manual('Thermometer5', False)
-    pulser.switch_manual('Thermometer2', True)
+    pulser.switch_manual('Thermometer3', True)
     sleep(2)
     
     file_C1 = open(filedirectory_C1,"ab")
     fcsv_C1 = writer(file_C1,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (1e-6)
     tempR=np.interp(voltage,VoltC1,TempC1)
     elapsed_time_C1 = (time() - initial_time)/60
-    fcsv_C1.writerow([round(elapsed_time_C1,4), strftime("%H"+"%M"), voltage, tempR])
+    fcsv_C1.writerow([round(elapsed_time_C1,4), strftime("%H"+"%M"), voltage, round(tempR, 3)])
     file_C1.close()
     print tempR
-    pulser.switch_manual('Thermometer2', False)
-    pulser.switch_manual('Thermometer3', True)    
+    pulser.switch_manual('Thermometer3', False)
+    pulser.switch_manual('Thermometer4', True)    
     sleep(2)
 
     file_C2 = open(filedirectory_C2,"ab")
     fcsv_C2 = writer(file_C2,lineterminator="\n")
     voltage = keithley.get_dc_volts()
-    resistance = voltage / (1e-6)
     tempR=np.interp(voltage,VoltC2,TempC2)
     elapsed_time_C2 = (time() - initial_time)/60
-    fcsv_C2.writerow([round(elapsed_time_C2,4), strftime("%H"+"%M"), voltage, tempR])
+    fcsv_C2.writerow([round(elapsed_time_C2,4), strftime("%H"+"%M"), voltage, round(tempR, 3)])
     file_C2.close()
     print tempR
-    pulser.switch_manual('Thermometer3', False)
+    pulser.switch_manual('Thermometer4', False)
     pulser.switch_manual('Thermometer1', True)    
     sleep(2)
     
-    sleep(50)
+    sleep(10)
