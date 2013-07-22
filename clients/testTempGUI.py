@@ -1,104 +1,81 @@
 import labrad
+from time import *
 import os
+import sys
 from PyQt4 import QtGui, QtCore
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
+#from test import getValue
+
+from random import *
 
 Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
 
-class tempPanel(QtGui.QWidget):
-    def __init__(self, parent, thermometerName):
-        super(tempPanel,self).__init__(parent)
-        QtGui.QWidget.__init__(self)
-        self.parent = parent
-        self.reactor = reactor
+class tempWidget(QtGui.QWidget):
+    def __init__(self, thermometerName, parent=None):
+        QtGui.QWidget.__init__(self,parent=parent)
         self.thermometerName = thermometerName
         self.setupUI()
-        self.connect()
-        
-    @inlineCallbacks
-    def connect(self):
-        from labrad.wrappers import connectAsync
-        cxn_pulser = yield connectAsync()
-        cxn_dmm = yield connectAsync('192.168.169.30')
-        self.server_pulser = cxn_pulser.pulser
-        self.server_dmm = cxn_dmm.keithley_2110_dmm
-        
+
     def setupUI(self):
         tempLabel = QtGui.QLabel()
         tempLabel.setText(tempLabel.tr("Temperature (K)"))
         thermometerName = QtGui.QLabel(self.thermometerName)
         thermometerName.setFont(QtGui.QFont('MS Shell Dlg 2',pointSize=16))
         
-        self.temperatureBox = QtGui.QLCDNumber()
-        self.temperatureBox.setFont(QtGui.QFont('MS Shell Dlg 2',pointSize=24))
-        self.temperatureBox.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        
+        self.lcd = QtGui.QLCDNumber(parent=self)
+        self.lcd.setFont(QtGui.QFont('MS Shell Dlg 2',pointSize=24))
+        self.lcd.setSizePolicy(QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
+        self.lcd.setSegmentStyle(QtGui.QLCDNumber.Flat)
+        self.lcd.setDigitCount(7)
+
+        self.lcd.display(uniform(0.5,1.6))
+        self.lcd.update()
+        self.connect(self.lcd, QtCore.SIGNAL('valueChanged(float)'), self.lcd, QtCore.SLOT('display(float)'))
+
+        self.button = QtGui.QPushButton("Get New Data", parent=self)
+        self.button.clicked.connect(self.update)
+
         self.grid = QtGui.QGridLayout()
         self.grid.setSpacing(5)
-        
+
         self.grid.addWidget(tempLabel, 2, 0, QtCore.Qt.AlignCenter)
         self.grid.addWidget(thermometerName, 1, 0, QtCore.Qt.AlignCenter)
-        self.grid.addWidget(self.temperatureBox, 2, 1, QtCore.Qt.AlignCenter)
+        self.grid.addWidget(self.lcd, 2, 1, QtCore.Qt.AlignCenter)
+        self.grid.addWidget(self.button, 3,1, QtCore.Qt.AlignCenter)
         
         self.setLayout(self.grid)
-        self.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-
-    @inlineCallbacks
-    def pulser(self):
-        yield self.server_pulser.switch_manual()
-    
-    def getVoltage(self):
-        yield server_dmm.get_dc_volts()
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         
-    @inlineCallbacks
-    def newValue(self, newTemp):
-        yield QtGui.QLCDNumber().display(newTemp)
-    
-    
+    def update(self):
+        temp = uniform(0.5,1.6)
+        self.lcd.display(temp)
+        self.lcd.update()
 
-class Layout(QtGui.QWidget):
-    def __init__(self, parent=None):
-        super(Layout, self).__init__(parent)
-        self.setupUI()
-        self.connect()
+    def selfUpdate(self):
+        print ""
 
-    @inlineCallbacks
-    def connect(self):
-        from labrad.wrappers import connectAsync
-        cxn_pulser = yield connectAsync()
-        cxn_dmm = yield connectAsync('192.168.169.30')
-        self.server_pulser = cxn_pulser.pulser
-        self.server_dmm = cxn_dmm.keithley_2110_dmm
-    
-    def setupUI(self):
-        self.setWindowTitle('Resonator Temperature')
-        grid = QtGui.QGridLayout()
-        grid.setSpacing(10)
-        self.setLayout(grid)
-#        devPanel = tempPanel(reactor)
-#         thermometerName = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
-#         numThermometer = len(thermometerName)
-#         for i in range(numThermometer):
-#             devPanel = tempPanel(thermometerName[0])
-#             self.devDict[i] = devPanel
-#             if (i % 2 == 0): #even
-#                 grid.addWidget(devPanel, (i / 2) , 0)
-#             else:
-#                 grid.addWidget(devPanel, ((i - 1) / 2) , 1)
-        grid.addWidget(tempPanel(self, "Cold Finger"), 1 , 1)
-        grid.addWidget(tempPanel(self, "Inside Heat Shield"), 1 , 2)
-        grid.addWidget(tempPanel(self, "Cernox"), 2, 1)
-        grid.addWidget(tempPanel(self, "C1"), 2 , 2)
-        grid.addWidget(tempPanel(self, "C2"), 2 , 3)
-        
-        self.show()
-        
 def main():
     a = QtGui.QApplication( [] )
-    tempGUI = Layout()
-    tempGUI.show()
+    panel = QtGui.QWidget()
+    grid = QtGui.QGridLayout()
+    grid.setSpacing(10)
+    for i in range (len(Thermometers)):
+        if (i % 2 == 0):
+            grid.addWidget(tempWidget(Thermometers[i], parent=panel), (i/2), 0)
+        else:
+            grid.addWidget(tempWidget(Thermometers[i], parent=panel), ((i-1)/2), 1)
+
+    panel.setLayout(grid)
+
+    main_window = QtGui.QMainWindow()
+    main_window.setWindowTitle("Resonator Temperature")
+    main_window.setCentralWidget(panel)
+
+    main_window.show()
+
+
     a.exec_()
 
-if __name__ == '__main__':
-     main()
+if __name__ =="__main__":
+    main()
