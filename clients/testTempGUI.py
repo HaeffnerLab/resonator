@@ -52,14 +52,9 @@ class tempWidget(QtGui.QWidget):
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         
     def update(self):
-<<<<<<< HEAD
-        temp = uniform(0,293)
-        self.lcd.display(temp)
-=======
         self.dataSet = getValue().getTemperature()
         self.measurement(self.dataSet)
         self.lcd.display(self.dataSet[1])
->>>>>>> d1a6830a79da9bfc6c53b7e1ae4b9d7cc0a38959
         self.lcd.update()
 
     def measurement(self, dataSet):
