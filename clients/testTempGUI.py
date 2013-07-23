@@ -1,20 +1,27 @@
 import labrad
+from csv import *
 from time import *
+from random import *
+
 import os
 import sys
 from PyQt4 import QtGui, QtCore
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
-#from test import getValue
+from keithley_helper import voltage_conversion as VC
+from keithley_helper import resistance_conversion as RC
 
-from random import *
-
+vc=VC()
+rc=RC()
+run_time = strftime("%d%m%Y_%H%M")
+initial_time = time()
 Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
 
 class tempWidget(QtGui.QWidget):
     def __init__(self, thermometerName, parent=None):
         QtGui.QWidget.__init__(self,parent=parent)
         self.thermometerName = thermometerName
+        self.fileDirectory = "/Users/ryohmasuda/Desktop/testFile/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.setupUI()
 
     def setupUI(self):
@@ -28,9 +35,6 @@ class tempWidget(QtGui.QWidget):
         self.lcd.setSizePolicy(QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
         self.lcd.setSegmentStyle(QtGui.QLCDNumber.Flat)
         self.lcd.setDigitCount(7)
-
-        self.lcd.display(uniform(0.5,1.6))
-        self.lcd.update()
         self.connect(self.lcd, QtCore.SIGNAL('valueChanged(float)'), self.lcd, QtCore.SLOT('display(float)'))
 
         self.button = QtGui.QPushButton("Get New Data", parent=self)
@@ -48,12 +52,32 @@ class tempWidget(QtGui.QWidget):
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         
     def update(self):
+<<<<<<< HEAD
         temp = uniform(0,293)
         self.lcd.display(temp)
+=======
+        self.dataSet = getValue().getTemperature()
+        self.measurement(self.dataSet)
+        self.lcd.display(self.dataSet[1])
+>>>>>>> d1a6830a79da9bfc6c53b7e1ae4b9d7cc0a38959
         self.lcd.update()
 
-    def selfUpdate(self):
-        print ""
+    def measurement(self, dataSet):
+##        yield self.pulserServer.switch_manual(self.thermometerName, True)
+        openFile = open(self.fileDirectory, "ab")
+        csvFile = writer(openFile, lineterminator="\n")
+#        dataSet = getValue().getTemperature()
+        elapsed_time = (time() - (initial_time))/60
+        csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), dataSet[0], dataSet[1]])
+        print str(self.thermometerName)+": Temp = "+ str(dataSet[1]) + "(K) , Voltage = " + str(dataSet[0]) + "(V)"
+        openFile.close()       
+
+class getValue(object):
+    def getTemperature(self):
+        dataSet = [0, 0]
+        dataSet[0] = uniform(0.5005, 1.627)
+        dataSet[1] = vc.conversion(dataSet[0])
+        return dataSet
 
 def main():
     a = QtGui.QApplication( [] )
@@ -73,9 +97,8 @@ def main():
     main_window.setCentralWidget(panel)
 
     main_window.show()
-
-
+    
     a.exec_()
 
-if __name__ =="__main__":
+if __name__ == "__main__":
     main()
