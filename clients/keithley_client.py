@@ -72,7 +72,7 @@ while(1):
     print temp
     pulser.switch_manual('Thermometer1', False)
     pulser.switch_manual('Thermometer2', True)
-    sleep(2)
+    sleep(0.5)
     
     file_529 = open(filedirectory_529,"ab")
     fcsv_529 = writer(file_529,lineterminator="\n")
@@ -84,7 +84,7 @@ while(1):
     print temp
     pulser.switch_manual('Thermometer2', False)
     pulser.switch_manual('Thermometer5', True)
-    sleep(2)
+    sleep(0.5)
 
     file_Cernox = open(filedirectory_Cernox,"ab")
     fcsv_Cernox = writer(file_Cernox,lineterminator="\n")
@@ -96,7 +96,7 @@ while(1):
     print TempCer
     pulser.switch_manual('Thermometer5', False)
     pulser.switch_manual('Thermometer3', True)
-    sleep(2)
+    sleep(0.5)
     
     file_C1 = open(filedirectory_C1,"ab")
     fcsv_C1 = writer(file_C1,lineterminator="\n")
@@ -108,7 +108,7 @@ while(1):
     print tempR
     pulser.switch_manual('Thermometer3', False)
     pulser.switch_manual('Thermometer4', True)    
-    sleep(2)
+    sleep(0.5)
 
     file_C2 = open(filedirectory_C2,"ab")
     fcsv_C2 = writer(file_C2,lineterminator="\n")
@@ -120,6 +120,6 @@ while(1):
     print tempR
     pulser.switch_manual('Thermometer4', False)
     pulser.switch_manual('Thermometer1', True)    
-    sleep(2)
+    sleep(0.5)
     
-    sleep(10)
+    sleep(120)

@@ -48,7 +48,7 @@ class tempWidget(QtGui.QWidget):
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         
     def update(self):
-        temp = uniform(0.5,1.6)
+        temp = uniform(0,293)
         self.lcd.display(temp)
         self.lcd.update()
 
