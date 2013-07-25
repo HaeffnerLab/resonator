@@ -18,8 +18,6 @@ Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
     
 class tempWidget(QtGui.QWidget):
     from labrad.wrappers import connectAsync
-#        self.cxn_dmm = yield connectAsync('192.168.169.30')
-#        self.cxn_pulser = yield connectAsync('192.168.169.29')
     cxn_dmm = labrad.connect("192.168.169.30")
     cxn_pulser = labrad.connect()
     dmmServer = cxn_dmm.keithley_2110_dmm
@@ -34,6 +32,7 @@ class tempWidget(QtGui.QWidget):
         self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.setupUI()
+#        self.connectLabrad()
 
 
     def initializeFiles(self):
@@ -45,12 +44,12 @@ class tempWidget(QtGui.QWidget):
 
 #    def connectLabrad(self):
 #        from labrad.wrappers import connectAsync
-##        self.cxn_dmm = yield connectAsync('192.168.169.30')
-##        self.cxn_pulser = yield connectAsync('192.168.169.29')
+###        self.cxn_dmm = yield connectAsync('192.168.169.30')
+###        self.cxn_pulser = yield connectAsync('192.168.169.29')
 #        self.cxn_dmm = yield connectAsync("192.168.169.30")
-#        self.cxn_pulser = yield labrad.connect('192.168.169.29')
-#        self.__dmmServer =  yield self.cxn_dmm.keithley_2110_dmm()
-#        self.__pulserServer = yield self.cxn_pulser.pulser()
+#        self.cxn_pulser = labrad.connect()
+#        self.dmmServer = self.cxn_dmm.keithley_2110_dmm()
+#        self.pulserServer = self.cxn_pulser.pulser()
 
     def setupUI(self):
         tempLabel = QtGui.QLabel()
