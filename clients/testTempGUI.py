@@ -2,8 +2,9 @@ import labrad
 import os
 import sys
 from csv import *
-from time import *
 from PyQt4 import QtGui, QtCore
+from random import *
+from time import *
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -29,24 +30,13 @@ class tempWidget(QtGui.QWidget):
         self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.setupUI()
-#        self.connectLabrad()
-
 
     def initializeFiles(self):
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
-            fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+            fileDirectory = "/home/resonator/Desktop/Resonator_Voltage/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
             openFile = open(fileDirectory, "wb")
             openFile.close()
-
-#    def connectLabrad(self):
-#        from labrad.wrappers import connectAsync
-###        self.cxn_dmm = yield connectAsync('192.168.169.30')
-###        self.cxn_pulser = yield connectAsync('192.168.169.29')
-#        self.cxn_dmm = yield connectAsync("192.168.169.30")
-#        self.cxn_pulser = labrad.connect()
-#        self.dmmServer = self.cxn_dmm.keithley_2110_dmm()
-#        self.pulserServer = self.cxn_pulser.pulser()
 
     def setupUI(self):
         tempLabel = QtGui.QLabel()
@@ -89,8 +79,14 @@ class tempWidget(QtGui.QWidget):
         self.show()
 
     def newValue(self):
-        self.pulserServer.switch_manual('Thermometer4', True)
-        # Put some data taking stuff#
+        thermometer = ""
+        numThermometers = len(Thermometers)
+        for i in range(numThermometers):
+            thermometer = "Thermometer"+str(i+1)
+            if (self.thermometerName == Thermometers[i]):
+                self.pulserServer.switch_manual(thermometer, True)
+            else:
+                self.pulserServer.switch_manual(thermometer, False)
         self.dataSet = [0, 0]
         self.dataSet[0] = self.dmmServer.get_dc_volts()
         self.dataSet[1] =  vc.conversion(self.dataSet[0])
@@ -98,7 +94,8 @@ class tempWidget(QtGui.QWidget):
         self.tempBox.update()
         self.voltageBox.display(self.dataSet[0])
         self.voltageBox.update()
-        self.pulserServer.switch_manual('Thermometer4', False)
+        self.pulserServer.switch_manual(thermometer, False)
+
         return self.dataSet
 
     def saveValues(self):
@@ -134,10 +131,7 @@ class Layout(QtGui.QWidget):
 
 if __name__=="__main__":
     a = QtGui.QApplication( [] )
-#    import qt4reactor
-#    qt4reactor.install()
     from twisted.internet import reactor
     mainPanel = Layout(reactor)
     mainPanel.show()
-#    reactor.run()
     a.exec_()
