@@ -1,13 +1,12 @@
 import labrad
-from csv import *
-from time import *
-from random import *
 import os
 import sys
+from csv import *
+from time import *
 from PyQt4 import QtGui, QtCore
-from twisted.internet.defer import inlineCallbacks, returnValue
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 vc=VC()
 rc=RC()
@@ -17,14 +16,12 @@ initial_time = time()
 Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
     
 class tempWidget(QtGui.QWidget):
-    from labrad.wrappers import connectAsync
     cxn_dmm = labrad.connect("192.168.169.30")
     cxn_pulser = labrad.connect()
     dmmServer = cxn_dmm.keithley_2110_dmm
     dmmServer.select_device()
     pulserServer =  cxn_pulser.pulser
 
-##    def __init__(self, cxn, parent, thermometerName):
     def __init__(self, parent, thermometerName):
         QtGui.QWidget.__init__(self)
         self.parent = parent
@@ -95,7 +92,6 @@ class tempWidget(QtGui.QWidget):
         self.pulserServer.switch_manual('Thermometer4', True)
         # Put some data taking stuff#
         self.dataSet = [0, 0]
-        self.dataSet[0] =  uniform(0.5005, 1.627)
         self.dataSet[0] = self.dmmServer.get_dc_volts()
         self.dataSet[1] =  vc.conversion(self.dataSet[0])
         self.tempBox.display(self.dataSet[1])
@@ -103,7 +99,6 @@ class tempWidget(QtGui.QWidget):
         self.voltageBox.display(self.dataSet[0])
         self.voltageBox.update()
         self.pulserServer.switch_manual('Thermometer4', False)
-
         return self.dataSet
 
     def saveValues(self):
@@ -119,16 +114,7 @@ class Layout(QtGui.QWidget):
     def __init__(self, reactor):
         QtGui.QWidget.__init__(self)
         self.reactor = reactor
-#        self.connectLabrad()
         self.tempLayout()
-    
-#    @inlineCallbacks
-#   def connectLabrad(self):
-#        from labrad.wrappers import connectAsync
-#        self.cxn_dmm = yield connectAsync('192.168.169.30')
-#        self.cxn_pulser = yield connectAsync('192.168.169.29')
-#        self.dmmServer = yield self.cxn_dmm.keithley_2110_dmm
-#        self.pulserServer = yield self.cxn_pulser.pulser
     
     def tempLayout(self):
         Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
@@ -138,7 +124,6 @@ class Layout(QtGui.QWidget):
         self.setLayout(grid)
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
-#            tempUI = tempWidget(self, cxn_dmm, Thermometers[i])
             tempUI = tempWidget(self, Thermometers[i])
             if (i % 2 == 0): #even
                 grid.addWidget(tempUI, (i / 2) , 0)
