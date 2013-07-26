@@ -23,6 +23,27 @@ class tempWidget(QtGui.QWidget):
     dmmServer = cxn_dmm.keithley_2110_dmm
     dmmServer.select_device()
     pulserServer =  cxn_pulser.pulser
+    #load calibraton files and get ready for temperaturelookup
+    V529 = np.loadtxt('calibration files/529(Inside Heat Shield)_28062013_1107_keithley_DMM.csv',delimiter=',')
+    V529 = V529.transpose()
+    C1 = np.loadtxt('calibration files/C1_28062013_1107_keithley_DMM.csv',delimiter=',')
+    C1 = C1.transpose()
+    C2 = np.loadtxt('calibration files/C2_28062013_1107_keithley_DMM.csv',delimiter=',')
+    C2 = C2.transpose()
+    Cernox = np.loadtxt('calibration files/Cernox_28062013_1107_keithley_DMM.csv',delimiter=',')
+    Cernox = Cernox.transpose()
+    TempC1 = np.interp(C1[0], V529[0], V529[3])
+    TempC2 = np.interp(C2[0], V529[0], V529[3])
+    TempCernox = np.interp(Cernox[0], V529[0], V529[3])
+
+    TempC1 = TempC1[::-1]
+    TempC2 = TempC2[::-1]
+    TempCernox = TempCernox[::-1]
+    VoltC1 = C1[2][::-1]
+    VoltC2 = C2[2][::-1]
+    VoltCernox = Cernox[2][::-1]
+    TempV529=V529[3][::-1]
+    VoltV529=V529[2][::-1]
 
     def __init__(self, parent, thermometerName):
         QtGui.QWidget.__init__(self)
@@ -90,7 +111,15 @@ class tempWidget(QtGui.QWidget):
                 self.pulserServer.switch_manual(thermometer, False)
         self.dataSet = [0, 0]
         self.dataSet[0] = self.dmmServer.get_dc_volts()
-        self.dataSet[1] =  vc.conversion(self.dataSet[0])
+        if self.thermometerName = "C1":
+            dataSet[1]=np.interp(dataSet[0],VoltC1,TempC1)
+        elif self.thermometerName = "C2":
+            dataSet[1]=np.interp(dataSet[0],VoltC2,TempC2)
+        elif self.thermometerName = "Cernox":
+            dataSet[1]=np.interp(dataSet[0],VoltCernox,TempCernox)        
+        else:
+            self.dataSet[1] =  vc.conversion(self.dataSet[0])
+            
         self.tempBox.display(self.dataSet[1])
         self.tempBox.update()
         self.voltageBox.display(self.dataSet[0])
@@ -106,8 +135,8 @@ class tempWidget(QtGui.QWidget):
         csvFile = writer(openFile, lineterminator="\n")
         elapsed_time = (time() - (initial_time))/60
         dataSet = self.newValue()
-        csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), dataSet[0], dataSet[1]])
-        print str(self.thermometerName)+": Temp = "+ str(dataSet[1]) + "(K) , Voltage = " + str(dataSet[0]) + "(V)"
+        csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), dataSet[0], round(dataSet[1]], 3))
+#        print str(self.thermometerName)+": Temp = "+ str(dataSet[1]) + "(K) , Voltage = " + str(dataSet[0]) + "(V)"
         openFile.close()
 
 class Layout(QtGui.QWidget):
