@@ -14,7 +14,7 @@ rc=RC()
 
 run_time = strftime("%d%m%Y_%H%M")
 initial_time = time()
-Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
+Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
     
 class tempWidget(QtGui.QWidget):
     cxn_dmm = labrad.connect("192.168.169.30")
