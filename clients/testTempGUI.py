@@ -1,6 +1,7 @@
 import labrad
 import os
 import sys
+import numpy as np
 from csv import *
 from PyQt4 import QtGui, QtCore
 from random import *
@@ -34,7 +35,7 @@ class tempWidget(QtGui.QWidget):
     def initializeFiles(self):
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
-            fileDirectory = "/home/resonator/Desktop/Resonator_Voltage/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+            fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
             openFile = open(fileDirectory, "wb")
             openFile.close()
 
@@ -94,7 +95,9 @@ class tempWidget(QtGui.QWidget):
         self.tempBox.update()
         self.voltageBox.display(self.dataSet[0])
         self.voltageBox.update()
-        self.pulserServer.switch_manual(thermometer, False)
+        for i in range (numThermometers):
+            thermometer = "Thermometer"+str(i+1)
+            self.pulserServer.switch_manual(thermometer, False)
 
         return self.dataSet
 
@@ -114,7 +117,7 @@ class Layout(QtGui.QWidget):
         self.tempLayout()
     
     def tempLayout(self):
-        Thermometers = ["Cold Finger","Inside Heat Shield","Cernox","C1","C2"]
+        Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
         self.setWindowTitle("Resonator Temperature")
         grid = QtGui.QGridLayout()
         grid.setSpacing(10)
