@@ -15,6 +15,34 @@ vc=VC()
 rc=RC()
 
 class tempWidget(QtGui.QWidget):
+    cxn_dmm = labrad.connect("192.168.169.30")
+    cxn_pulser = labrad.connect()
+    dmmServer = cxn_dmm.keithley_2110_dmm
+    dmmServer.select_device()
+    pulserServer =  cxn_pulser.pulser
+    
+    #load calibraton files and get ready for temperature lookup
+    V529 = np.loadtxt('calibration files/529(Inside Heat Shield)_28062013_1107_keithley_DMM.csv',delimiter=',')
+    V529 = V529.transpose()
+    C1 = np.loadtxt('calibration files/C1_28062013_1107_keithley_DMM.csv',delimiter=',')
+    C1 = C1.transpose()
+    C2 = np.loadtxt('calibration files/C2_28062013_1107_keithley_DMM.csv',delimiter=',')
+    C2 = C2.transpose() 
+    Cernox = np.loadtxt('calibration files/Cernox_28062013_1107_keithley_DMM.csv',delimiter=',')
+    Cernox = Cernox.transpose()
+    TempC1 = np.interp(C1[0], V529[0], V529[3])
+    TempC2 = np.interp(C2[0], V529[0], V529[3])
+    TempCernox = np.interp(Cernox[0], V529[0], V529[3])
+
+    TempC1 = TempC1[::-1]
+    TempC2 = TempC2[::-1]
+    TempCernox = TempCernox[::-1]
+    VoltC1 = C1[2][::-1]
+    VoltC2 = C2[2][::-1]
+    VoltCernox = Cernox[2][::-1]
+    TempV529=V529[3][::-1]
+    VoltV529=V529[2][::-1]
+    
     def __init__(self, parent, thermometerName):
         QtGui.QWidget.__init__(self, parent=parent)
         self.thermometerName = thermometerName
@@ -56,50 +84,33 @@ class tempWidget(QtGui.QWidget):
     def newValue(self, forever = True):
         Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
         while True:
+            
             sleep(5)
             self.dataSet = [0, 0]
             self.dataSet[0] = uniform(0.5, 1.6)
-##        #load calibraton files and get ready for temperaturelookup
-##        V529 = np.loadtxt('calibration files/529(Inside Heat Shield)_28062013_1107_keithley_DMM.csv',delimiter=',')
-##        V529 = V529.transpose()
-##        C1 = np.loadtxt('calibration files/C1_28062013_1107_keithley_DMM.csv',delimiter=',')
-##        C1 = C1.transpose()
-##        C2 = np.loadtxt('calibration files/C2_28062013_1107_keithley_DMM.csv',delimiter=',')
-##        C2 = C2.transpose()
-##        Cernox = np.loadtxt('calibration files/Cernox_28062013_1107_keithley_DMM.csv',delimiter=',')
-##        Cernox = Cernox.transpose()
-##        TempC1 = np.interp(C1[0], V529[0], V529[3])
-##        TempC2 = np.interp(C2[0], V529[0], V529[3])
-##        TempCernox = np.interp(Cernox[0], V529[0], V529[3])
-##
-##        TempC1 = TempC1[::-1]
-##        TempC2 = TempC2[::-1]
-##        TempCernox = TempCernox[::-1]
-##        VoltC1 = C1[2][::-1]
-##        VoltC2 = C2[2][::-1]
-##        VoltCernox = Cernox[2][::-1]
-##        TempV529=V529[3][::-1]
-##        VoltV529=V529[2][::-1]
 ##        
             thermometer = ""
             numThermometers = len(Thermometers)
-##        for i in range(numThermometers):
-##            thermometer = "Thermometer"+str(i+1)
-##            if (self.thermometerName == Thermometers[i]):
-##                self.pulserServer.switch_manual(thermometer, True)
-##            else:
-##                self.pulserServer.switch_manual(thermometer, False)
+            for i in range(numThermometers):
+                thermometer = "Thermometer"+str(i+1)
+                if (self.thermometerName == Thermometers[i]):
+                    self.pulserServer.switch_manual(thermometer, True)
+                else:
+                    self.pulserServer.switch_manual(thermometer, False)
 ##        self.dataSet = [0, 0]
 ##        self.dataSet[0] = self.dmmServer.get_dc_volts()
 ##        voltage = self.dataSet[0]
             if self.thermometerName == "C1":
                 self.dataSet[1] = 100
+                sleep(1)
 ##            self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
             elif self.thermometerName == "C2":
                 self.dataSet[1] = 200
+                sleep(2)
 ##            self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
             elif self.thermometerName == "Cernox":
                 self.dataSet[1] = 300
+                sleep(3)
 ##            self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)        
             else:
                 self.dataSet[1] =  vc.conversion(self.dataSet[0])

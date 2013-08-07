@@ -62,6 +62,7 @@ filedirectory_C2 = '/home/resonator/Desktop/Resonator_Voltage/C2_'+run_time+'_ke
 vc = VC()
 rc = RC()
 while(1):
+    pulser.switch_manual('Thermometer1', True)
     file_526 = open(filedirectory_526,"ab")
     fcsv_526 = writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
