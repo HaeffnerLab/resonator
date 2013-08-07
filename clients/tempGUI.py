@@ -83,44 +83,35 @@ class tempWidget(QtGui.QWidget):
 
     def newValue(self, forever = True):
         Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
+        numThermometers = len(Thermometers)
         while True:
-            
-            sleep(5)
             self.dataSet = [0, 0]
             self.dataSet[0] = uniform(0.5, 1.6)
-##        
+
             thermometer = ""
-            numThermometers = len(Thermometers)
             for i in range(numThermometers):
                 thermometer = "Thermometer"+str(i+1)
-                if (self.thermometerName == Thermometers[i]):
-                    self.pulserServer.switch_manual(thermometer, True)
+                self.pulserServer.switch_manual(thermometer, False)
+
+            for i in range (numThermometers):
+                 "Thermometer"+str(i+1)
+                self.pulserServer.switch_manual(thermometer, True)
+                self.dataSet[0] = self.dmmServer.get_dc_volts()
+                voltage = self.dataSet[0]
+                if Thermometers[i] == "C1":
+                self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
+               elif Thermometers[i] == "C2":
+                    self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
+                elif Thermometers[i] == "Cernox":
+                    self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)        
                 else:
-                    self.pulserServer.switch_manual(thermometer, False)
-##        self.dataSet = [0, 0]
-##        self.dataSet[0] = self.dmmServer.get_dc_volts()
-##        voltage = self.dataSet[0]
-            if self.thermometerName == "C1":
-                self.dataSet[1] = 100
-                sleep(1)
-##            self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
-            elif self.thermometerName == "C2":
-                self.dataSet[1] = 200
-                sleep(2)
-##            self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
-            elif self.thermometerName == "Cernox":
-                self.dataSet[1] = 300
-                sleep(3)
-##            self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)        
-            else:
-                self.dataSet[1] =  vc.conversion(self.dataSet[0])
-                
- #           self.dataSet[0] = uniform(0.5, 1.6)
-#            self.dataSet[1] = vc.conversion(self.dataSet[0])
-            self.tempBox.display(self.dataSet[1])
-            self.tempBox.update()
-            self.voltageBox.display(self.dataSet[0])
-            self.voltageBox.update()
+                    self.dataSet[1] =  vc.conversion(self.dataSet[0])
+                self.tempBox.display(self.dataSet[1])
+                self.tempBox.update()
+                self.voltageBox.display(self.dataSet[0])
+                self.voltageBox.update()
+               self.pulserServer.switch_manual(thermometer, False)
+
 ##        for i in range (numThermometers):
 ##            thermometer = "Thermometer"+str(i+1)
 ##            self.pulserServer.switch_manual(thermometer, False)
