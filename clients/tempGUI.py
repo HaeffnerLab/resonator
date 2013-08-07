@@ -83,43 +83,60 @@ class tempWidget(QtGui.QWidget):
 
     def newValue(self, forever = True):
         Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
-        numThermometers = len(Thermometers)
         while True:
             self.dataSet = [0, 0]
             self.dataSet[0] = uniform(0.5, 1.6)
-
+       
             thermometer = ""
+            numThermometers = len(Thermometers)
+
+##        self.dataSet = [0, 0]
+##        self.dataSet[0] = self.dmmServer.get_dc_volts()
+##        voltage = self.dataSet[0]
+            thermometer = ""
+            numThermometers = len(Thermometers)
             for i in range(numThermometers):
                 thermometer = "Thermometer"+str(i+1)
                 self.pulserServer.switch_manual(thermometer, False)
-
-            for i in range (numThermometers):
-                 "Thermometer"+str(i+1)
-                self.pulserServer.switch_manual(thermometer, True)
+            if self.thermometerName == "Cold Finger ":
+                self.pulserServer.switch_manual("Thermometer1", True)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
-                voltage = self.dataSet[0]
-                if Thermometers[i] == "C1":
+                self.dataSet[1] =  vc.conversion(self.dataSet[0])
+                sleep(1)
+            elif self.thermometerName == "Inside Heat Shield":
+                self.pulserServer.switch_manual("Thermometer2", True)
+                self.dataSet[0] = self.dmmServer.get_dc_volts()
+                self.dataSet[1] =  vc.conversion(self.dataSet[0])
+                sleep(2)
+            elif self.thermometerName == "C1":
+                self.pulserServer.switch_manual("Thermometer3", True)
+                self.dataSet[0] = self.dmmServer.get_dc_volts()
                 self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
-               elif Thermometers[i] == "C2":
-                    self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
-                elif Thermometers[i] == "Cernox":
-                    self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)        
-                else:
-                    self.dataSet[1] =  vc.conversion(self.dataSet[0])
-                self.tempBox.display(self.dataSet[1])
-                self.tempBox.update()
-                self.voltageBox.display(self.dataSet[0])
-                self.voltageBox.update()
-               self.pulserServer.switch_manual(thermometer, False)
+                sleep(3)
+            elif self.thermometerName == "C2":
+                self.pulserServer.switch_manual("Thermometer4", True)
+                self.dataSet[0] = self.dmmServer.get_dc_volts()
+                self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
+                sleep(4)
+            elif self.thermometerName == "Cernox":
+                self.pulserServer.switch_manual("Thermometer5", True)
+                self.dataSet[0] = self.dmmServer.get_dc_volts()
+                self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)
+                sleep(5)
+            else:
+                self.dataSet[1] =  vc.conversion(self.dataSet[0])
 
-##        for i in range (numThermometers):
-##            thermometer = "Thermometer"+str(i+1)
-##            self.pulserServer.switch_manual(thermometer, False)
+            for i in range(numThermometers):
+                thermometer = "Thermometer"+str(i+1)
+                self.pulserServer.switch_manual(thermometer, False)
+                
+            self.tempBox.display(self.dataSet[1])
+            self.tempBox.update()
+            self.voltageBox.display(self.dataSet[0])
+            self.voltageBox.update()
             if forever==False: break
     #        return self.dataSet
-
-    def one_newValue(self):
-        print ""
+            sleep(45)
 
     def updateValue(self):
         """CALL THIS to start running forever."""
@@ -156,6 +173,7 @@ def main():
     tempUI= Layout(reactor)
     tempUI.show()
     a.exec_()
+    sys.exit(a.exec_())
 
 
 if __name__ == "__main__":
