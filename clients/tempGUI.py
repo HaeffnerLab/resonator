@@ -21,28 +21,6 @@ class tempWidget(QtGui.QWidget):
     dmmServer.select_device()
     pulserServer =  cxn_pulser.pulser
     
-    #load calibraton files and get ready for temperature lookup
-    V529 = np.loadtxt('calibration files/529(Inside Heat Shield)_28062013_1107_keithley_DMM.csv',delimiter=',')
-    V529 = V529.transpose()
-    C1 = np.loadtxt('calibration files/C1_28062013_1107_keithley_DMM.csv',delimiter=',')
-    C1 = C1.transpose()
-    C2 = np.loadtxt('calibration files/C2_28062013_1107_keithley_DMM.csv',delimiter=',')
-    C2 = C2.transpose() 
-    Cernox = np.loadtxt('calibration files/Cernox_28062013_1107_keithley_DMM.csv',delimiter=',')
-    Cernox = Cernox.transpose()
-    TempC1 = np.interp(C1[0], V529[0], V529[3])
-    TempC2 = np.interp(C2[0], V529[0], V529[3])
-    TempCernox = np.interp(Cernox[0], V529[0], V529[3])
-
-    TempC1 = TempC1[::-1]
-    TempC2 = TempC2[::-1]
-    TempCernox = TempCernox[::-1]
-    VoltC1 = C1[2][::-1]
-    VoltC2 = C2[2][::-1]
-    VoltCernox = Cernox[2][::-1]
-    TempV529=V529[3][::-1]
-    VoltV529=V529[2][::-1]
-    
     def __init__(self, parent, thermometerName):
         QtGui.QWidget.__init__(self, parent=parent)
         self.thermometerName = thermometerName
@@ -83,49 +61,71 @@ class tempWidget(QtGui.QWidget):
 
     def newValue(self, forever = True):
         Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
+        ##################################################################################################
+        #Load calibraton files and get ready for temperature lookup
+        V529 = np.loadtxt('calibration files/529(Inside Heat Shield)_28062013_1107_keithley_DMM.csv',delimiter=',')
+        V529 = V529.transpose()
+        C1 = np.loadtxt('calibration files/C1_28062013_1107_keithley_DMM.csv',delimiter=',')
+        C1 = C1.transpose()
+        C2 = np.loadtxt('calibration files/C2_28062013_1107_keithley_DMM.csv',delimiter=',')
+        C2 = C2.transpose() 
+        Cernox = np.loadtxt('calibration files/Cernox_28062013_1107_keithley_DMM.csv',delimiter=',')
+        Cernox = Cernox.transpose()
+        TempC1 = np.interp(C1[0], V529[0], V529[3])
+        TempC2 = np.interp(C2[0], V529[0], V529[3])
+        TempCernox = np.interp(Cernox[0], V529[0], V529[3])
+
+        TempC1 = TempC1[::-1]
+        TempC2 = TempC2[::-1]
+        TempCernox = TempCernox[::-1]
+        VoltC1 = C1[2][::-1]
+        VoltC2 = C2[2][::-1]
+        VoltCernox = Cernox[2][::-1]
+        TempV529=V529[3][::-1]
+        VoltV529=V529[2][::-1]
+        ##################################################################################################
+        
         while True:
             self.dataSet = [0, 0]
-            self.dataSet[0] = uniform(0.5, 1.6)
-       
             thermometer = ""
-            numThermometers = len(Thermometers)
-
 ##        self.dataSet = [0, 0]
 ##        self.dataSet[0] = self.dmmServer.get_dc_volts()
-##        voltage = self.dataSet[0]
-            thermometer = ""
             numThermometers = len(Thermometers)
             for i in range(numThermometers):
                 thermometer = "Thermometer"+str(i+1)
                 self.pulserServer.switch_manual(thermometer, False)
+            sleep(2)
             if self.thermometerName == "Cold Finger ":
                 self.pulserServer.switch_manual("Thermometer1", True)
+                sleep(1)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
                 self.dataSet[1] =  vc.conversion(self.dataSet[0])
                 sleep(1)
             elif self.thermometerName == "Inside Heat Shield":
                 self.pulserServer.switch_manual("Thermometer2", True)
+                sleep(1)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
                 self.dataSet[1] =  vc.conversion(self.dataSet[0])
                 sleep(2)
             elif self.thermometerName == "C1":
                 self.pulserServer.switch_manual("Thermometer3", True)
+                sleep(1)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
                 self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
                 sleep(3)
             elif self.thermometerName == "C2":
                 self.pulserServer.switch_manual("Thermometer4", True)
+                sleep(1)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
                 self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
                 sleep(4)
             elif self.thermometerName == "Cernox":
                 self.pulserServer.switch_manual("Thermometer5", True)
+                sleep(1)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
                 self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)
                 sleep(5)
-            else:
-                self.dataSet[1] =  vc.conversion(self.dataSet[0])
-
+                
             for i in range(numThermometers):
                 thermometer = "Thermometer"+str(i+1)
                 self.pulserServer.switch_manual(thermometer, False)
@@ -134,9 +134,9 @@ class tempWidget(QtGui.QWidget):
             self.tempBox.update()
             self.voltageBox.display(self.dataSet[0])
             self.voltageBox.update()
+            sleep(45)
             if forever==False: break
     #        return self.dataSet
-            sleep(45)
 
     def updateValue(self):
         """CALL THIS to start running forever."""
@@ -165,7 +165,6 @@ class Layout(QtGui.QWidget):
                 grid.addWidget(tempUI, ((i - 1) / 2) , 1)
         self.setLayout(grid)
         self.show()
-
         
 def main():
     from twisted.internet import reactor
