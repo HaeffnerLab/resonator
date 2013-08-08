@@ -92,48 +92,60 @@ class tempWidget(QtGui.QWidget):
 ##        self.dataSet[0] = self.dmmServer.get_dc_volts()
             numThermometers = len(Thermometers)
             for i in range(numThermometers):
-                thermometer = "Thermometer"+str(i+1)
-                self.pulserServer.switch_manual(thermometer, False)
-            sleep(1)
-            if self.thermometerName == "Cold Finger":
-                self.pulserServer.switch_manual("Thermometer1", True)
-                sleep(1)
-                self.dataSet[0] = self.dmmServer.get_dc_volts()
-                self.dataSet[1] =  vc.conversion(self.dataSet[0])
-                sleep(1)
-            elif self.thermometerName == "Inside Heat Shield":
-                self.pulserServer.switch_manual("Thermometer2", True)
-                sleep(1)
-                self.dataSet[0] = self.dmmServer.get_dc_volts()
-                self.dataSet[1] =  vc.conversion(self.dataSet[0])
-                sleep(2)
-            elif self.thermometerName == "C1":
-                self.pulserServer.switch_manual("Thermometer3", True)
-                sleep(1)
-                self.dataSet[0] = self.dmmServer.get_dc_volts()
-                self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
-                sleep(3)
-            elif self.thermometerName == "C2":
-                self.pulserServer.switch_manual("Thermometer4", True)
-                sleep(1)
-                self.dataSet[0] = self.dmmServer.get_dc_volts()
-                self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
-                sleep(4)
-            elif self.thermometerName == "Cernox":
-                self.pulserServer.switch_manual("Thermometer5", True)
-                sleep(1)
-                self.dataSet[0] = self.dmmServer.get_dc_volts()
-                self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)
-                sleep(5)
+                for j in range(numThermometers):
+                    thermometer = "Thermometer"+str(j+1)
+                    self.pulserServer.switch_manual(thermometer, False)
                 
-            for i in range(numThermometers):
-                thermometer = "Thermometer"+str(i+1)
-                self.pulserServer.switch_manual(thermometer, False)
                 
-            self.tempBox.display(self.dataSet[1])
-            self.tempBox.update()
-            self.voltageBox.display(self.dataSet[0])
-            self.voltageBox.update()
+                if self.thermometerName == "Cold Finger":
+                    self.pulserServer.switch_manual("Thermometer1", True)
+                    sleep(1)
+                    self.dataSet[0] = self.dmmServer.get_dc_volts()
+                    self.dataSet[1] =  vc.conversion(self.dataSet[0])
+                    self.pulserServer.switch_manual("Thermometer1", False)
+                    sleep(1)
+                elif self.thermometerName == "Inside Heat Shield":
+                    self.pulserServer.switch_manual("Thermometer2", True)
+                    sleep(1)
+                    self.dataSet[0] = self.dmmServer.get_dc_volts()
+                    self.dataSet[1] =  vc.conversion(self.dataSet[0])
+                    self.pulserServer.switch_manual("Thermometer2", False)
+                    sleep(2)
+                elif self.thermometerName == "C1":
+                    self.pulserServer.switch_manual("Thermometer3", True)
+                    sleep(1)
+                    self.dataSet[0] = self.dmmServer.get_dc_volts()
+                    self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
+                    self.pulserServer.switch_manual("Thermometer3", False)
+                    sleep(3)
+                elif self.thermometerName == "C2":
+                    self.pulserServer.switch_manual("Thermometer4", True)
+                    sleep(1)
+                    self.dataSet[0] = self.dmmServer.get_dc_volts()
+                    self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
+                    self.pulserServer.switch_manual("Thermometer4", False)
+                    sleep(4)
+                elif self.thermometerName == "Cernox":
+                    self.pulserServer.switch_manual("Thermometer5", True)
+                    sleep(1)
+                    self.dataSet[0] = self.dmmServer.get_dc_volts()
+                    self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)
+                    self.pulserServer.switch_manual("Thermometer5", False)
+                    sleep(5)
+                    
+                self.tempBox.display(self.dataSet[1])
+                self.tempBox.update()
+                self.voltageBox.display(self.dataSet[0])
+                self.voltageBox.update()
+                
+                for k in range(numThermometers):
+                    thermometer = "Thermometer"+str(k+1)
+                    self.pulserServer.switch_manual(thermometer, False)
+                
+#            self.tempBox.display(self.dataSet[1])
+#            self.tempBox.update()
+#            self.voltageBox.display(self.dataSet[0])
+#            self.voltageBox.update()
             sleep(45)
             if forever==False: break
     #        return self.dataSet
