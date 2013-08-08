@@ -1,11 +1,9 @@
 import labrad
-import os
 import sys
 import numpy as np
 import threading
 from csv import *
 from PyQt4 import QtGui, QtCore
-from random import *
 from time import *
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
@@ -94,8 +92,8 @@ class tempWidget(QtGui.QWidget):
             for i in range(numThermometers):
                 thermometer = "Thermometer"+str(i+1)
                 self.pulserServer.switch_manual(thermometer, False)
-            sleep(2)
-            if self.thermometerName == "Cold Finger ":
+            sleep(1)
+            if self.thermometerName == "Cold Finger":
                 self.pulserServer.switch_manual("Thermometer1", True)
                 sleep(1)
                 self.dataSet[0] = self.dmmServer.get_dc_volts()
@@ -172,8 +170,8 @@ def main():
     tempUI= Layout(reactor)
     tempUI.show()
     a.exec_()
+    tempUI.close()
     sys.exit(a.exec_())
-
 
 if __name__ == "__main__":
     main()
