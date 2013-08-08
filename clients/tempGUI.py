@@ -23,6 +23,7 @@ class tempWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent=parent)
         self.thermometerName = thermometerName
         self.create_Widget()
+        self.stopGUI = False
 
     def create_Widget(self):
         tempLabel = QtGui.QLabel()
@@ -84,6 +85,7 @@ class tempWidget(QtGui.QWidget):
         ##################################################################################################
         
         while True:
+            if self.stopGUI: break
             self.dataSet = [0, 0]
             thermometer = ""
 ##        self.dataSet = [0, 0]
@@ -140,6 +142,9 @@ class tempWidget(QtGui.QWidget):
         """CALL THIS to start running forever."""
         self.t = threading.Thread(target=self.newValue)
         self.t.start()
+        
+    def endGUI(self):
+        self.stopGUI = True
         
 class Layout(QtGui.QWidget):
     def __init__(self, reactor):
