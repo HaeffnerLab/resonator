@@ -1,10 +1,9 @@
 import labrad
 import sys
-import numpy as np
 import threading
-from csv import *
-from PyQt4 import QtGui, QtCore
+import numpy as np
 from time import *
+from PyQt4 import QtGui, QtCore
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -12,20 +11,32 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 vc=VC()
 rc=RC()
 
-class tempWidget(QtGui.QWidget):
+run_time = strftime("%d%m%Y_%H%M")
+initial_time = time()
+Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
+
+class Measurement(QtGui.QWidget):
     cxn_dmm = labrad.connect("192.168.169.30")
     cxn_pulser = labrad.connect()
     dmmServer = cxn_dmm.keithley_2110_dmm
     dmmServer.select_device()
     pulserServer =  cxn_pulser.pulser
     
-    def __init__(self, parent, thermometerName):
-        QtGui.QWidget.__init__(self, parent=parent)
+    def __init__(self, thermometerName):
+        self.stopMeasurement = False
         self.thermometerName = thermometerName
-        self.create_Widget()
-        self.stopGUI = False
-
-    def create_Widget(self):
+        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+        self.initializeFiles()
+        self.setupUI()
+        
+    def initializeFiles(self):
+        numThermometers = len(Thermometers)
+        for i in range(numThermometers):
+            fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+            openFile = open(fileDirectory, "wb")
+            openFile.close()
+            
+    def setupUI(self):
         tempLabel = QtGui.QLabel()
         tempLabel.setText(tempLabel.tr("Temperature (K)"))
         thermometerName = QtGui.QLabel(self.thermometerName)
@@ -45,7 +56,6 @@ class tempWidget(QtGui.QWidget):
         self.voltageBox.setSegmentStyle(QtGui.QLCDNumber.Flat)
         self.voltageBox.setDigitCount(7)
 
-
         self.grid = QtGui.QGridLayout()
         self.grid.setSpacing(5)
         self.grid.addWidget(tempLabel, 2, 0, QtCore.Qt.AlignCenter)
@@ -56,10 +66,16 @@ class tempWidget(QtGui.QWidget):
 
         self.setLayout(self.grid)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-        
 
-    def newValue(self, forever = True):
-        Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
+            
+    def getValues(self, forever =True):
+        while True:
+            if stopMeasurement: break
+            print "still running..."
+
+            if forever == False: break
+
+    def getMeasurement(self, forever = True):
         ##################################################################################################
         #Load calibraton files and get ready for temperature lookup
         V529 = np.loadtxt('calibration files/529(Inside Heat Shield)_28062013_1107_keithley_DMM.csv',delimiter=',')
@@ -83,81 +99,75 @@ class tempWidget(QtGui.QWidget):
         TempV529=V529[3][::-1]
         VoltV529=V529[2][::-1]
         ##################################################################################################
-        
         while True:
             if self.stopGUI: break
-            self.dataSet = [0, 0]
             thermometer = ""
-##        self.dataSet = [0, 0]
-##        self.dataSet[0] = self.dmmServer.get_dc_volts()
+            self.dataSet = [0, 0]
+            Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
             numThermometers = len(Thermometers)
             for i in range(numThermometers):
-                for j in range(numThermometers):
-                    thermometer = "Thermometer"+str(j+1)
-                    self.pulserServer.switch_manual(thermometer, False)
-                
-                
-                if self.thermometerName == "Cold Finger":
-                    self.pulserServer.switch_manual("Thermometer1", True)
-                    sleep(1)
-                    self.dataSet[0] = self.dmmServer.get_dc_volts()
-                    self.dataSet[1] =  vc.conversion(self.dataSet[0])
-                    self.pulserServer.switch_manual("Thermometer1", False)
-                    sleep(1)
-                elif self.thermometerName == "Inside Heat Shield":
-                    self.pulserServer.switch_manual("Thermometer2", True)
-                    sleep(1)
-                    self.dataSet[0] = self.dmmServer.get_dc_volts()
-                    self.dataSet[1] =  vc.conversion(self.dataSet[0])
-                    self.pulserServer.switch_manual("Thermometer2", False)
-                    sleep(2)
-                elif self.thermometerName == "C1":
-                    self.pulserServer.switch_manual("Thermometer3", True)
-                    sleep(1)
-                    self.dataSet[0] = self.dmmServer.get_dc_volts()
-                    self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
-                    self.pulserServer.switch_manual("Thermometer3", False)
-                    sleep(3)
-                elif self.thermometerName == "C2":
-                    self.pulserServer.switch_manual("Thermometer4", True)
-                    sleep(1)
-                    self.dataSet[0] = self.dmmServer.get_dc_volts()
-                    self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
-                    self.pulserServer.switch_manual("Thermometer4", False)
-                    sleep(4)
-                elif self.thermometerName == "Cernox":
-                    self.pulserServer.switch_manual("Thermometer5", True)
-                    sleep(1)
-                    self.dataSet[0] = self.dmmServer.get_dc_volts()
-                    self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)
-                    self.pulserServer.switch_manual("Thermometer5", False)
-                    sleep(5)
-                    
+                thermometer = "Thermometer"+str(i+1)
+                self.pulserServer.switch_manual(thermometer, False)
+                if Thermometers[i] == self.thermometerName:
+                    self.pulserServer.switch_manual(thermometer, True)
+                    sleep(0.5)
+            
+            self.dataSet[0] = self.dmmServer.get_dc_volts()
+            voltage = self.dataSet[0]
+            if self.thermometerName == "Cold Finger":
+                self.dataSet[1] = vc.conversion(self.dataSet[0])
                 self.tempBox.display(self.dataSet[1])
                 self.tempBox.update()
                 self.voltageBox.display(self.dataSet[0])
                 self.voltageBox.update()
-                
-                for k in range(numThermometers):
-                    thermometer = "Thermometer"+str(k+1)
-                    self.pulserServer.switch_manual(thermometer, False)
-                
-#            self.tempBox.display(self.dataSet[1])
-#            self.tempBox.update()
-#            self.voltageBox.display(self.dataSet[0])
-#            self.voltageBox.update()
-            sleep(45)
-            if forever==False: break
-    #        return self.dataSet
+                sleep(55)
 
-    def updateValue(self):
-        """CALL THIS to start running forever."""
-        self.t = threading.Thread(target=self.newValue)
+            if self.thermometerName == "Inside Heat Shield":
+                self.dataSet[1] = vc.conversion(self.dataSet[0])
+                self.tempBox.display(self.dataSet[1])
+                self.tempBox.update()
+                self.voltageBox.display(self.dataSet[0])
+                self.voltageBox.update()
+                sleep(56)
+                
+            elif self.thermometerName == "C1":
+                self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
+                
+            elif self.thermometerName == "C2":
+                self.dataSet[1]=np.interp(self.dataSet[0],VoltC2,TempC2)
+
+                
+            elif self.thermometerName == "Cernox":
+                self.dataSet[1]=np.interp(self.dataSet[0],VoltCernox,TempCernox)
+            else:
+                self.dataSet[1] = vc.conversion(self.dataSet[0])
+
+            for i in range(numThermometers):
+                thermometer = "Thermometer"+str(i+1)
+                self.pulserServer.switch_manual(thermometer, False)
+            self.tempBox.display(self.dataSet[1])
+            self.tempBox.update()
+            self.voltageBox.display(self.dataSet[0])
+            self.voltageBox.update()
+
+            openFile = open(self.fileDirectory, "ab")
+            csvFile = writer(openFile, lineterminator="\n")
+            elapsed_time = (time() - (initial_time))/60
+            dataSet = self.newValue()
+            csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), dataSet[0], round(dataSet[1], 3)])
+    #        print str(self.thermometerName)+": Temp = "+ str(dataSet[1]) + "(K) , Voltage = " + str(dataSet[0]) + "(V)"
+            openFile.close()
+            sleep(60)
+            if forever == False: break
+            
+    def start(self):
+        self.t = threading.Thread(target=self.getMeasurement)
         self.t.start()
-        
-    def endGUI(self):
-        self.stopGUI = True
-        
+
+    def stop(self):
+        """shut down continuous measurement."""
+        self.stopMeasurement = True
+
 class Layout(QtGui.QWidget):
     def __init__(self, reactor):
         QtGui.QWidget.__init__(self)
@@ -173,11 +183,12 @@ class Layout(QtGui.QWidget):
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
             tempUI = tempWidget(self, Thermometers[i])
-            tempUI.updateValue()
             if (i % 2 == 0): #even
                 grid.addWidget(tempUI, (i / 2) , 0)
             else:
                 grid.addWidget(tempUI, ((i - 1) / 2) , 1)
+            tempUI.start()
+            sleep(1)
         self.setLayout(grid)
         self.show()
         
@@ -187,8 +198,8 @@ def main():
     tempUI= Layout(reactor)
     tempUI.show()
     a.exec_()
-    tempUI.close()
     sys.exit(a.exec_())
+
 
 if __name__ == "__main__":
     main()
