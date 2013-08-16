@@ -123,4 +123,4 @@ while(1):
     pulser.switch_manual('Thermometer1', True)    
     sleep(0.5)
     
-    sleep(120)
+    sleep(300)

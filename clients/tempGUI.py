@@ -3,6 +3,7 @@ import sys
 import threading
 import numpy as np
 from time import *
+from csv import *
 from PyQt4 import QtGui, QtCore
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
@@ -23,18 +24,19 @@ class Measurement(QtGui.QWidget):
     pulserServer =  cxn_pulser.pulser
     
     def __init__(self, thermometerName):
+        QtGui.QWidget.__init__(self)
         self.stopMeasurement = False
         self.thermometerName = thermometerName
-        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
-        self.initializeFiles()
+#        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+#        self.initializeFiles()
         self.setupUI()
         
-    def initializeFiles(self):
-        numThermometers = len(Thermometers)
-        for i in range(numThermometers):
-            fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
-            openFile = open(fileDirectory, "wb")
-            openFile.close()
+#    def initializeFiles(self):
+#        numThermometers = len(Thermometers)
+#        for i in range(numThermometers):
+#            fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+#            openFile = open(fileDirectory, "wb")
+#            openFile.close()
             
     def setupUI(self):
         tempLabel = QtGui.QLabel()
@@ -67,13 +69,6 @@ class Measurement(QtGui.QWidget):
         self.setLayout(self.grid)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
-            
-    def getValues(self, forever =True):
-        while True:
-            if stopMeasurement: break
-            print "still running..."
-
-            if forever == False: break
 
     def getMeasurement(self, forever = True):
         ##################################################################################################
@@ -100,7 +95,7 @@ class Measurement(QtGui.QWidget):
         VoltV529=V529[2][::-1]
         ##################################################################################################
         while True:
-            if self.stopGUI: break
+#            if self.stop: break
             thermometer = ""
             self.dataSet = [0, 0]
             Thermometers = ["Cold Finger","Inside Heat Shield","C1","C2", "Cernox"]
@@ -114,23 +109,8 @@ class Measurement(QtGui.QWidget):
             
             self.dataSet[0] = self.dmmServer.get_dc_volts()
             voltage = self.dataSet[0]
-            if self.thermometerName == "Cold Finger":
-                self.dataSet[1] = vc.conversion(self.dataSet[0])
-                self.tempBox.display(self.dataSet[1])
-                self.tempBox.update()
-                self.voltageBox.display(self.dataSet[0])
-                self.voltageBox.update()
-                sleep(55)
-
-            if self.thermometerName == "Inside Heat Shield":
-                self.dataSet[1] = vc.conversion(self.dataSet[0])
-                self.tempBox.display(self.dataSet[1])
-                self.tempBox.update()
-                self.voltageBox.display(self.dataSet[0])
-                self.voltageBox.update()
-                sleep(56)
                 
-            elif self.thermometerName == "C1":
+            if self.thermometerName == "C1":
                 self.dataSet[1]=np.interp(self.dataSet[0],VoltC1,TempC1)
                 
             elif self.thermometerName == "C2":
@@ -150,13 +130,12 @@ class Measurement(QtGui.QWidget):
             self.voltageBox.display(self.dataSet[0])
             self.voltageBox.update()
 
-            openFile = open(self.fileDirectory, "ab")
-            csvFile = writer(openFile, lineterminator="\n")
-            elapsed_time = (time() - (initial_time))/60
-            dataSet = self.newValue()
-            csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), dataSet[0], round(dataSet[1], 3)])
+#            openFile = open(self.fileDirectory, "ab")
+#            csvFile = writer(openFile, lineterminator="\n")
+#            elapsed_time = (time() - (initial_time))/60
+#            csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), self.dataSet[0], round(self.dataSet[1], 3)])
     #        print str(self.thermometerName)+": Temp = "+ str(dataSet[1]) + "(K) , Voltage = " + str(dataSet[0]) + "(V)"
-            openFile.close()
+#            openFile.close()
             sleep(60)
             if forever == False: break
             
@@ -182,7 +161,7 @@ class Layout(QtGui.QWidget):
         self.setLayout(grid)
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
-            tempUI = tempWidget(self, Thermometers[i])
+            tempUI = Measurement(Thermometers[i])
             if (i % 2 == 0): #even
                 grid.addWidget(tempUI, (i / 2) , 0)
             else:
