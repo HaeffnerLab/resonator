@@ -38,12 +38,12 @@ class tempWidget(QtGui.QWidget):
 
 
     def initializeFiles(self):
+        Thermometers = ["Cold finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
             fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
             openFile = open(fileDirectory, "wb")
             openFile.close()
-            
             
     def setupUI(self):
         tempLabel = QtGui.QLabel()
@@ -67,8 +67,13 @@ class tempWidget(QtGui.QWidget):
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.show()
 
+
     @inlineCallbacks
     def update(self):
+        Thermometers = ["Cold finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
+        for item in Thermometers:
+            yield self.pulserServer.switch_manual(self.thermometerName, "False")
+            
         yield self.pulserServer.switch_manual(self.thermometerName, "True")
         voltage = yield self.dmmServer.get_dc_volts()
         temp = yield self.processData(voltage)
@@ -79,7 +84,7 @@ class tempWidget(QtGui.QWidget):
 #                 voltage = yield self.get_voltage_from_server()
 #                 gui.set_voltage(voltage)
         yield self.pulserServer.switch_manual(self.thermometerName, "False")
-
+        
     
     def processData(self, v):
         self.dataSet = [0, 0]
