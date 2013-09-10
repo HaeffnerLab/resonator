@@ -1,6 +1,6 @@
-import labrad
 from time import *
 import numpy as np
+from csv import *
 from PyQt4 import QtGui, QtCore
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -20,8 +20,8 @@ class tempWidget(QtGui.QWidget):
         self.reactor = reactor
         self.updater = LoopingCall(self.update)
         self.thermometer_dict = {}.fromkeys(Thermometers)
-        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.thermometerName = thermometerName
+        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.connect()
         self.setupUI()
@@ -29,9 +29,10 @@ class tempWidget(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
+        import labrad
         from labrad.wrappers import connectAsync
         self.cxn_pulser = yield connectAsync()
-        self.cxn_dmm = yield connectAsync('192.168.169.30')
+        self.cxn_dmm = yield labrad.connect('192.168.169.30')
         self.pulserServer = yield self.cxn_pulser.pulser
         self.dmmServer = yield self.cxn_dmm.keithley_2110_dmm
         self.dmmServer.select_device()
@@ -72,7 +73,7 @@ class tempWidget(QtGui.QWidget):
     def update(self):
         Thermometers = ["Cold finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
         for item in Thermometers:
-            yield self.pulserServer.switch_manual(self.thermometerName, "False")
+            yield self.pulserServer.switch_manual(item, "False")
             
         yield self.pulserServer.switch_manual(self.thermometerName, "True")
         voltage = yield self.dmmServer.get_dc_volts()
