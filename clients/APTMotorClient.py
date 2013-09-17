@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from twisted.internet.defer import inlineCallbacks, returnValue
-from APT_config import stageConfiguration
+from resonator.clients.APT_config import stageConfiguration
 
 BLOCKSIGNAL = 1
 
