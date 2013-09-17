@@ -21,7 +21,7 @@ class tempWidget(QtGui.QWidget):
         self.updater = LoopingCall(self.update)
         self.thermometer_dict = {}.fromkeys(Thermometers)
         self.thermometerName = thermometerName
-        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+        self.fileDirectory = 'c:/data_resonator_voltage/test/'+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.connect()
         self.setupUI()
