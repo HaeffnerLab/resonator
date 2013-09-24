@@ -3,7 +3,7 @@ import numpy as np
 from csv import *
 from PyQt4 import QtGui, QtCore
 from twisted.internet.task import LoopingCall
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
 
@@ -21,7 +21,7 @@ class tempWidget(QtGui.QWidget):
         self.updater = LoopingCall(self.update)
         self.thermometer_dict = {}.fromkeys(Thermometers)
         self.thermometerName = thermometerName
-        self.fileDirectory = "c:/data_resonator_voltage/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+        self.fileDirectory = "c:/data_resonator_voltage/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.connect()
         self.setupUI()
@@ -42,7 +42,7 @@ class tempWidget(QtGui.QWidget):
         Thermometers = ["Cold finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
-            fileDirectory = 'c:/data_resonator_voltage/test/'+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+            fileDirectory = 'c:/data_resonator_voltage/'+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
             #(For Linux)fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
             openFile = open(fileDirectory, "wb")
             openFile.close()
@@ -102,8 +102,6 @@ class tempWidget(QtGui.QWidget):
 #                 voltage = yield self.get_voltage_from_server()
 #                 gui.set_voltage(voltage)
         yield self.pulserServer.switch_manual(self.thermometerName, False)
-        sleep(1)
-        
     
     def processData(self, v):
         self.dataSet = [0, 0]
