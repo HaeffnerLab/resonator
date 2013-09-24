@@ -21,7 +21,7 @@ class tempWidget(QtGui.QWidget):
         self.updater = LoopingCall(self.update)
         self.thermometer_dict = {}.fromkeys(Thermometers)
         self.thermometerName = thermometerName
-        self.fileDirectory = 'c:/data_resonator_voltage/test/'+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+        self.fileDirectory = "c:/data_resonator_voltage/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.connect()
         self.setupUI()
@@ -31,8 +31,8 @@ class tempWidget(QtGui.QWidget):
     def connect(self):
         import labrad
         from labrad.wrappers import connectAsync
-        self.cxn_pulser = yield connectAsync('192.168.169.29')
         self.cxn_dmm = yield connectAsync()
+        self.cxn_pulser = yield connectAsync('192.168.169.29')
         self.pulserServer = yield self.cxn_pulser.pulser
         self.dmmServer = yield self.cxn_dmm.keithley_2110_dmm
         self.dmmServer.select_device()
@@ -53,39 +53,56 @@ class tempWidget(QtGui.QWidget):
         thermometerName = QtGui.QLabel(self.thermometerName)
         thermometerName.setFont(QtGui.QFont("MS Shell Dlg 2", pointSize = 16))
 
+        voltageLabel = QtGui.QLabel()
+        voltageLabel.setText(tempLabel.tr("Voltage (V)"))
+        self.voltageBox = QtGui.QLCDNumber(parent = self)
+        self.voltageBox.setFont(QtGui.QFont("MS Shell Dlg 2", pointSize = 24))
+        self.voltageBox.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.voltageBox.setSegmentStyle(QtGui.QLCDNumber.Flat)
+        self.voltageBox.setDigitCount(7)
+
         self.tempBox = QtGui.QLCDNumber(parent = self)
         self.tempBox.setFont(QtGui.QFont("MS Shell Dlg 2", pointSize = 24))
         self.tempBox.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.tempBox.setSegmentStyle(QtGui.QLCDNumber.Flat)
         self.tempBox.setDigitCount(7)
 
+##        self.grid = QtGui.QGridLayout()
+##        self.grid.setSpacing(5)
+##        self.grid.addWidget(thermometerName, 1, 0, QtCore.Qt.AlignCenter)
+##        self.grid.addWidget(tempLabel, 2, 0, QtCore.Qt.AlignCenter)
+##        self.grid.addWidget(self.tempBox, 2, 1, QtCore.Qt.AlignCenter)
+
         self.grid = QtGui.QGridLayout()
         self.grid.setSpacing(5)
         self.grid.addWidget(thermometerName, 1, 0, QtCore.Qt.AlignCenter)
         self.grid.addWidget(tempLabel, 2, 0, QtCore.Qt.AlignCenter)
         self.grid.addWidget(self.tempBox, 2, 1, QtCore.Qt.AlignCenter)
+        self.grid.addWidget(voltageLabel, 3, 0, QtCore.Qt.AlignCenter)
+        self.grid.addWidget(self.voltageBox, 3,1, QtCore.Qt.AlignCenter)
 
         self.setLayout(self.grid)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.show()
 
-
     @inlineCallbacks
     def update(self):
-        Thermometers = ["Cold finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
+        Thermometers = ["Cold Finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
         for item in Thermometers:
-            yield self.pulserServer.switch_manual(item, "False")
-            
-        yield self.pulserServer.switch_manual(self.thermometerName, "True")
+            yield self.pulserServer.switch_manual(item, False)        
+        yield self.pulserServer.switch_manual(self.thermometerName, True)
         voltage = yield self.dmmServer.get_dc_volts()
         temp = yield self.processData(voltage)
-        self.tempBox.display(temp)
+        self.tempBox.display(temp[1])
+        self.voltageBox.display(temp[0])
         yield self.tempBox.update()
+        yield self.voltageBox.update()
 #         yield None
 #         for key,widget in ...:
 #                 voltage = yield self.get_voltage_from_server()
 #                 gui.set_voltage(voltage)
-        yield self.pulserServer.switch_manual(self.thermometerName, "False")
+        yield self.pulserServer.switch_manual(self.thermometerName, False)
+        sleep(1)
         
     
     def processData(self, v):
@@ -132,14 +149,13 @@ class tempWidget(QtGui.QWidget):
         csvFile.writerow([round(elapsed_time,4), strftime("%H"+"%M"), self.dataSet[0], round(self.dataSet[1], 3)])
         openFile.close()
         
-        return self.dataSet[1]
+        return self.dataSet
 
     def start(self, state):
         if state == QtCore.Qt.Checked:
-            self.updater.start(1)
+            self.updater.start(60)
         elif state == QtCore.Qt.Unchecked:
             self.updater.stop()
-            
         
 class tempMeasurement(QtGui.QWidget):
     def __init__(self, reactor):
