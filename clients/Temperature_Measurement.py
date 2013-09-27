@@ -21,7 +21,10 @@ class tempWidget(QtGui.QWidget):
         self.updater = LoopingCall(self.update)
         self.thermometer_dict = {}.fromkeys(Thermometers)
         self.thermometerName = thermometerName
-        self.fileDirectory = "c:/data_resonator_voltage/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+#For Windows:
+        #self.fileDirectory = "c:/data_resonator_voltage/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+#For Linux:
+        self.fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
         self.initializeFiles()
         self.connect()
         self.setupUI()
@@ -31,11 +34,12 @@ class tempWidget(QtGui.QWidget):
     def connect(self):
         import labrad
         from labrad.wrappers import connectAsync
-        self.cxn_dmm = yield connectAsync()
-        self.cxn_pulser = yield connectAsync('192.168.169.29')
-#For Linux
-        #self.cxn_dmm = yield connectAsync('192.168.169.30')
-        #self.cxn_pulser = yield connectAsync()
+# For Windows:
+        #self.cxn_dmm = yield connectAsync()
+        #self.cxn_pulser = yield connectAsync('192.168.169.29')
+#For Linux:
+        self.cxn_dmm = yield connectAsync('192.168.169.30')
+        self.cxn_pulser = yield connectAsync()
         self.pulserServer = yield self.cxn_pulser.pulser
         self.dmmServer = yield self.cxn_dmm.keithley_2110_dmm
         self.dmmServer.select_device()
@@ -45,8 +49,10 @@ class tempWidget(QtGui.QWidget):
         Thermometers = ["Cold finger", "Inside Heat Shield", "C1", "C2", "Cernox"]
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
-            fileDirectory = 'c:/data_resonator_voltage/'+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
-            #(For Linux)fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+        #(For Windows):
+            #fileDirectory = 'c:/data_resonator_voltage/'+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
+        #(For Linux):
+            fileDirectory = "/home/resonator/Desktop/test/"+str(self.thermometerName)+"_"+run_time+"_keithley_DMM.csv"
             openFile = open(fileDirectory, "wb")
             openFile.close()
             
