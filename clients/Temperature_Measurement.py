@@ -33,6 +33,9 @@ class tempWidget(QtGui.QWidget):
         from labrad.wrappers import connectAsync
         self.cxn_dmm = yield connectAsync()
         self.cxn_pulser = yield connectAsync('192.168.169.29')
+#For Linux
+        #self.cxn_dmm = yield connectAsync('192.168.169.30')
+        #self.cxn_pulser = yield connectAsync()
         self.pulserServer = yield self.cxn_pulser.pulser
         self.dmmServer = yield self.cxn_dmm.keithley_2110_dmm
         self.dmmServer.select_device()
@@ -97,10 +100,6 @@ class tempWidget(QtGui.QWidget):
         self.voltageBox.display(temp[0])
         yield self.tempBox.update()
         yield self.voltageBox.update()
-#         yield None
-#         for key,widget in ...:
-#                 voltage = yield self.get_voltage_from_server()
-#                 gui.set_voltage(voltage)
         yield self.pulserServer.switch_manual(self.thermometerName, False)
     
     def processData(self, v):
@@ -172,8 +171,6 @@ class tempMeasurement(QtGui.QWidget):
         numThermometers = len(Thermometers)
         for i in range(numThermometers):
             tempUI = tempWidget(reactor, Thermometers[i])
-#            dict[Thermometers[i]] = tempUI
-           # self.checkBox.stateChanged.connect(tempUI.start)
             self.checkBox.stateChanged.connect(tempUI.start)
             if (i % 2 == 0): #even
                 grid.addWidget(tempUI, (i / 2) , 1)
