@@ -1,14 +1,12 @@
-from time import *
+from time import strftime, time
 import numpy as np
-from csv import *
+from csv import writer
 from PyQt4 import QtGui, QtCore
 from twisted.internet.task import LoopingCall
 from twisted.internet.defer import inlineCallbacks
 from keithley_helper import voltage_conversion as VC
-from keithley_helper import resistance_conversion as RC
 
 vc=VC()
-rc=RC()
 
 run_time = strftime("%d%m%Y_%H%M")
 initial_time = time()
@@ -32,7 +30,6 @@ class tempWidget(QtGui.QWidget):
 
     @inlineCallbacks
     def connect(self):
-        import labrad
         from labrad.wrappers import connectAsync
 # For Windows:
         #self.cxn_dmm = yield connectAsync()
