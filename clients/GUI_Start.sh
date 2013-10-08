@@ -9,6 +9,7 @@
 
 LABRAD_ACTIVATE="/home/resonator/.virtualenvs/labrad/bin/activate" # virtualenv activate script
 GUI_SCRIPT="/home/resonator/labrad/resonator/clients/ResonatorGUI.py" # script that starts the gui (from python)
+GUI_SWITCH="/home/resonator/labrad/resonator/clients/SWITCH_CONTROL.py" #script that starts the gui (from python)
 VIRTUALENV_ERR=111 # error accessing virtualenv
 GUI_START_ERR=129 # could not start the gui
 
@@ -23,7 +24,9 @@ fi
 
 # Start the gui
 if [ -f $GUI_SCRIPT ]; then
-    python $GUI_SCRIPT
+    python $GUI_SCRIPT &
+    python  $GUI_SWITCH
+
 else
     echo "Error: Could not find the gui startup script: $GUI_SCRIPT"
     printf "Press ENTER to close"; read close
