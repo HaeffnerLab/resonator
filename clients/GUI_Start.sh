@@ -25,7 +25,7 @@ fi
 # Start the gui
 if [ -f $GUI_SCRIPT ]; then
     python $GUI_SCRIPT &
-    python  $GUI_SWITCH
+    python $GUI_SWITCH
 
 else
     echo "Error: Could not find the gui startup script: $GUI_SCRIPT"
