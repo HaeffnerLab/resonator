@@ -29,13 +29,15 @@ from serialdeviceserver import SerialDeviceServer
 from serialdeviceserver import SerialDeviceError, SerialConnectionError
 from serialdeviceserver import setting, inlineCallbacks
 from twisted.internet.defer import returnValue
+from labrad.units import WithUnit
+from labrad.types import Error
 
 # Default Startup Values
 ON_OFF = False
 AMP = -30
-FREQ = 1
+FREQ = WithUnit(1,'MHz')
 CARRIER_MODE = 'FIXED'
-SWEEP_RANGE_START = 1
+SWEEP_RANGE_START = WithUnit(1,'MHz')
 SWEEP_RANGE_STOP = 2
 SWEEP_STEP = 0.05
 SWEEP_TIME = 50
@@ -62,7 +64,7 @@ class MarconiServer(SerialDeviceServer):
     regKey = 'MarconiKey' # must set in registry, see notes at top of file
     port = None
     serNode = 'resonatormain' # labradnode
-    timeout = 1.0
+    timeout = WithUnit(1.0, 's')
     gpibaddr = 11
     regPath = ['','Servers','Marconi Server']
 
@@ -146,7 +148,7 @@ class MarconiServer(SerialDeviceServer):
         self.reg.cd(self.regPath)
         try:
             use_default = yield self.reg.get('Use Default')
-        except KeyError:
+        except Error:
             use_default = False
         # Load appropriate settings
         if 'Default' in settings and use_default:
@@ -216,7 +218,7 @@ class MarconiServer(SerialDeviceServer):
         """Get or set the power level (dBm)"""
         return self._Amplitude(level)
     
-    @setting(13, "Frequency", freq = 'v', returns='v')
+    @setting(13, "Frequency", freq = 'v[MHz]', returns='v[MHz]')
     def Frequency(self, c, freq=None):
         """Get or set the CW frequency (MHz)"""
         return self._Frequency(freq)
@@ -231,7 +233,7 @@ class MarconiServer(SerialDeviceServer):
         """Get or set the carrier mode to 'FIXED' or 'SWEPT' """
         return self._CarrierMode(mode)
 
-    @setting(21, "Sweep Range Start", start = 'v', returns = 'v')
+    @setting(21, "Sweep Range Start", start = 'v[MHz]', returns = 'v[MHz]')
     def SweepRangeStart(self, c, start=None):
         """Get or set the starting frequency for carrier frequency sweeps (MHZ)"""
         return self._SweepRangeStart(start)
@@ -362,11 +364,13 @@ class MarconiServer(SerialDeviceServer):
     def _Frequency(self, freq=None):
         """Get or set the CW frequency (MHz)"""
         if freq is not None:
+            freq = freq['MHz']
             checkedFreq = self.checkFreq(freq)
             command = self.FreqSetStr(checkedFreq)
             yield self.ser.write(command)
             self.marDict['freq'] = checkedFreq
-        returnValue(self.marDict['freq'])
+        value = self.marDict['freq']
+        returnValue(WithUnit(value,'MHz'))
 
     def checkFreq(self, freq):
         if freq < self.marDict['freq_min']:
@@ -396,11 +400,13 @@ class MarconiServer(SerialDeviceServer):
     def _SweepRangeStart(self, start=None):
         """Get or set the starting point for carrier frequency sweeps (MHZ)."""
         if start is not None:
+            start = start['MHz']
             checkedStart = self.checkFreq(start)
             command = self.SweepStartSetStr(checkedStart)
             yield self.ser.write(command)
             self.marDict['sweep_range_start'] = checkedStart
-        returnValue(self.marDict['sweep_range_start'])
+        value = self.marDict['sweep_range_start']
+        returnValue(WithUnit(value,'MHz'))
 
     @inlineCallbacks
     def _SweepRangeStop(self, stop=None):
@@ -458,20 +464,11 @@ class MarconiServer(SerialDeviceServer):
             self.marDict['trig_mode'] = trig_mode
         returnValue(self.marDict['trig_mode'])
 
-    class CarrierModeException(Exception):
-        """Raised when attempting to access sweep functionality while
-        CarrierMode is 'FIXED'. Contains the current CarrierMode as the
-        field 'currentMode'."""
-
-        def __init__(self, msg=None):
-            super(CarrierModeException, self).__init__(msg)
-            currentMode = self.marDict['carrier_mode']
-
     def checkCarrierMode(self):
         """Throws a CarrierModeException if the carrier mode is not 'SWEPT'.
         Carrier mode must be swept before other sweep methods are used."""
         if self.marDict['carrier_mode'] != 'SWEPT':
-            raise CarrierModeException("Carrier mode is not 'SWEPT'")
+            raise Exception("Carrier mode is not 'SWEPT'")
 
     @inlineCallbacks
     def _SweepBegin(self):

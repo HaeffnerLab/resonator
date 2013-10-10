@@ -31,6 +31,8 @@ class SWEEP_WIDGET(QtGui.QWidget):
     def connect(self):
         """Connect to LabRAD and load server settings."""
         from labrad.wrappers import connectAsync
+        from labrad.units import WithUnit
+        self.WithUnit = WithUnit
 
         self.cxn = yield connectAsync()                     # '192.168.169.30'
         try:
@@ -121,7 +123,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         step = yield self.server.sweep_step()
         time = yield self.server.sweep_time()
 
-        self.sweepRangeStartCtrl.setValue(start)
+        self.sweepRangeStartCtrl.setValue(start['MHz'])
         self.sweepRangeStopCtrl.setValue(stop)
         self.sweepStepCtrl.setValue(step)
         self.sweepTimeCtrl.setValue(time)
@@ -192,7 +194,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepRangeStartChange(start):
-            yield self.server.sweep_range_start(start)
+            yield self.server.sweep_range_start(self.WithUnit(start,'MHz'))
 
         sweepRangeStartCtrl.valueChanged.connect(onSweepRangeStartChange)
         return sweepRangeStartCtrl
