@@ -76,7 +76,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
         lowerMiddleLayout = QtGui.QGridLayout()
         self.sweepStepCtrl = self.makeSweepStepCtrl()
         self.sweepTimeCtrl = self.makeSweepTimeCtrl()
-        lowerMiddleLayout.addWidget(QtGui.QLabel("Step Size (KHz)"), 0, 0)
+        lowerMiddleLayout.addWidget(QtGui.QLabel("Step Size (kHz)"), 0, 0)
         lowerMiddleLayout.addWidget(self.sweepStepCtrl, 0, 1)
         lowerMiddleLayout.addWidget(QtGui.QLabel("Time/Step (ms)"), 1, 0)
         lowerMiddleLayout.addWidget(self.sweepTimeCtrl, 1, 1)
@@ -208,7 +208,7 @@ class SWEEP_WIDGET(QtGui.QWidget):
 
         @inlineCallbacks
         def onSweepRangeStopChange(stop):
-            yield self.server.sweep_range_stop(stop)
+            yield self.server.sweep_range_stop(self.WithUnit(stop,'MHz'))
 
         sweepRangeStopCtrl.valueChanged.connect(onSweepRangeStopChange)
         return sweepRangeStopCtrl

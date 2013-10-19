@@ -38,7 +38,7 @@ AMP = -30
 FREQ = WithUnit(1,'MHz')
 CARRIER_MODE = 'FIXED'
 SWEEP_RANGE_START = WithUnit(1,'MHz')
-SWEEP_RANGE_STOP = 2
+SWEEP_RANGE_STOP = WithUnit(2,'MHz')
 SWEEP_STEP = 0.05
 SWEEP_TIME = 50
 SWEEP_MODE = 'SNGL'
@@ -238,7 +238,7 @@ class MarconiServer(SerialDeviceServer):
         """Get or set the starting frequency for carrier frequency sweeps (MHZ)"""
         return self._SweepRangeStart(start)
 
-    @setting(22, "Sweep Range Stop", stop = 'v', returns = 'v')
+    @setting(22, "Sweep Range Stop", stop = 'v[MHz]', returns = 'v[MHz]')
     def SweepRangeStop(self, c, stop=None):
         """Get or set the ending frequency for carrier frequency sweeps (MHZ)"""
         return self._SweepRangeStop(stop)

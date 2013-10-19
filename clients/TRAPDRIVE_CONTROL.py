@@ -50,6 +50,8 @@ class TD(QtGui.QWidget):
     @inlineCallbacks
     def connect(self):
         from labrad.wrappers import connectAsync
+        from labrad.units import WithUnit
+        self.WithUnit = WithUnit
         self.cxn = yield connectAsync()
         try:
             self.server = yield self.cxn.marconi_server
@@ -88,7 +90,9 @@ class TD(QtGui.QWidget):
         
     @inlineCallbacks
     def onFreqChange(self, f):
-        yield self.server.frequency(f)
+        yield self.server.frequency(self.WithUnit(f,"MHz"))
+
+        
 
     @inlineCallbacks
     def onPowerChange(self, p):
