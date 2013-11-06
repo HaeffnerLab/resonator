@@ -564,14 +564,10 @@ class MarconiServer(GPIBManagedServer):
         
 __server__ = MarconiServer()
 
-if __name__ == '__main__':
-    test = 0
-    if not test:
-        print 'Marconi server has not been tested'
-    else:        
-        from labrad import util
-        util.runServer(__server__)
-        s = __server__
-        print 'Frequency = ' + str(s.frequency)
-        print 'Amplitude = ' + str(s.amplitude)
-        print 'Output State = ' + s.output
+if __name__ == '__main__': 
+    from labrad import util
+    util.runServer(__server__)
+    s = __server__
+    print 'Frequency = ' + str(s.frequency)
+    print 'Amplitude = ' + str(s.amplitude)
+    print 'Output State = ' + s.output
