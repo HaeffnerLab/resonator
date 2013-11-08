@@ -53,7 +53,7 @@ class T(QtGui.QWidget):
         try:
             s = yield self.server.list_devices()
             print s
-            yield self.server.select_device('cct_camera GPIB Bus - USB0::0x0AAD::0x0054::102543')
+            yield self.server.select_device('cct_camera GPIB Bus - USB0::0x0AAD::0x0054::104542')
         except Error:
             self.setEnabled(False)
             return

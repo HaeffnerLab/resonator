@@ -1,7 +1,6 @@
 import labrad
 from time import *
 from csv import *
-from math import *
 import numpy as np
 from keithley_helper import voltage_conversion as VC
 from keithley_helper import resistance_conversion as RC
@@ -37,11 +36,11 @@ TempV529=V529[3][::-1]
 VoltV529=V529[2][::-1]
 
 #Initially switch off the TTL pulse except the first one
-pulser.switch_manual('Thermometer1', True)
-pulser.switch_manual('Thermometer2', False)
-pulser.switch_manual('Thermometer3', False)
-pulser.switch_manual('Thermometer4', False)
-pulser.switch_manual('Thermometer5', False)
+pulser.switch_manual('Cold Finger', True)
+pulser.switch_manual('Inside Heat Shield', False)
+pulser.switch_manual('C1', False)
+pulser.switch_manual('C2', False)
+pulser.switch_manual('Cernox', False)
 
 run_time = strftime("%d%m%Y_%H%M")
 initial_time = time()
@@ -62,7 +61,7 @@ filedirectory_C2 = '/home/resonator/Desktop/Resonator_Voltage/C2_'+run_time+'_ke
 vc = VC()
 rc = RC()
 while(1):
-    pulser.switch_manual('Thermometer1', True)
+    pulser.switch_manual('Cold Finger', True)
     file_526 = open(filedirectory_526,"ab")
     fcsv_526 = writer(file_526,lineterminator="\n")
     voltage = keithley.get_dc_volts()
@@ -71,8 +70,8 @@ while(1):
     fcsv_526.writerow([round(elapsed_time_526,4), strftime("%H"+"%M"), voltage, round(temp, 3)])
     file_526.close()
     print temp
-    pulser.switch_manual('Thermometer1', False)
-    pulser.switch_manual('Thermometer2', True)
+    pulser.switch_manual('Cold Finger', False)
+    pulser.switch_manual('Inside Heat Shield', True)
     sleep(0.5)
     
     file_529 = open(filedirectory_529,"ab")
@@ -83,8 +82,8 @@ while(1):
     fcsv_529.writerow([round(elapsed_time_529,4), strftime("%H"+"%M"), voltage, round(temp, 3)])
     file_529.close()
     print temp
-    pulser.switch_manual('Thermometer2', False)
-    pulser.switch_manual('Thermometer5', True)
+    pulser.switch_manual('Inside Heat Shield', False)
+    pulser.switch_manual('Cernox', True)
     sleep(0.5)
 
     file_Cernox = open(filedirectory_Cernox,"ab")
@@ -95,8 +94,8 @@ while(1):
     fcsv_Cernox.writerow([round(elapsed_time_Cernox, 4), strftime("%H"+"%M"), voltage, round(TempCer, 3)])
     file_Cernox.close()
     print TempCer
-    pulser.switch_manual('Thermometer5', False)
-    pulser.switch_manual('Thermometer3', True)
+    pulser.switch_manual('Cernox', False)
+    pulser.switch_manual('C1', True)
     sleep(0.5)
     
     file_C1 = open(filedirectory_C1,"ab")
@@ -107,8 +106,8 @@ while(1):
     fcsv_C1.writerow([round(elapsed_time_C1,4), strftime("%H"+"%M"), voltage, round(tempR, 3)])
     file_C1.close()
     print tempR
-    pulser.switch_manual('Thermometer3', False)
-    pulser.switch_manual('Thermometer4', True)    
+    pulser.switch_manual('C1', False)
+    pulser.switch_manual('C2', True)    
     sleep(0.5)
 
     file_C2 = open(filedirectory_C2,"ab")
@@ -119,8 +118,8 @@ while(1):
     fcsv_C2.writerow([round(elapsed_time_C2,4), strftime("%H"+"%M"), voltage, round(tempR, 3)])
     file_C2.close()
     print tempR
-    pulser.switch_manual('Thermometer4', False)
-    pulser.switch_manual('Thermometer1', True)    
+    pulser.switch_manual('C2', False)
+    pulser.switch_manual('Cold Finger', True)    
     sleep(0.5)
     
     sleep(300)
