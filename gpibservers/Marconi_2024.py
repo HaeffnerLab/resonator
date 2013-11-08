@@ -50,7 +50,7 @@ POWER_MAX = 10 # 10 dBm
 
 class Marconi2024Wrapper(GPIBDeviceWrapper):
 
-     def createDict(self):
+    def createDict(self):
         """Creates dictionary to store Marconi settings."""
         d = {}
 
