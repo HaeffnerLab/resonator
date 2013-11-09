@@ -41,7 +41,7 @@ SWEEP_TRIG_MODE = 'OFF'
 # Startup with Default values
 # Set to true to load Default values (above) at startup, rather than the
 # MostRecentSettings saved from the previous session.
-START_WITH_DEFAULTS = False
+START_WITH_DEFAULTS = True
 
 # Marconi Extreme Values (should be set according to
 # the max and min values the marconi actually will allow).
@@ -52,6 +52,11 @@ POWER_MAX = 10 # 10 dBm
 
 class Marconi2024Wrapper(GPIBDeviceWrapper):
 
+    @inlineCallbacks
+    def initialize(self):
+        yield self.createDict()
+        
+    @inlineCallbacks
     def createDict(self):
         """Creates dictionary to store Marconi settings."""
         d = {}
@@ -61,7 +66,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         d['power'] = None # power in dBm
         d['power_min'] = POWER_MIN # min power in dBm
         d['power_max'] = POWER_MAX # max power in dBm
-        d['freq'] = None # frequency in MHz
+        d['freq'] = yield self.getFrequency() # frequency in MHz
         d['freq_min'] = FREQ_MIN # min freq in MHz
         d['freq_max'] = FREQ_MAX # max freq in MHz
 
@@ -76,6 +81,10 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         d['trig_mode'] = None # See SweepTrigModeSetStr
         #d['currently_sweeping'] = None # True if currently sweeping
         self.marDict = d
+
+    @property
+    def frequency(self):
+        return self.marDict['freq']
     
     @inlineCallbacks
     def setupRegistry(self):
@@ -204,27 +213,19 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         return level
 
     @inlineCallbacks
-    def _Frequency(self, freq=None):
-        """Get or set the CW frequency (MHz)"""
-        if freq is not None:
-            freq = freq['MHz']
-            checkedFreq = self.checkFreq(freq)
-            command = self.FreqSetStr(checkedFreq)
-            yield self.write(command)
-            self.marDict['freq'] = checkedFreq
-        value = self.marDict['freq']
-        returnValue(WithUnit(value,'MHz'))
+    def setFrequency(self, freq):
+        if not self.marDict['freq_min'] <= freq['MHz'] <= self.marDict['freq_max']:
+            raise Exception("Frequency out of bounds")
+        yield self.write('CFRQ:Value {}MHZ'.format(freq['MHz']))
+        self.marDict['freq']=freq
 
-    def checkFreq(self, freq):
-        if freq < self.marDict['freq_min']:
-            print "*** WARNING: attempt to set frequency below minimum value."
-            print "*** WARNING: setting to minimum value instead."
-            return self.marDict['freq_min']
-        elif freq > self.marDict['freq_max']:
-            print "*** WARNING: attempt to set frequency above maximum value."
-            print "*** WARNING: setting to maximum value instad."
-            return self.marDict['freq_max']
-        return freq
+    @inlineCallbacks
+    def getFrequency(self):
+        """Get the CW frequency (MHz)"""
+        freq = yield self.query('CFRQ:VALUE?')
+        freq = float(freq)
+        freq = WithUnit(freq, 'Hz')
+        returnValue(freq)
 
     # ===== SWEEP =====
 
@@ -309,7 +310,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
 
     def checkCarrierMode(self):
         """Throws a CarrierModeException if the carrier mode is not 'SWEPT'.
-        Carrier mode must be swept before other sweep methods are used."""
+        Carrier mode must be swept before other sweep methods asetFrequencyre used."""
         if self.marDict['carrier_mode'] != 'SWEPT':
             raise Exception("Carrier mode is not 'SWEPT'")
 
@@ -371,16 +372,8 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         """String to set power (in dBm)"""
         return 'RFLV:Value ' + str(pwr) + ' DBM' + '\n'
 
-    def FreqReqStr(self):
-        """String to request current frequency"""
-        return 'CFRQ?' + '\n'
-        
-    def FreqSetStr(self,freq):
-        """String to set freq (in MHZ)"""
-        return 'CFRQ:Value ' + str(freq) + 'MHZ' + '\n'
 
-
-    # ===== SWEEP =====
+    # ===== SWEEP =====setFrequency
     
     def CarrierModeSetStr(self, mode):
         """String to set carrier to FIXED or SWEPT mode"""
@@ -423,9 +416,9 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         """String to set trigger mode to OFF, START, STARTSTOP, or STEP
         as described in the Marconi Manual"""
         trig_mode = trig_mode.upper()
-        if not trig_mode in ('OFF', 'START', 'STARTSTOP', 'STEP'):
+        if not trig_mode in ('setFrequencyOFF', 'START', 'STARTSTOP', 'STEP'):
             raise ValueError("Sweep trigger mode must be one of: "\
-                            "'OFF', 'START', 'STARTSTOP', or 'STEP'")
+                            "'OFF', 'STAfrequencyRT', 'STARTSTOP', or 'STEP'")
         return 'SWEEP:TRIG ' + trig_mode + '\n'
 
     def SweepBeginStr(self):
@@ -449,26 +442,25 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
 class MarconiServer(GPIBManagedServer):
     """Provides basic CW control for Marconi 2024 RF Generators"""
     name = 'Marconi Server'
-    deviceName = 'IFR,2024,112236/043,44533/466/03.04'
+    deviceName = 'IFR 2024'
     deviceWrapper = Marconi2024Wrapper
 
 
-    
     # +++++++++++++++++++++++++
-    # ===== META SETTINGS =====
+    # ===== META SETTINGS =====frequency
     # +++++++++++++++++++++++++
 
-    @setting(0, "Save Settings", saveName='s', returns='')
+    @setting(14, "Save Settings", saveName='s', returns='')
     def SaveSettings(self, c, saveName='MostRecentSettings'):
         """Save the current server settings in the registry under 'saveName'
         or 'MostRecentSettings' if saveName is unspecified."""
         yield self._SaveSettings(saveName)
 
-    @setting(1, "Load Settings", loadName='s', returns='b')
+    @setting(15, "Load Settings", loadName='s', returns='b')
     def LoadSettings(self, c, loadName='MostRecentSettings'):
         """Load previous server settings. If loadName is unspecified, loads from
         'MostRecentSettings' otherwise loads from loadName."""
-        yield self._LoadSettings(loadName)
+        yield self._LoadSettinsetFrequencygs(loadName)
 
 
     # +++++++++++++++++++++++++++
@@ -495,7 +487,10 @@ class MarconiServer(GPIBManagedServer):
     @setting(13, "Frequency", freq = 'v[MHz]', returns='v[MHz]')
     def Frequency(self, c, freq=None):
         """Get or set the CW frequency (MHz)"""
-        return self._Frequency(freq)
+        dev = self.selectDevice(c)
+        if freq is not None:
+                yield dev.setFrequency(freq)
+        returnValue(dev.frequency)
 
 
     # ++++++++++++++++++++++++++++
@@ -566,10 +561,11 @@ class MarconiServer(GPIBManagedServer):
         
 __server__ = MarconiServer()
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
+    print 'here'
     from labrad import util
     util.runServer(__server__)
     s = __server__
-    print 'Frequency = ' + str(s.frequency)
-    print 'Amplitude = ' + str(s.amplitude)
-    print 'Output State = ' + s.output
+#    print 'Frequency = ' + str(s.frequency)
+#    print 'Amplitude = ' + str(s.amplitude)
+#    print 'Output State = ' + s.output
