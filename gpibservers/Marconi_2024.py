@@ -63,7 +63,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
 
         # == BASIC SETTINGS ==
         d['on_off'] = None # True (ON) or False (OFF)
-        d['power'] = None # power in dBm
+        d['power'] = yield self.getAmplitude() # power in dBm
         d['power_min'] = POWER_MIN # min power in dBm
         d['power_max'] = POWER_MAX # max power in dBm
         d['freq'] = yield self.getFrequency() # frequency in MHz
@@ -82,9 +82,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         #d['currently_sweeping'] = None # True if currently sweeping
         self.marDict = d
 
-    @property
-    def frequency(self):
-        return self.marDict['freq']
+
     
     @inlineCallbacks
     def setupRegistry(self):
@@ -175,6 +173,14 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
 
     # ===== BASIC =====
 
+    @property
+    def frequency(self):
+        return self.marDict['freq']
+    
+    @property
+    def amplitude(self):
+        return self.marDict['power']
+
     @inlineCallbacks
     def _Identify(self):
         """Ask instrument to identify itself"""
@@ -192,25 +198,21 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         returnValue(self.marDict['on_off'])
 
     @inlineCallbacks
-    def _Amplitude(self, level=None):
+    def setAmplitude(self, level):
         """Sets power level, enter power in dBm"""
-        if level is not None:
-            checkedLevel = self.checkPower(level)
-            command = self.PowerSetStr(checkedLevel)
-            yield self.write(command)
-            self.marDict['power'] = checkedLevel
+        if not self.marDict['power_min'] <= level <= self.marDict['power_max']:
+            raise Exception("power out of bounds")
+        command = self.PowerSetStr(level)
+        yield self.write(command)
+        self.marDict['power'] = level
         returnValue(self.marDict['power'])
-    
-    def checkPower(self, level):
-        if level < self.marDict['power_min']:
-            print "*** WARNING: attempt to set power below minimum value."
-            print "*** WARNING: setting to minimum value instead."
-            return self.marDict['power_min']
-        elif level > self.marDict['power_max']:
-            print "*** WARNING: attempt to set power above maximum value."
-            print "*** WARNING: setting to maximum value instad."
-            return self.marDict['power_max']
-        return level
+        
+    @inlineCallbacks
+    def getAmplitude(self):
+         "Gets the Amplitude in dbm"
+         power = yield self.query('RFLV:VALUE?')
+         power = float(power)
+         returnValue(power)
 
     @inlineCallbacks
     def setFrequency(self, freq):
@@ -470,26 +472,31 @@ class MarconiServer(GPIBManagedServer):
     @setting(10, "Identify", returns = 's')
     def Identify(self, c):
         """Ask instrument to identify itself"""
-        return self._Identify()
+        dev=self.selectDevice(c)
+        return dev._Identify()
 
     @setting(11, "Carrier On Off", state = 'b', returns = 'b')
     def CarrierOnOff(self, c, state=None):
         """Get or set the on/off state of the CW signal.
         True represents ON
         False represents OFF"""
-        return self._CarrierOnOff(state)
+        dev=self.selectDevice(c)
+        return dev._CarrierOnOff(state)
 
     @setting(12, "Amplitude", level = 'v', returns = "v")
     def Amplitude(self, c, level=None):
         """Get or set the power level (dBm)"""
-        return self._Amplitude(level)
+        dev = self.selectDevice(c)
+        if level is not None:
+            yield dev.setAmplitude(level)
+        returnValue(dev.amplitude)
     
     @setting(13, "Frequency", freq = 'v[MHz]', returns='v[MHz]')
     def Frequency(self, c, freq=None):
         """Get or set the CW frequency (MHz)"""
         dev = self.selectDevice(c)
         if freq is not None:
-                yield dev.setFrequency(freq)
+            yield dev.setFrequency(freq)
         returnValue(dev.frequency)
 
 
@@ -500,64 +507,76 @@ class MarconiServer(GPIBManagedServer):
     @setting(20, "Carrier Mode", mode = 's', returns = 's') # or 's'
     def CarrierMode(self, c, mode=None):
         """Get or set the carrier mode to 'FIXED' or 'SWEPT' """
-        return self._CarrierMode(mode)
+        dev=self.selectDevice(c)
+        return dev._CarrierMode(mode)
 
     @setting(21, "Sweep Range Start", start = 'v[MHz]', returns = 'v[MHz]')
     def SweepRangeStart(self, c, start=None):
         """Get or set the starting frequency for carrier frequency sweeps (MHZ)"""
-        return self._SweepRangeStart(start)
+        dev=self.selectDevice(c)
+        return dev._SweepRangeStart(start)
 
     @setting(22, "Sweep Range Stop", stop = 'v[MHz]', returns = 'v[MHz]')
     def SweepRangeStop(self, c, stop=None):
         """Get or set the ending frequency for carrier frequency sweeps (MHZ)"""
-        return self._SweepRangeStop(stop)
+        dev=self.selectDevice(c)
+        return dev._SweepRangeStop(stop)
 
     @setting(23, "Sweep Step", step = 'v', returns = 'v')
     def SweepStep(self, c, step=None):
         """Get or set the size of the sweep step (MHZ)"""
-        return self._SweepStep(step)
+        dev=self.selectDevice(c)
+        return dev._SweepStep(step)
 
     @setting(24, "Sweep Time", time = 'v', returns = 'v')
     def SweepTime(self, c, time=None):
         """Get or set the time to complete one sweep step (ms)"""
-        return self._SweepTime(time)
+        dev=self.selectDevice(c)
+        return dev._SweepTime(time)
 
     @setting(25, "Sweep Mode", mode = 's', returns = 's')
     def SweepMode(self, c, mode=None):
         """Get or set the sweep mode to single shot ('SNGL') or continuous ('CONT')"""
-        return self._SweepMode(mode)
+        dev=self.selectDevice(c)
+        return dev._SweepMode(mode)
 
     @setting(26, "Sweep Shape", shape = 's', returns = 's')
     def SweepShape(self, c, shape=None):
         """Get or set the sweep shape to linear ('LIN') of log ('LOG')"""
-        return self._SweepShape(shape)
+        dev=self.selectDevice(c)
+        return dev._SweepShape(shape)
 
     @setting(27, "Sweep Trig Mode", trig_mode = 's', returns = 's')
     def SweepTrigMode(self, c, trig_mode=None):
         """Get or set the external trigger mode.
         Options are: OFF, START, STARTSTOP, STEP.
         (See Marconi manual for details."""
-        return self._SweepTrigMode(trig_mode)
+        dev=self.selectDevice(c)
+        return dev._SweepTrigMode(trig_mode)
 
     @setting(30, "Sweep Begin", returns = '')
     def SweepBegin(self, c):
         """Start a sweep"""
-        return self._SweepBegin()
+        dev=self.selectDevice(c)
+        return dev._SweepBegin()
 
     @setting(31, "Sweep Pause", returns = '')
     def SweepPause(self, c):
         """Pause the current sweep"""
-        return self._SweepPause()
+        dev=self.selectDevice(c)
+        return dev._SweepPause()
 
     @setting(32, "Sweep Continue", returns = '')
     def SweepContinue(self, c):
         """Continue a currently paused sweep"""
-        return self._SweepContinue()
+        dev=self.selectDevice(c)
+        return dev._SweepContinue()
 
     @setting(33, "Sweep Reset", returns = '')
     def SweepReset(self, c):
         """Reset the current sweep to the start frequency"""
-        return self._SweepReset()
+        dev=self.selectDevice(c)
+        return dev._SweepReset()
         
 __server__ = MarconiServer()
 
