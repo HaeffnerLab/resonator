@@ -58,8 +58,8 @@ class TD(QtGui.QWidget):
         from labrad import types as T
         self.T = T
         self.cxn = yield connectAsync('192.168.169.30')
-        self.server = yield self.cxn.rohdeschwarz_server
-        self.SMAGPIB = Device_config.TD_SMA
+        self.server = yield self.cxn.marconi_server
+        self.SMAGPIB = 'cct_camera GPIB Bus - GPIB0::1'
         try:
             #yield self.server.select_device('GPIB Bus - USB0::0x0AAD::0x0054::102542')
             yield self.server.select_device(self.SMAGPIB)
@@ -75,10 +75,10 @@ class TD(QtGui.QWidget):
     @inlineCallbacks
     def onOutputChange(self, state):
         if self.state:
-            self.stateButton.setText('Rohde&Schwarz: OFF')
+            self.stateButton.setText('Trap Drive   : OFF')
             yield self.server.onoff(False)
         if not self.state:
-            self.stateButton.setText('Rohde&Schwarz: ON')
+            self.stateButton.setText('Trap Drive: ON')
             yield self.server.onoff(True)
         self.state = not self.state
 
@@ -91,9 +91,9 @@ class TD(QtGui.QWidget):
         self.powerCtrl.setValue(currentpower)
         self.frequencyCtrl.setValue(currentfreq)
         if currentstate:
-            self.stateButton.setText('Rohde&Schwarz: ON')
+            self.stateButton.setText('Trap Drive: ON')
         else:
-            self.stateButton.setText('Rohde&Schwarz: OFF')
+            self.stateButton.setText('Trap Drive: OFF')
         self.state = currentstate
         
     @inlineCallbacks
