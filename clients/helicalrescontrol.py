@@ -6,23 +6,43 @@ WithUnit = U.WithUnit
 
 cxn = labrad.connect('192.168.169.29')
 cameracomputercxn = labrad.connect()
-marconi = cxn.marconi_server()
+marconi = cameracomputercxn.marconi_server()
 tds = cameracomputercxn.tektronixtds_server()
 tds.select_device()
 
+#
+#
+#
+# change frequency step size when there is less noise
 
-x = tds.returnvalue()
-y = #current best amplitude
+f=marconi.frequency() #in MHz set frequency
+print f
+prev = tds.getvalue()     #previous pk2pk value in volts
+print prev
+f=marconi.frequency(f+0.1) #change f +.01
 
-for i in range(100):
-    f=marconi.frequency()
-    if y<x:
-        f+#some integer
-        #store new f
-    elif y>x:
-        f-#some integer
-        #store new f
+while (True):
+    curr = tds.getvalue() #current pk2pk value in Volts
+
+    
+    if curr>prev:
+        print 'case 1'
+        prev=curr                   #set previous pk2pk to current pk2pk
+        f=marconi.frequency(f+0.1) #change f +.01
+    elif curr<prev:
+        print 'case 2'
+        f=marconi.frequency(f-0.2) #change f -.02
+        actual=tds.getvalue()
+        if actual<prev:
+            print f
+            print prev; print 'V'
+            break
+        #else:
+            #curr=prev
+        
     else:
-        print #new f
-        print 'is current best'
-        quit 
+        print 'case 3'
+        print f; print 'best frequency MHz'
+        print curr
+        break
+

@@ -62,7 +62,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         d = {}
 
         # == BASIC SETTINGS ==
-        d['on_off'] = None # True (ON) or False (OFF)
+        d['on_off'] = yield self.requestRF() # True (ON) or False (OFF)
         d['power'] = yield self.getAmplitude() # power in dBm
         d['power_min'] = POWER_MIN # min power in dBm
         d['power_max'] = POWER_MAX # max power in dBm
@@ -196,6 +196,16 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
             yield self.write(command)
             self.marDict['on_off'] = state
         returnValue(self.marDict['on_off'])
+
+    @inlineCallbacks
+    def requestRF(self):
+        """requests the RF status"""
+        result = yield self.query('RFLV?')
+        if 'ON' in result:
+            answer=True
+        else:
+            answer=False
+        returnValue(answer)
 
     @inlineCallbacks
     def setAmplitude(self, level):
@@ -475,7 +485,7 @@ class MarconiServer(GPIBManagedServer):
         dev=self.selectDevice(c)
         return dev._Identify()
 
-    @setting(11, "Carrier On Off", state = 'b', returns = 'b')
+    @setting(11, "OnOff", state = 'b', returns = 'b')
     def CarrierOnOff(self, c, state=None):
         """Get or set the on/off state of the CW signal.
         True represents ON
