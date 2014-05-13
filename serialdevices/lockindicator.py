@@ -5,15 +5,18 @@ from twisted.internet import reactor
 from twisted.internet.defer import returnValue
 from labrad.server import Signal
 import numpy
+import binascii
 
 class lockindicator( SerialDeviceServer ):
     """Controls lockindicator box in laser room"""
 
-    name = 'laserlockservre'
+    name = 'laserlockserver'
     regKey = 'laserlock'
     port = None
     serNode = 'cctmain'
     timeout = 1.0
+
+    laserupdate = Signal(611088, 'signal: laserlock', 'i')
 
     @inlineCallbacks
     def initServer( self ):
@@ -33,22 +36,26 @@ class lockindicator( SerialDeviceServer ):
                 print 'Error opening serial connection'
                 print 'Check set up and restart serial server'
             else: raise
-        yield self.populateDict()
 
-    def createDict(self):
-        d = {}
-        d['0'] = 0 #laser 0
-        d['1'] = 0 #laser 1
-        d['2'] = 0 #laser 2
-        d['3'] = 0 #laser 3
-        d['4'] = 0 #laser 4
-        d['5'] = 0 # 422
-        d['6'] = 0 #laser 6
-        d['7'] = 0 #laser 7        
-        self.tpsDict = d
 
-    @setting(1, "status", channel='i', returns='b')
-    def status(self, c, channel):
-        '''returns status of channel'''
+    @inlineCallbacks
+    def getstatus(self):
+        yield self.ser.write_line('d')
+        answer=yield self.ser.readline()
+        intans=int(binascii.hexlify(answer),16)
+        self.notifyOtherListeners(c, intans, self.laserupdate)
 
-        returnValue(answer)
+
+    def notifyOtherListeners(self, context, message, f):
+        """
+        Notifies all listeners except the one in the given context, executing function f
+        """
+        notified = self.listeners.copy()
+        notified.remove(context.ID)
+        f(message,notified)
+
+if __name__ == "__main__":
+    from labrad import util
+    util.runServer(laserlockserver())
+
+
