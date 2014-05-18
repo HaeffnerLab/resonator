@@ -61,7 +61,7 @@ class TD(QtGui.QWidget):
         self.T = T
         self.cxn = yield connectAsync('192.168.169.30')
         self.server = yield self.cxn.marconi_server
-        self.tds = yield self.cxn.tektronix_tds_server
+        self.tds = yield self.cxn.tektronixtds_server
         self.SMAGPIB = 'cct_camera GPIB Bus - GPIB0::1'
         try:
             #yield self.server.select_device('GPIB Bus - USB0::0x0AAD::0x0054::102542')
