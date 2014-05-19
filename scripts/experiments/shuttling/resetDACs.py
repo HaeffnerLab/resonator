@@ -1,4 +1,4 @@
-from cct.scripts.PulseSequences.resetDACs import reset_DACs
+from resonator.scripts.PulseSequences.resetDACs import reset_DACs
 from common.abstractdevices.script_scanner.scan_methods import experiment
 from labrad import types
 

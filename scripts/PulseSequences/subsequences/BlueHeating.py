@@ -1,5 +1,5 @@
-from lattice.scripts.PulseSequences.PulseSequence import PulseSequence
-from lattice.scripts.PulseSequences.subsequences.DopplerCooling import doppler_cooling
+from resonator.scripts.PulseSequences.PulseSequence import PulseSequence
+from resonator.scripts.PulseSequences.subsequences.DopplerCooling import doppler_cooling
 
 class global_blue_heating(PulseSequence):
     

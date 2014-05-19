@@ -6,7 +6,7 @@ import time
 cxn = labrad.connect()
 dv = cxn.data_vault
 rs = cxn.rohdeschwarz_server
-rs.select_device('lattice-pc GPIB Bus - USB0::0x0AAD::0x0054::102549')
+rs.select_device('resonator-pc GPIB Bus - USB0::0x0AAD::0x0054::102549')
 
 phaseMin = 0.0
 phaseMax = 25.0

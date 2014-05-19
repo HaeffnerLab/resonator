@@ -5,9 +5,9 @@ import time
 
 cxn = labrad.connect()
 dv = cxn.data_vault
-ds = cxn.cctdac
+ds = cxn.resonatordac
 #rs = cxn.rohdeschwarz_server
-#rs.select_device('lattice-pc GPIB Bus - USB0::0x0AAD::0x0054::102549')
+#rs.select_device('resonator-pc GPIB Bus - USB0::0x0AAD::0x0054::102549')
 
 amplMin = .04
 amplMax = 0.1

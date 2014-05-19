@@ -1,5 +1,5 @@
-from cct.scripts.PulseSequences.advanceDACsShuttle import advance_DACs_shuttle
-from cct.scripts.PulseSequences.resetDACs import reset_DACs
+from resonator.scripts.PulseSequences.advanceDACsShuttle import advance_DACs_shuttle
+from resonator.scripts.PulseSequences.resetDACs import reset_DACs
 from common.abstractdevices.script_scanner.scan_methods import experiment
 from labrad import types
 # import matplotlib

@@ -1,4 +1,4 @@
-from cct.scripts.PulseSequences.ramsey_dephase import ramsey_dephase
+from resonator.scripts.PulseSequences.ramsey_dephase import ramsey_dephase
 from excitation_729 import excitation_729
 
 class excitation_ramsey_dephase(excitation_729):

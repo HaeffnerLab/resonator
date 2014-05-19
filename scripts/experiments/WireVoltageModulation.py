@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/cct/LabRAD/cct')
+sys.path.append('/home/resonator/LabRAD/resonator')
 import labrad
 from labrad import types
 import datetime

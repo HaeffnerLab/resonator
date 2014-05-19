@@ -17,7 +17,7 @@ for Ex in amplitudes:
     cxn = labrad.connect()
     cxn2 = labrad.connect('192.168.169.30')
     dv = cxn.data_vault
-    ds = cxn.cctdac
+    ds = cxn.resonatordac
     pmt = cxn.normalpmtflow
     rs = cxn2.rohdeschwarz_server
     rs.select_device('GPIB Bus - USB0::0x0AAD::0x0054::104543')

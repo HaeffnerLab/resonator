@@ -1,4 +1,4 @@
-from cct.scripts.PulseSequences.spectrum_rabi import spectrum_rabi
+from resonator.scripts.PulseSequences.spectrum_rabi import spectrum_rabi
 from commmon.okfpgaservers.pulser.pulse_sequences.plot_sequence import SequencePlotter
 from labrad.units import WithUnit
 

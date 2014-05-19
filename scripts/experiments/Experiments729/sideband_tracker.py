@@ -1,8 +1,8 @@
 from common.abstractdevices.script_scanner.scan_methods import experiment
 from excitations import excitation_729
-from lattice.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
-from lattice.scripts.scriptLibrary import dvParameters
-from lattice.scripts.experiments.Crystallization.crystallization import crystallization
+from resonator.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
+from resonator.scripts.scriptLibrary import dvParameters
+from resonator.scripts.experiments.Crystallization.crystallization import crystallization
 import time
 import labrad
 from labrad.units import WithUnit

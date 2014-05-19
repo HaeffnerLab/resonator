@@ -1,7 +1,7 @@
 from common.abstractdevices.script_scanner.scan_methods import experiment
 from excitation_ramsey import excitation_ramsey
-from cct.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
-from cct.scripts.scriptLibrary import dvParameters
+from resonator.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
+from resonator.scripts.scriptLibrary import dvParameters
 import time
 import labrad
 from labrad.units import WithUnit

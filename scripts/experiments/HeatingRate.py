@@ -1,6 +1,6 @@
 import sys;
-sys.path.append('/home/cct/LabRAD/cct/scripts')
-sys.path.append('/home/cct/LabRAD/cct/PulseSequences')
+sys.path.append('/home/resonator/LabRAD/resonator/scripts')
+sys.path.append('/home/resonator/LabRAD/resonator/PulseSequences')
 import labrad
 from labrad import types
 import numpy

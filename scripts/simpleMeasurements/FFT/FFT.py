@@ -1,8 +1,8 @@
 import sys; 
-#sys.path.append('F:\\Experiment_control\\LabRAD\\cct\\scripts')
-sys.path.append('/home/cct/LabRAD/cct/scripts')
-sys.path.append('/home/cct/LabRAD/cct/scripts/PulseSequences')
-#sys.path.append('F:\\Experiment_control\\LabRAD\\cct\\scripts\\PulseSequences')
+#sys.path.append('F:\\Experiment_control\\LabRAD\\resonator\\scripts')
+sys.path.append('/home/resonator/LabRAD/resonator/scripts')
+sys.path.append('/home/resonator/LabRAD/resonator/scripts/PulseSequences')
+#sys.path.append('F:\\Experiment_control\\LabRAD\\resonator\\scripts\\PulseSequences')
 import labrad
 import numpy as np
 from PulseSequences.TimeResolvedRecord import TimeResolved

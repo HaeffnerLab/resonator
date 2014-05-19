@@ -10,8 +10,8 @@ Analysis
 
 from common.abstractdevices.script_scanner.scan_methods import experiment
 from excitation_mode_coupling import excitation_mode_coupling
-from cct.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
-from cct.scripts.scriptLibrary import dvParameters
+from resonator.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
+from resonator.scripts.scriptLibrary import dvParameters
 from excitation_mode_coupling import excitation_mode_coupling
 import time
 import labrad

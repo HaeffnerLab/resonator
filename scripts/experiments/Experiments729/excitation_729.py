@@ -1,6 +1,6 @@
 from common.abstractdevices.script_scanner.scan_methods import experiment
-from cct.scripts.PulseSequences.spectrum_rabi import spectrum_rabi
-from cct.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
+from resonator.scripts.PulseSequences.spectrum_rabi import spectrum_rabi
+from resonator.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
 from labrad import types as T
 import numpy
 import time
