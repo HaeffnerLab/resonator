@@ -9,7 +9,7 @@ class cctGUI(QtGui.QMainWindow):
 
     @inlineCallbacks
     def connect_labrad(self):
-        from connection import connection
+        from common.clients.connection import connection
         cxn = connection()
         yield cxn.connect()
         self.create_layout(cxn)
