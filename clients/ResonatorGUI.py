@@ -9,7 +9,7 @@ class cctGUI(QtGui.QMainWindow):
 
     @inlineCallbacks
     def connect_labrad(self):
-        from connection import connection
+        from common.clients.connection import connection
         cxn = connection()
         yield cxn.connect()
         self.create_layout(cxn)
@@ -30,12 +30,13 @@ class cctGUI(QtGui.QMainWindow):
         self.tabWidget.addTab(tableopticsTab, '&Table Optics')
         self.tabWidget.addTab(sweepTab, '&Sweep (Marconi)')
 
- #       scriptControl = self.makeScriptControl(reactor)
+        from common.clients.script_scanner_gui.script_scanner_gui import script_scanner_gui
+        script_scanner = script_scanner_gui(reactor, cxn)
+        script_scanner.show()
 
         self.createGrapherTab()
 
         gridLayout = QtGui.QGridLayout()
- #       gridLayout.addWidget(scriptControl, 0, 0, 1, 1)
         gridLayout.addWidget(self.tabWidget, 0, 1, 1, 3)
         rightPanel = QtGui.QGridLayout()
         rightPanel.addWidget(pmtWidget(reactor), 0, 0)
@@ -44,15 +45,9 @@ class cctGUI(QtGui.QMainWindow):
         centralWidget = QtGui.QWidget()
         centralWidget.setLayout(gridLayout)
         self.setCentralWidget(centralWidget)
-        self.setWindowTitle('CCTGUI')
+        self.setWindowTitle('ResonatorGUI')
 
 
-    def makeScriptControl(self, reactor):
-        from common.clients.guiscriptcontrol.scriptcontrol import ScriptControl
-        self.sc = ScriptControl(reactor, self)
-        self.sc, self.experimentParametersWidget = self.sc.getWidgets()
-        self.createExperimentParametersTab()
-        return self.sc
 
     def createExperimentParametersTab(self):
         self.tabWidget.addTab(self.experimentParametersWidget, '&Experiment Parameters')

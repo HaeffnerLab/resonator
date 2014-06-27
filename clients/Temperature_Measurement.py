@@ -27,7 +27,6 @@ class tempWidget(QtGui.QWidget):
         self.connect()
         self.setupUI()
     
-
     @inlineCallbacks
     def connect(self):
         from labrad.wrappers import connectAsync

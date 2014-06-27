@@ -1,32 +1,12 @@
-from sequence import Sequence
-class ADV_DAC(Sequence):
-    requiredVars = {
-                         'startIndex':(int, 1, 1000, 1),
-                         'stopIndex':(int, 1, 1000, 2),
-                         'maxIndex':(int, 100, 1000, 1000),
-                         'duration':(float, 10e-8, 10e-2, 10e-2),
-                         'reset':(int, 0, 1, 0)
-                    }
-    def defineSequence(self):
-        pulser = self.pulser
-        p = self.parameters
-        n = p.startIndex
-        dTime = p.duration
-        sTime = 0
-        
-        
-        if p.reset:
-            pulser.add_ttl_pulse('rst', sTime, 3 * dTime)
-            pulser.add_ttl_pulse('adv', sTime + dTime, dTime)
-            return
-        
-        while n != p.stopIndex:
-            if n < p.maxIndex:
-                pulser.add_ttl_pulse('adv', sTime, dTime)
-                n += 1
-                sTime += 2*dTime
-            else:
-                pulser.add_ttl_pulse('rst', sTime, 3 * dTime)
-                pulser.add_ttl_pulse('adv', sTime + dTime, dTime)
-                n = 1
-                sTime += 4*dTime
+from common.okfpgaservers.pulser.pulse_sequences.pulse_sequence import pulse_sequence
+class advance_DACs(pulse_sequence):
+	required_parameters = [
+							('advanceDACs', 'pulse_length'),
+							('advanceDACs', 'steps'),
+	]
+
+	def sequence( self ):
+		pl = self.parameters.advanceDACs.pulse_length
+		for step in range(self.parameters.advanceDACs.steps):
+			self.addTTL('adv', 2*step*pl, pl)
+

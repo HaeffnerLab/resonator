@@ -38,6 +38,7 @@ class TD(QtGui.QWidget):
 #        self.frequencyCtrl.setSuffix(' MHz')
         self.updateButton = QtGui.QPushButton('Get')
         self.stateButton = QtGui.QPushButton()
+        self.maximumButton = QtGui.QPushButton('Maximum')
         
         superLayout.addLayout(layout,0,0)
         groupbox.setLayout(groupboxLayout)
@@ -48,6 +49,7 @@ class TD(QtGui.QWidget):
         groupboxLayout.addWidget(self.powerCtrl,2,1)
         groupboxLayout.addWidget(self.stateButton,0,0,1,1)
         groupboxLayout.addWidget(self.updateButton,0,1,1,1)
+        groupboxLayout.addWidget(self.maximumButton)
 
         self.setLayout(superLayout)
     
@@ -58,10 +60,12 @@ class TD(QtGui.QWidget):
         from labrad import types as T
         self.T = T
         self.cxn = yield connectAsync('192.168.169.30')
-        self.server = yield self.cxn.rohdeschwarz_server
-        self.SMAGPIB = Device_config.TD_SMA
+        self.server = yield self.cxn.marconi_server
+        self.tds = yield self.cxn.tektronixtds_server
+        self.SMAGPIB = 'cct_camera GPIB Bus - GPIB0::1'
         try:
             #yield self.server.select_device('GPIB Bus - USB0::0x0AAD::0x0054::102542')
+            ##yield self.tds.select_device(self.
             yield self.server.select_device(self.SMAGPIB)
         except Error:
             self.setEnabled(False)
@@ -71,14 +75,15 @@ class TD(QtGui.QWidget):
         self.frequencyCtrl.valueChanged.connect(self.onFreqChange)
         self.stateButton.clicked.connect(self.onOutputChange)
         self.updateButton.clicked.connect(self.update)
+        self.maximumButton.clicked.connect(self.checkMax)
     
     @inlineCallbacks
     def onOutputChange(self, state):
         if self.state:
-            self.stateButton.setText('Rohde&Schwarz: OFF')
+            self.stateButton.setText('Trap Drive   : OFF')
             yield self.server.onoff(False)
         if not self.state:
-            self.stateButton.setText('Rohde&Schwarz: ON')
+            self.stateButton.setText('Trap Drive: ON')
             yield self.server.onoff(True)
         self.state = not self.state
 
@@ -91,9 +96,9 @@ class TD(QtGui.QWidget):
         self.powerCtrl.setValue(currentpower)
         self.frequencyCtrl.setValue(currentfreq)
         if currentstate:
-            self.stateButton.setText('Rohde&Schwarz: ON')
+            self.stateButton.setText('Trap Drive: ON')
         else:
-            self.stateButton.setText('Rohde&Schwarz: OFF')
+            self.stateButton.setText('Trap Drive: OFF')
         self.state = currentstate
         
     @inlineCallbacks
@@ -103,6 +108,56 @@ class TD(QtGui.QWidget):
     @inlineCallbacks
     def onPowerChange(self, p):
         yield self.server.amplitude(self.T.Value(self.powerCtrl.value(), 'dBm'))
+
+    @inlineCallbacks
+    def checkMax(self):
+        import labrad
+        import numpy
+        import time
+        import labrad.units as U
+        WithUnit = U.WithUnit
+        cxn = labrad.connect('192.168.169.29')
+        cameracomputercxn = labrad.connect()
+        
+        #tds = cameracomputercxn.tektronixtds_server()
+        tds.select_device()
+
+        #
+        #
+        #
+        # change frequency step size when there is less noise
+
+        f=server.frequency() #in MHz set frequency
+        print f
+        prev = tds.getvalue()     #previous pk2pk value in volts
+        print prev
+        f=server.frequency(f+0.01) #change f +.01
+
+        while (True):
+            curr = tds.getvalue() #current pk2pk value in Volts
+    
+            if curr>prev:
+                print 'case 1'
+                prev=curr                   #set previous pk2pk to current pk2pk
+                f=server.frequency(f+0.01) #change f +.01
+            elif curr<prev:
+                print 'case 2'
+                f=server.frequency(f-0.02) #change f -.02
+                actual=tds.getvalue()
+                if actual<prev:
+                    print f
+                    print prev; print 'V'
+                    break
+                #else:
+                    #curr=prev
+        
+            else:
+                print 'case 3'
+                print f; print 'best frequency MHz'
+                print curr
+                break
+                self.maximumButton.setText('Maximum found')
+
     
     def closeEvent(self, x):
         self.reactor.stop()

@@ -1,8 +1,8 @@
 # wire voltage modulation
 
 #import sys
-#sys.path.append('/home/cct/LabRAD/cct/scripts')
-#sys.path.append('/home/cct/LabRAD/cct/scripts/PulseSequences')
+#sys.path.append('/home/resonator/LabRAD/resonator/scripts')
+#sys.path.append('/home/resonator/LabRAD/resonator/scripts/PulseSequences')
 
 import labrad
 from labrad import types

@@ -5,7 +5,7 @@ import traceback # for debugging
 
 nodeDict =  {'node_resonatormain':
                 ['Data Vault','Pulser','Tektronix Server','NormalPMTFlow',
-                 'Serial Server','Marconi Server','DAC Server']
+                 'Serial Server','Marconi Server','DAC Server','ParameterVault','ScriptScanner']
             }
 # Ryan: removed "CCTDAC Pulser v2" from startup, I believe this is unused
 # Ryan: removed GPIB Device Manager, and RohdeSchwarz Server,
