@@ -12,7 +12,7 @@ from random import randrange as r
 class DAC_CALIBRATOR(QDACCalibrator):
     def __init__(self, cxncam, cxn, parent=None):
         self.dacserver = cxn.dac_server
-        self.dmmserver = cxncam.keithley_2100_dmm
+        self.dmmserver = cxncam.keithley_2110_dmm
         self.datavault = cxn.data_vault
         self.registry = cxn.registry
 
@@ -32,7 +32,7 @@ class DAC_CALIBRATOR(QDACCalibrator):
         self.datavault.new(str(self.channelToCalib) + TIME,[('digital', '')], [('Analog', 'Volts', 'Volts')])
         self.datavault.add_parameter('plotLive',True)
 	
-        channel_name = self.dacserver.get_dac__channel_name(int(self.channelToCalib))
+        channel_name = self.channelToCalib #self.dacserver.get_dac__channel_name(int(self.channelToCalib))
         
         #stepsize = 0b101010101
 
@@ -108,11 +108,11 @@ class DAC_CALIBRATOR(QDACCalibrator):
 
 if __name__=="__main__":
     import labrad
-    cxn = labrad.connect()
+    cxn = labrad.connect('192.168.169.29')
     cxncam = labrad.connect('192.168.169.30')
     dacserver = cxn.dac_server
-    dmmserver = cxncam.keithley_2100_dmm
-    dmmserver.select_device('cct_camera GPIB Bus - USB0::0x05E6::0x2100::1243106')
+    dmmserver = cxncam.keithley_2110_dmm
+    dmmserver.select_device()
     app = QtGui.QApplication(sys.argv)
     icon = DAC_CALIBRATOR(cxncam, cxn)
     icon.show()
