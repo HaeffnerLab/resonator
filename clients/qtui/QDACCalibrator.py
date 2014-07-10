@@ -7,7 +7,7 @@ class QDACCalibrator(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         #basepath = os.environ.get('LABRADPATH',None)
-        path = 'C:/Users/experimenter/Desktop/LabRad/resonator/clients/qtui/daccalib.ui'
+        path = '/home/resonator/labrad/resonator/clients/qtui/daccalib.ui'
 #        if not basepath:
 
 #            raise Exception('Please set your LABRADPATH environment variable')
