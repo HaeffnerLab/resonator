@@ -81,7 +81,9 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         d['trig_mode'] = None # See SweepTrigModeSetStr
         #d['currently_sweeping'] = None # True if currently sweeping
         self.marDict = d
-
+        print self.marDict['freq']
+        print self.marDict['power']
+        
 
     
     @inlineCallbacks
@@ -213,6 +215,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         if not self.marDict['power_min'] <= level <= self.marDict['power_max']:
             raise Exception("power out of bounds")
         command = self.PowerSetStr(level)
+        print command
         yield self.write(command)
         self.marDict['power'] = level
         returnValue(self.marDict['power'])
@@ -382,7 +385,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
 
     def PowerSetStr(self, pwr):
         """String to set power (in dBm)"""
-        return 'RFLV:Value ' + str(pwr) + ' DBM' + '\n'
+        return 'RFLV:Value {} DBM\n'.format(pwr['dBm'])
 
 
     # ===== SWEEP =====setFrequency
@@ -493,7 +496,7 @@ class MarconiServer(GPIBManagedServer):
         dev=self.selectDevice(c)
         return dev._CarrierOnOff(state)
 
-    @setting(12, "Amplitude", level = 'v', returns = "v")
+    @setting(12, "Amplitude", level = 'v[dBm]', returns = "v[dBm]")
     def Amplitude(self, c, level=None):
         """Get or set the power level (dBm)"""
         dev = self.selectDevice(c)
