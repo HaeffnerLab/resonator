@@ -52,7 +52,7 @@ class TD(QtGui.QWidget):
         from labrad.wrappers import connectAsync
         from labrad.units import WithUnit
         self.WithUnit = WithUnit
-        self.cxn = yield connectAsync()
+        self.cxn = yield connectAsync('192.168.169.30')
         try:
             self.server = yield self.cxn.marconi_server
         except AttributeError:
