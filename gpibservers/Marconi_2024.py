@@ -232,6 +232,7 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         if not self.marDict['freq_min'] <= freq['MHz'] <= self.marDict['freq_max']:
             raise Exception("Frequency out of bounds")
         yield self.write('CFRQ:Value {}MHZ'.format(freq['MHz']))
+        print freq
         self.marDict['freq']=freq
 
     @inlineCallbacks
