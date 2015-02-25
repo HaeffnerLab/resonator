@@ -3,13 +3,15 @@ import time
 import datetime
 import numpy as np
 
+#time.sleep(3600)
+
 SAVE_DATA = True
 
 cxn = labrad.connect()
 
 delta_f = 0.002
-start_freq = 2.0
-stop_freq = 19.0
+start_freq = 4.001
+stop_freq = 9.1
 
 pulse_duration = 1e4
 
@@ -27,6 +29,7 @@ mso.setformat('BYTE')
 #    tps.setrms()
 rg = cxn.rigol_dg4062_server()
 rg.select_device()
+
 
 
 def get_data(tps, filename, mean_list, freq):
