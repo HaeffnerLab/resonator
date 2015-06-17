@@ -57,6 +57,7 @@ class DDS_CONTROL(QtGui.QWidget):
         self.cxn = yield connectAsync()
         self.server = yield self.cxn.pulser
         allChannels = yield self.server.get_dds_channels()
+        print allChannels
         layout = QtGui.QHBoxLayout()
         for chan in self.channels:
             if chan in allChannels:

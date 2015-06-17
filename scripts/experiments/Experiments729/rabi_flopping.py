@@ -1,17 +1,22 @@
 from common.abstractdevices.script_scanner.scan_methods import experiment
-from excitation_729 import excitation_729
+from excitations import excitation_729
 from resonator.scripts.scriptLibrary.common_methods_729 import common_methods_729 as cm
 from resonator.scripts.scriptLibrary import dvParameters
 import time
 import labrad
 from labrad.units import WithUnit
 from numpy import linspace
-from common.okfpgaservers.pulser.pulse_sequences.plot_sequence import SequencePlotter
 
 class rabi_flopping(experiment):
     
     name = 'RabiFlopping'
-    required_parameters = [
+    trap_frequencies = [
+                        ('TrapFrequencies','axial_frequency'),
+                        ('TrapFrequencies','radial_frequency_1'),
+                        ('TrapFrequencies','radial_frequency_2'),
+                        ('TrapFrequencies','rf_drive_frequency'),                       
+                        ]
+    rabi_required_parameters = [
                            ('RabiFlopping','rabi_amplitude_729'),
                            ('RabiFlopping','manual_scan'),
                            ('RabiFlopping','manual_frequency_729'),
@@ -19,26 +24,20 @@ class rabi_flopping(experiment):
                            ('RabiFlopping','rabi_amplitude_729'),
                            ('RabiFlopping','frequency_selection'),
                            ('RabiFlopping','sideband_selection'),
-                           ('RabiFlopping', 'offset_frequency'),
-                           #(''),
                            
-                           ('TrapFrequencies','axial_frequency'),
-                           ('TrapFrequencies','radial_frequency_1'),
-                           ('TrapFrequencies','radial_frequency_2'),
-                           ('TrapFrequencies','rf_drive_frequency'),
                            ]
     
-    optional_parmeters = [
-                          ('RabiFlopping', 'window_name'),
-                          ('RabiFlopping', 'dataset_name_append'),
-                          ('RabiFlopping', 'save_directory')
-                          ]
-    required_parameters.extend(excitation_729.required_parameters)
-    #removing parameters we'll be overwriting, and they do not need to be loaded
-    required_parameters.remove(('Excitation_729','rabi_excitation_amplitude'))
-    required_parameters.remove(('Excitation_729','rabi_excitation_duration'))
-    required_parameters.remove(('Excitation_729','rabi_excitation_frequency'))
-    
+    @classmethod
+    def all_required_parameters(cls):
+        parameters = set(cls.rabi_required_parameters)
+        parameters = parameters.union(set(cls.trap_frequencies))
+        parameters = parameters.union(set(excitation_729.all_required_parameters()))
+        parameters = list(parameters)
+        #removing parameters we'll be overwriting, and they do not need to be loaded
+        parameters.remove(('Excitation_729','rabi_excitation_amplitude'))
+        parameters.remove(('Excitation_729','rabi_excitation_duration'))
+        parameters.remove(('Excitation_729','rabi_excitation_frequency'))
+        return parameters
     
     def initialize(self, cxn, context, ident):
         self.ident = ident
@@ -47,24 +46,14 @@ class rabi_flopping(experiment):
         self.scan = []
         self.amplitude = None
         self.duration = None
-        self.cxnlab = labrad.connect('192.168.169.49') #connection to labwide network
+        #self.cxnlab = labrad.connect('192.168.169.49') #connection to labwide network
         self.drift_tracker = cxn.sd_tracker
         self.dv = cxn.data_vault
         self.rabi_flop_save_context = cxn.context()
-        self.pulser = cxn.pulser
-        self.fitter = None
-        try:
-            self.fitter = cxn.fitter
-        except:
-            print "No data analyzer"
-
+    
     def setup_sequence_parameters(self):
+        self.load_frequency()
         flop = self.parameters.RabiFlopping
-        frequency = cm.frequency_from_line_selection(flop.frequency_selection, flop.manual_frequency_729, flop.line_selection, self.drift_tracker)
-        trap = self.parameters.TrapFrequencies
-        if flop.frequency_selection == 'auto':
-            frequency = cm.add_sidebands(frequency, flop.sideband_selection, trap)
-        self.parameters['Excitation_729.rabi_excitation_frequency'] = frequency + flop.offset_frequency
         self.parameters['Excitation_729.rabi_excitation_amplitude'] = flop.rabi_amplitude_729
         minim,maxim,steps = flop.manual_scan
         minim = minim['us']; maxim = maxim['us']
@@ -73,61 +62,51 @@ class rabi_flopping(experiment):
         
     def setup_data_vault(self):
         localtime = time.localtime()
-        try:
-            directory = self.parameters.get('RabiFlopping.save_directory')
-            datasetNameAppend = self.parameters.get('RabiFlopping.dataset_name_append')
-        except KeyError:
-            datasetNameAppend = time.strftime("%Y%b%d_%H%M_%S",localtime)
-            dirappend = [ time.strftime("%Y%b%d",localtime) ,time.strftime("%H%M_%S", localtime)]
-            directory = ['','Experiments']
-            directory.extend([self.name])
-            directory.extend(dirappend)
+        datasetNameAppend = time.strftime("%Y%b%d_%H%M_%S",localtime)
+        dirappend = [ time.strftime("%Y%b%d",localtime) ,time.strftime("%H%M_%S", localtime)]
+        directory = ['','Experiments']
+        directory.extend([self.name])
+        directory.extend(dirappend)
         self.dv.cd(directory ,True, context = self.rabi_flop_save_context)
-        self.dv.new('Rabi Flopping {}'.format(datasetNameAppend),[('Excitation', 'us')],[('Excitation Probability','Arb','Arb')], context = self.rabi_flop_save_context)
-        window_name = self.parameters.get('RabiFlopping.window_name', ['Rabi Flopping'])
-        self.dv.add_parameter('Window', window_name, context = self.rabi_flop_save_context)
+        output_size = self.excite.output_size
+        dependants = [('Excitation','Ion {}'.format(ion),'Probability') for ion in range(output_size)]
+        self.dv.new('Rabi Flopping {}'.format(datasetNameAppend),[('Excitation', 'us')], dependants , context = self.rabi_flop_save_context)
+        self.dv.add_parameter('Window', ['Rabi Flopping'], context = self.rabi_flop_save_context)
         self.dv.add_parameter('plotLive', True, context = self.rabi_flop_save_context)
+    
+    def load_frequency(self):
+        #reloads trap frequencyies and gets the latest information from the drift tracker
+        self.reload_some_parameters(self.trap_frequencies) 
+        flop = self.parameters.RabiFlopping
+        frequency = cm.frequency_from_line_selection(flop.frequency_selection, flop.manual_frequency_729, flop.line_selection, self.drift_tracker)
+        trap = self.parameters.TrapFrequencies
+        if flop.frequency_selection == 'auto':
+            frequency = cm.add_sidebands(frequency, flop.sideband_selection, trap)
+        self.parameters['Excitation_729.rabi_excitation_frequency'] = frequency
         
     def run(self, cxn, context):
-        '''
-        Right now this function returns the time at which the maximum excitation
-        is achieved. This is supposed to be a guess for the pi time to be used
-        in heating rate measurements.
-        
-        To do: have it fit to some model and return the parameters
-        '''
         self.setup_data_vault()
         self.setup_sequence_parameters()
-        self.pulser.switch_auto('397mod')
-        self.pulser.switch_auto('parametric_modulation')
-
-        excitation_list = []
-        time_list = []
         for i,duration in enumerate(self.scan):
             should_stop = self.pause_or_stop()
             if should_stop: break
-            self.parameters['Excitation_729.rabi_excitation_duration'] = duration
-            self.excite.set_parameters(self.parameters)
-            excitation = self.excite.run(cxn, context)
-            self.dv.add((duration, excitation), context = self.rabi_flop_save_context)
-            time_list.append(duration)
-            excitation_list.append(excitation)
+            excitation = self.do_get_excitation(cxn, context, duration)
+            if excitation is None: break 
+            submission = [duration['us']]
+            submission.extend(excitation)
+            self.dv.add(submission, context = self.rabi_flop_save_context)
             self.update_progress(i)
-
-        index = excitation_list.index(max(excitation_list))
-        pi_time = time_list[index]
-        return pi_time
-        
-            
-
-         #dds = self.cxn.pulser.human_readable_dds()
-         #ttl = self.cxn.pulser.human_readable_ttl()
-         #channels = self.cxn.pulser.get_channels().asarray
-         #sp = SequencePlotter(ttl.asarray, dds.aslist, channels)
-         #sp.makePlot()
-
+    
+    def do_get_excitation(self, cxn, context, duration):
+        self.load_frequency()
+        self.parameters['Excitation_729.rabi_excitation_duration'] = duration
+        self.excite.set_parameters(self.parameters)
+        excitation, readouts = self.excite.run(cxn, context)
+        return excitation
+     
     def finalize(self, cxn, context):
-        self.save_parameters(self.dv, cxn, self.cxnlab, self.rabi_flop_save_context)
+        #self.save_parameters(self.dv, cxn, self.cxnlab, self.rabi_flop_save_context)
+        self.excite.finalize(cxn, context)
 
     def update_progress(self, iteration):
         progress = self.min_progress + (self.max_progress - self.min_progress) * float(iteration + 1.0) / len(self.scan)

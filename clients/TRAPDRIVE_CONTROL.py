@@ -79,7 +79,7 @@ class TD(QtGui.QWidget):
     def update(self, c):
         currentpower = yield self.server.amplitude()
         currentfreq = yield self.server.frequency()
-        currentstate = yield self.server.carrier_on_off()
+        currentstate = yield self.server.onoff()
         self.powerCtrl.setValue(currentpower)
         self.frequencyCtrl.setValue(currentfreq)
         if currentstate:

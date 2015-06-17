@@ -1,16 +1,21 @@
-import os
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore,uic
 from twisted.internet.defer import inlineCallbacks, returnValue
 from Devices_config import Device_config
 
 
+
+#############
+
+#### = updated in _mod version. Changes: values are not applied on entry, rather we wait until the 'Set' button is pressed
+
+#############
+
 MinPower = -36 #dbM
 MaxPower = 25
 DEFPower = -20
 MinFreq = 0 #Mhz
-MaxFreq = 100
+MaxFreq = 99
 DEFFreq = 10
 
 class TD(QtGui.QWidget):
@@ -33,12 +38,16 @@ class TD(QtGui.QWidget):
 #        self.powerCtrl.setSuffix(' dBm')
         self.frequencyCtrl = QtGui.QDoubleSpinBox()
         self.frequencyCtrl.setRange (MinFreq,MaxFreq)
+      
         self.frequencyCtrl.setDecimals (5)
         self.frequencyCtrl.setSingleStep(.1)
 #        self.frequencyCtrl.setSuffix(' MHz')
         self.updateButton = QtGui.QPushButton('Get')
         self.stateButton = QtGui.QPushButton()
         self.maximumButton = QtGui.QPushButton('Maximum')
+        
+        ####   button to apply user-specified frequency and power
+        self.setButton = QtGui.QPushButton('Set')
         
         superLayout.addLayout(layout,0,0)
         groupbox.setLayout(groupboxLayout)
@@ -51,6 +60,9 @@ class TD(QtGui.QWidget):
         groupboxLayout.addWidget(self.updateButton,0,1,1,1)
         groupboxLayout.addWidget(self.maximumButton)
 
+        ####
+        groupboxLayout.addWidget(self.setButton)
+        
         self.setLayout(superLayout)
     
     @inlineCallbacks
@@ -65,17 +77,27 @@ class TD(QtGui.QWidget):
         self.SMAGPIB = 'cct_camera GPIB Bus - GPIB0::1'
         try:
             #yield self.server.select_device('GPIB Bus - USB0::0x0AAD::0x0054::102542')
-            ##yield self.tds.select_device(self.
             yield self.server.select_device(self.SMAGPIB)
         except Error:
             self.setEnabled(False)
             return
         self.update(0)
-        self.powerCtrl.valueChanged.connect(self.onPowerChange)
-        self.frequencyCtrl.valueChanged.connect(self.onFreqChange)
+        currentpower = yield self.server.amplitude()
+        currentfreq = yield self.server.frequency()
+        self.powerCtrl.setValue(currentpower)
+        self.frequencyCtrl.setValue(currentfreq)
+            
+        #### Nothing happens on value change!          
+        
+        ####self.powerCtrl.valueChanged.connect(self.onPowerChange)
+        ####self.frequencyCtrl.valueChanged.connect(self.onFreqChange)
+        
         self.stateButton.clicked.connect(self.onOutputChange)
         self.updateButton.clicked.connect(self.update)
  #       self.maximumButton.clicked.connect(self.checkMax)
+ 
+        #### connect set Button to the method that writes values to server.
+        self.setButton.clicked.connect(self.setFreqAndPower)
     
     @inlineCallbacks
     def onOutputChange(self, state):
@@ -93,6 +115,8 @@ class TD(QtGui.QWidget):
         currentpower = yield self.server.amplitude()
         currentfreq = yield self.server.frequency()
         currentstate = yield self.server.onoff()
+      
+
         self.powerCtrl.setValue(currentpower)
         self.frequencyCtrl.setValue(currentfreq)
         if currentstate:
@@ -104,9 +128,17 @@ class TD(QtGui.QWidget):
     @inlineCallbacks
     def onFreqChange(self, f):
         yield self.server.frequency(self.T.Value(self.frequencyCtrl.value(), 'MHz'))
+        
+
 
     @inlineCallbacks
     def onPowerChange(self, p):
+        yield self.server.amplitude(self.T.Value(self.powerCtrl.value(), 'dBm'))
+
+    #### method to write frequency and power to server (marconi)
+    @inlineCallbacks
+    def setFreqAndPower(self, state):
+        yield self.server.frequency(self.T.Value(self.frequencyCtrl.value(), 'MHz'))
         yield self.server.amplitude(self.T.Value(self.powerCtrl.value(), 'dBm'))
 
 #    @inlineCallbacks
@@ -122,9 +154,6 @@ class TD(QtGui.QWidget):
 #        #tds = cameracomputercxn.tektronixtds_server()
 #        tds.select_device()
 #
-#        #
-#        #
-#        #
 #        # change frequency step size when there is less noise
 #
 #        f=server.frequency() #in MHz set frequency
@@ -174,8 +203,7 @@ class TD_CONTROL(QtGui.QMainWindow):
         widget.setLayout(gridLayout) 
         self.setCentralWidget(widget)
 
-    def buildW(self, reactor):
-        
+    def buildW(self, reactor):        
         W = QtGui.QWidget()
         subLayout = QtGui.QGridLayout()
         subLayout.addWidget(TD(reactor), 1, 0)
