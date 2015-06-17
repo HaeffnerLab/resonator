@@ -7,13 +7,15 @@ from labrad.server import Signal
 import numpy
 import binascii
 
+SERVERNAME='laserlockserver'
+
 class lockindicator( SerialDeviceServer ):
     """Controls lockindicator box in laser room"""
 
-    name = 'laserlockserver'
+    name = SERVERNAME
     regKey = 'laserlock'
     port = None
-    serNode = 'cctmain'
+    serNode = 'lab-49'
     timeout = 1.0
 
     laserupdate = Signal(611088, 'signal: laserlock', 'i')
@@ -38,8 +40,11 @@ class lockindicator( SerialDeviceServer ):
             else: raise
 
 
-    @inlineCallbacks
-    def getstatus(self):
+    @setting(1, returns = '' )
+    def getlaserstatus(self,context):
+        """
+        Notifies all listeners of current laser status
+        """        
         yield self.ser.write_line('d')
         answer=yield self.ser.readline()
         intans=int(binascii.hexlify(answer),16)
