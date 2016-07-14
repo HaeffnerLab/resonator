@@ -12,7 +12,7 @@ cxn = labrad.connect()
 cxncam = labrad.connect('192.168.169.30')
 dacserver = cxn.dac_server
 dmmserver = cxncam.keithley_2100_dmm
-# dmmserver.select_device('resonator_camera GPIB Bus - USB0::0x05E6::0x2100::1243106')
+# dmmserver.select_device('cct_camera GPIB Bus - USB0::0x05E6::0x2100::1243106')
 dmmserver.select_device('GPIB Bus - USB0::0x05E6::0x2100::1243106')
 
 print "Running DAC test..."
