@@ -8,7 +8,7 @@ import glob
 import re
 from scipy.optimize import curve_fit
 
-DO_PLOT = False
+DO_PLOT = True
 
 def func(x, a, c, d):
     return a*numpy.exp(-x*c)+d
@@ -16,7 +16,16 @@ def func(x, a, c, d):
 def find(s, ch):
     return [i for i, ltr in enumerate(s) if ltr == ch]
 
-filelist = glob.glob('C:/data_resonator/fit/02182015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/02182015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/03032015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/03062015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/07182015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/07232015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/08012015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/08032015/*.npy')
+#filelist = glob.glob('C:/data_resonator/fit/08142015/*.npy')
+filelist = glob.glob('C:/data_resonator/fit/10262015/*.npy')
+
 intervall=200
 
 for filename1 in filelist:
@@ -41,7 +50,7 @@ for filename1 in filelist:
         if  len(newy)==0:
             newy.append(max(datav[intervall*(k-1):intervall*k,1]))
             cindex = numpy.where(datav[intervall*(k-1):intervall*(k),1]==max(datav[intervall*(k-1):intervall*(k),1]))
-            newx.append(datav[cindex[0][0]+(k-1)*intervall,0])            
+            newx.append(datav[cindex[0][0]+(k-1)*intervall,0])
         elif max(datav[intervall*(k-1):intervall*k,1])*0.8<newy[len(newy)-1]:
             newy.append(max(datav[intervall*(k-1):intervall*k,1]))
             cindex = numpy.where(datav[intervall*(k-1):intervall*(k),1]==max(datav[intervall*(k-1):intervall*(k),1]))
@@ -58,8 +67,8 @@ for filename1 in filelist:
     newy = numpy.array(newy)
     newxm = numpy.array(newxm)
     newym = numpy.array(newym)
-    p01 = (-0.004, 6e+2,newym[len(newym)-2])
-    p02 = (0.004, 6e+2,newy[len(newy)-2])
+    p01 = (-0.4, 6e+2,newym[len(newym)-2])
+    p02 = (0.4, 6e+2,newy[len(newy)-2])
     popt1, pcov1 = curve_fit(func, newxm, newym,p01)
     popt2, pcov2 = curve_fit(func, newx, newy,p02)
     fitvaly1 = func(newxm, popt1[0],popt1[1],popt1[2])

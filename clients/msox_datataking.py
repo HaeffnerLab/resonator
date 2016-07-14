@@ -29,4 +29,5 @@ while(1):
         outlist.append([clntimestr[x],clnvaluelist[x]])
     outarray = np.array(outlist)
     filename='c:/data_resonator/curve_osci_'+time.strftime("%d%m%Y_%H%M_")+optstr+'.csv'
+
     np.save(filename,outarray)

@@ -241,6 +241,8 @@ class Marconi2024Wrapper(GPIBDeviceWrapper):
         freq = yield self.query('CFRQ:VALUE?')
         freq = float(freq)
         freq = WithUnit(freq, 'Hz')
+        #### return in MHz, so as not to overload the client MaxFreq
+        freq = freq.inUnitsOf('MHz')
         returnValue(freq)
 
     # ===== SWEEP =====
@@ -511,6 +513,7 @@ class MarconiServer(GPIBManagedServer):
         dev = self.selectDevice(c)
         if freq is not None:
             yield dev.setFrequency(freq)
+
         returnValue(dev.frequency)
 
 
