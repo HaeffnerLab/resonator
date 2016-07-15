@@ -12,7 +12,7 @@ SAVE_DATA = True
 cxn = labrad.connect()
 
 delta_f = 0.001
-start_freq = 1.5
+start_freq = 1.0
 stop_freq = 18.0
 
 pulse_duration = 1e4
