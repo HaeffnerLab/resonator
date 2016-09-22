@@ -24,7 +24,7 @@ def find(s, ch):
 #filelist = glob.glob('C:/data_resonator/fit/08012015/*.npy')
 #filelist = glob.glob('C:/data_resonator/fit/08032015/*.npy')
 #filelist = glob.glob('C:/data_resonator/fit/08142015/*.npy')
-filelist = glob.glob('C:/data_resonator/fit/10262015/*.npy')
+filelist = glob.glob('C:/data_resonator/fit/20160729/*.npy')
 
 intervall=200
 
@@ -67,8 +67,8 @@ for filename1 in filelist:
     newy = numpy.array(newy)
     newxm = numpy.array(newxm)
     newym = numpy.array(newym)
-    p01 = (-0.4, 6e+2,newym[len(newym)-2])
-    p02 = (0.4, 6e+2,newy[len(newy)-2])
+    p01 = (-0.01, 6e+2,newym[len(newym)-2])
+    p02 = (0.01, 6e+2,newy[len(newy)-2])
     popt1, pcov1 = curve_fit(func, newxm, newym,p01)
     popt2, pcov2 = curve_fit(func, newx, newy,p02)
     fitvaly1 = func(newxm, popt1[0],popt1[1],popt1[2])

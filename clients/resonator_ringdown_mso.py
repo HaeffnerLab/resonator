@@ -3,9 +3,9 @@ import time
 import datetime
 import numpy as np
 
-#print"Waiting 8 hours to start"
+print"Waiting 8 hours to start"
 
-#time.sleep(8*3600)
+time.sleep(8*3600)
 
 SAVE_DATA = True
 
